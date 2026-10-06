@@ -24,7 +24,7 @@ jobs:
     steps:
       # SUT = OpenTelemetry Demo (Astronomy Shop) via deployment-testbot/setup.sh,
       # storefront and /api behind frontend-proxy on :8080, no auth.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: skyramp/testbot@v0.11.14
