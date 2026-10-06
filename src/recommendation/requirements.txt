@@ -191,7 +191,7 @@ grpcio==1.84.0 \
 grpcio-health-checking==1.84.0 \
     --hash=sha256:3eab9b688e5e09bd1d584c296d3440358f11817388db87b807edd61f45b464d1 \
     --hash=sha256:c69ea3775a5f90cd094f294859dfd0150a560f7101a8936bf7b4e08b7186a14e
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 mmh3==5.3.1 \
     --hash=sha256:010dcd7406c2f77b978beaadfeb7a01d4f7868ce862f6273b1c37bd902267394 \
     --hash=sha256:01159489255615d4be76a9ebb07cb0c9b0345f544197aa64ab18a7cfa5579a28 \
@@ -365,11 +365,11 @@ openfeature-flagd-core==1.0.0 \
 openfeature-hooks-opentelemetry==0.3.1 \
     --hash=sha256:6d399244a6f5408f474ae2b0233257e30d8a041d635f71c2727c033dbfe1fe92 \
     --hash=sha256:ef4cddec8d328a9b6b738494de3aed623a9917d3b83b2e6b0377e4d2a21d3b22
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 openfeature-provider-flagd==0.5.2 \
     --hash=sha256:6c10288afcca00a5889df475ddc03c09be53ba6d8f8060f1ba23e38fbc557054 \
     --hash=sha256:c87ad5e4481a56c3233c9419abc4a4c36ec3523e5345720f43b8b8ea4a7f927b
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 openfeature-sdk==0.10.0 \
     --hash=sha256:75497ea75d73f684eef509a25f79ad6386368862e050af80ab70a44ae49b33e4 \
     --hash=sha256:938c2540bdea4da3b01ef507517ee636f223a35abaaca845c5587e594151b052
@@ -391,7 +391,7 @@ opentelemetry-api==1.43.0 \
 opentelemetry-distro==0.64b0 \
     --hash=sha256:8a19716899854245b4028650ec1cca12d89f9be41571bbffe9e539cd55d2fd96 \
     --hash=sha256:ce97b6cedfcf03dc54035c422485412eda63250e094f4bd63ef57d017d823f3c
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 opentelemetry-exporter-otlp-proto-common==1.43.0 \
     --hash=sha256:123c3f9cc87218562490c63b36f497bf3a722faf174a515d1443f31ababa6264 \
     --hash=sha256:c4e32ba6d6b13bdb2b8f6764c4fd28d00192826561aa04f6d14eedfce7ac076f
@@ -399,7 +399,7 @@ opentelemetry-exporter-otlp-proto-common==1.43.0 \
 opentelemetry-exporter-otlp-proto-grpc==1.43.0 \
     --hash=sha256:1b3e0627daa9bc21884d4a13946807c255eb558bfe5bdd543dffb6f4c9faee0d \
     --hash=sha256:6a10d1feacffffda19acacbf277b736094b1e2f4dbb98c90ccb2c6e1962e2ec6
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 opentelemetry-instrumentation==0.64b0 \
     --hash=sha256:133ab7ffca796557aec059bf6be3190a34b6dea987f25be3d9409e230cbdad8b \
     --hash=sha256:b47d528dead6271d7743114417eb67fc915bd9258111c48dbf9a4951d2efa88d
@@ -467,15 +467,15 @@ psutil==7.2.2 \
     --hash=sha256:ed0cace939114f62738d808fdcecd4c869222507e266e574799e9c0faa17d486 \
     --hash=sha256:eed63d3b4d62449571547b60578c5b2c4bcccc5387148db46e0c2313dad0ee00 \
     --hash=sha256:fd04ef36b4a6d599bbdb225dd1d3f51e00105f6d48a28f006da7f9822f2606d8
-    # via -r src/recommendation/requirements.in
-python-dotenv==1.2.3 \
-    --hash=sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9 \
-    --hash=sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
+python-dotenv==1.2.4 \
+    --hash=sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc \
+    --hash=sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0
+    # via -r requirements.in
 python-json-logger==4.2.0 \
     --hash=sha256:158a52126fcd6869e09574d2b66272666f3dc8f468c62637ef9a1fa883719cb9 \
     --hash=sha256:e371ebe22ec01e289850102091a2b1f6fc9e655c7f1f5f29073936756c290afa
-    # via -r src/recommendation/requirements.in
+    # via -r requirements.in
 pyyaml==6.0.3 \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
     --hash=sha256:0150219816b6a1fa26fb4699fb7daa9caf09eb1999f3b70fb6e786805e80375a \
