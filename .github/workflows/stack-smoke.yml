@@ -11,6 +11,12 @@ on:
       orders:
         description: Orders the Playwright test places
         default: "5"
+      locust_users:
+        description: Concurrent Locust users (9 HTTP to 1 browser)
+        default: "20"
+      locust_duration:
+        description: Locust run time
+        default: 5m
   push:
     branches: [main]
     paths:
@@ -26,6 +32,8 @@ env:
     -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml
   LOCUST_AUTOSTART: "false"
   ORDERS: ${{ inputs.orders || '5' }}
+  LOCUST_USERS: ${{ inputs.locust_users || '20' }}
+  LOCUST_DURATION: ${{ inputs.locust_duration || '5m' }}
 
 jobs:
   stack:
@@ -95,6 +103,43 @@ jobs:
           (( orders >= ORDERS )) || { echo "expected at least $ORDERS orders in accounting.order"; exit 1; }
           (( catalog > 0 )) || { echo "no catalog.products queries recorded"; exit 1; }
 
+      - name: Run the upstream Locust load generator
+        run: |
+          psql() { docker exec astronomy-db psql -U postgres -d astronomy_db -tAc "$1"; }
+          before=$(psql 'SELECT count(*) FROM accounting."order"')
+          # The idle web-UI instance stays up; this headless run uses the same locustfile,
+          # HttpUser plus the Playwright browser user (LOCUST_BROWSER_TRAFFIC_ENABLED=true).
+          docker exec load-generator locust --skip-log-setup -f locustfile.py --headless \
+            --users "$LOCUST_USERS" --spawn-rate 2 --run-time "$LOCUST_DURATION" \
+            --host http://frontend-proxy:8080 --csv /tmp/locust --only-summary > locust.log 2>&1 &
+          pid=$!
+          secs=$(( ${LOCUST_DURATION%m} * 60 ))
+          sleep $(( secs / 2 ))
+          echo "docker stats at mid-run:"
+          docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}'
+          uptime; free -h
+          wait $pid || true
+          tail -40 locust.log
+          docker cp load-generator:/tmp/locust_stats.csv locust_stats.csv
+          docker cp load-generator:/tmp/locust_failures.csv locust_failures.csv
+          after=$(psql 'SELECT count(*) FROM accounting."order"')
+          echo "orders during load: $(( after - before ))"
+          python3 - <<'PY'
+          import csv
+          rows = [r for r in csv.DictReader(open("locust_stats.csv")) if r["Name"] != "Aggregated"]
+          print(f"{'endpoint':55} {'reqs':>6} {'fails':>6} {'p50':>6} {'p95':>6} {'p99':>6}")
+          for r in rows:
+              print(f"{r['Type']+' '+r['Name'][:50]:55} {r['Request Count']:>6} {r['Failure Count']:>6} "
+                    f"{r['50%']:>6} {r['95%']:>6} {r['99%']:>6}")
+          app = [r for r in rows if "/prompt" not in r["Name"]]
+          reqs = sum(int(r["Request Count"]) for r in app)
+          fails = sum(int(r["Failure Count"]) for r in app)
+          ratio = fails / reqs if reqs else 1
+          print(f"storefront requests={reqs} failures={fails} ({ratio:.2%}); agent /prompt excluded, no agent service")
+          raise SystemExit(0 if reqs and ratio < 0.01 else 1)
+          PY
+          (( after > before )) || { echo "no orders reached PostgreSQL during load"; exit 1; }
+
       - name: Check containers stayed up
         if: always()
         run: |
@@ -119,6 +164,8 @@ jobs:
             test/e2e/playwright-report
             test/e2e/test-results
             compose.log
+            locust.log
+            locust_*.csv
           if-no-files-found: ignore
 
       - name: Tear down
