@@ -1,0 +1,126 @@
+name: Stack smoke
+
+# Starts every service of the demo (core, Kafka group, observability stack) on a
+# GitHub-hosted runner, drives orders through the storefront with Playwright, and
+# checks that they reached PostgreSQL through Kafka. Answers whether the runner can
+# hold the whole stack and gives a base for load fixtures.
+
+on:
+  workflow_dispatch:
+    inputs:
+      orders:
+        description: Orders the Playwright test places
+        default: "5"
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stack-smoke.yml
+      - test/e2e/**
+
+permissions:
+  contents: read
+
+env:
+  COMPOSE: >-
+    docker compose --env-file .env --env-file .env.override
+    -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml
+  LOCUST_AUTOSTART: "false"
+  ORDERS: ${{ inputs.orders || '5' }}
+
+jobs:
+  stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          docker system prune -af >/dev/null
+
+      - name: Runner resources
+        run: |
+          nproc; free -h; df -h /; docker version --format '{{.Server.Version}}'
+
+      - name: Pull images
+        run: |
+          start=$(date +%s)
+          $COMPOSE pull --quiet
+          echo "pull took $(( $(date +%s) - start ))s"
+          docker system df
+
+      - name: Start all services
+        run: $COMPOSE up -d --no-build --force-recreate --remove-orphans
+
+      - name: Wait for storefront and services
+        run: |
+          deadline=$(( $(date +%s) + 600 ))
+          until curl -sf http://localhost:8080/api/products >/dev/null; do
+            if (( $(date +%s) >= deadline )); then echo "storefront not ready after 600s"; $COMPOSE ps -a; exit 1; fi
+            sleep 5
+          done
+          echo "storefront ready after $(( $(date +%s) - deadline + 600 ))s"
+          # Give the Kafka consumers time to join before orders arrive.
+          sleep 30
+          $COMPOSE ps -a --format 'table {{.Service}}\t{{.State}}\t{{.Status}}'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        working-directory: test/e2e
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Place orders through the storefront
+        working-directory: test/e2e
+        run: npx playwright test
+
+      - name: Verify orders reached PostgreSQL
+        run: |
+          psql() { docker exec astronomy-db psql -U postgres -d astronomy_db -tAc "$1"; }
+          for i in $(seq 1 24); do
+            orders=$(psql 'SELECT count(*) FROM accounting."order"')
+            (( orders >= ORDERS )) && break
+            sleep 5
+          done
+          items=$(psql 'SELECT count(*) FROM accounting.orderitem')
+          catalog=$(psql "SELECT coalesce(sum(calls),0) FROM pg_stat_statements WHERE query ILIKE '%catalog.products%'")
+          echo "orders=$orders orderitems=$items catalog_queries=$catalog"
+          (( orders >= ORDERS )) || { echo "expected at least $ORDERS orders in accounting.order"; exit 1; }
+          (( catalog > 0 )) || { echo "no catalog.products queries recorded"; exit 1; }
+
+      - name: Check containers stayed up
+        if: always()
+        run: |
+          docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}'
+          free -h
+          bad=$(docker ps -a --filter label=com.docker.compose.project --format '{{.Names}}' | while read -r c; do
+            read -r state restarts oom <<<"$(docker inspect -f '{{.State.Status}} {{.RestartCount}} {{.State.OOMKilled}}' "$c")"
+            [[ $state != running || $restarts != 0 || $oom != false ]] && echo "$c state=$state restarts=$restarts oom=$oom"
+          done)
+          echo "${bad:-all containers running, no restarts, no OOM kills}"
+          [[ -z $bad ]]
+
+      - name: Service logs
+        if: failure()
+        run: $COMPOSE logs --no-color --tail 200 > compose.log; tail -c 200000 compose.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stack-smoke
+          path: |
+            test/e2e/playwright-report
+            test/e2e/test-results
+            compose.log
+          if-no-files-found: ignore
+
+      - name: Tear down
+        if: always()
+        run: $COMPOSE down --volumes --remove-orphans
