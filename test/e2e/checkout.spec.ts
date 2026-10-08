@@ -28,6 +28,7 @@ for (let i = 0; i < ORDERS; i++) {
     expect((await placed).status()).toBe(200);
 
     await page.waitForURL(/\/checkout/);
-    await expect(page.locator(field('checkout-item'))).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Your order is complete!' })).toBeVisible();
+    await expect(page.getByText('Order ID:')).toBeVisible();
   });
 }

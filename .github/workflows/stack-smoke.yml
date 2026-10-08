@@ -102,7 +102,7 @@ jobs:
           free -h
           bad=$(docker ps -a --filter label=com.docker.compose.project --format '{{.Names}}' | while read -r c; do
             read -r state restarts oom <<<"$(docker inspect -f '{{.State.Status}} {{.RestartCount}} {{.State.OOMKilled}}' "$c")"
-            [[ $state != running || $restarts != 0 || $oom != false ]] && echo "$c state=$state restarts=$restarts oom=$oom"
+            if [[ $state != running || $restarts != 0 || $oom != false ]]; then echo "$c state=$state restarts=$restarts oom=$oom"; fi
           done)
           echo "${bad:-all containers running, no restarts, no OOM kills}"
           [[ -z $bad ]]
