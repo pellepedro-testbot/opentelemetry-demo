@@ -18,6 +18,7 @@ public class ValkeyCartStore : ICartStore
     private readonly ILogger _logger;
     private const string CartFieldName = "cart";
     private const int RedisRetryNumber = 30;
+    private const int AddItemMaxAttempts = 10;
 
     private volatile ConnectionMultiplexer _redis;
     private volatile bool _isRedisConnectionOpened;
@@ -136,34 +137,53 @@ public class ValkeyCartStore : ICartStore
 
             var db = _redis.GetDatabase();
 
-            // Access the cart from the cache
-            var value = await db.HashGetAsync(userId, CartFieldName);
+            // Optimistic concurrency: only write the cart back if nobody else changed it
+            // since we read it, otherwise re-read and apply the item again.
+            for (var attempt = 1; ; attempt++)
+            {
+                // Access the cart from the cache
+                var value = await db.HashGetAsync(userId, CartFieldName);
 
-            Oteldemo.Cart cart;
-            if (value.IsNull)
-            {
-                cart = new Oteldemo.Cart
+                Oteldemo.Cart cart;
+                if (value.IsNull)
                 {
-                    UserId = userId
-                };
-                cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
-            }
-            else
-            {
-                cart = Oteldemo.Cart.Parser.ParseFrom((byte[])value);
-                var existingItem = cart.Items.SingleOrDefault(i => i.ProductId == productId);
-                if (existingItem == null)
-                {
+                    cart = new Oteldemo.Cart
+                    {
+                        UserId = userId
+                    };
                     cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
                 }
                 else
                 {
-                    existingItem.Quantity += quantity;
+                    cart = Oteldemo.Cart.Parser.ParseFrom((byte[])value);
+                    var existingItem = cart.Items.SingleOrDefault(i => i.ProductId == productId);
+                    if (existingItem == null)
+                    {
+                        cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
+                    }
+                    else
+                    {
+                        existingItem.Quantity += quantity;
+                    }
+                }
+
+                var tran = db.CreateTransaction();
+                tran.AddCondition(value.IsNull
+                    ? Condition.HashNotExists(userId, CartFieldName)
+                    : Condition.HashEqual(userId, CartFieldName, value));
+                _ = tran.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
+                _ = tran.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
+
+                if (await tran.ExecuteAsync())
+                {
+                    break;
+                }
+
+                if (attempt >= AddItemMaxAttempts)
+                {
+                    throw new ApplicationException($"Cart for user {userId} was modified concurrently {attempt} times, giving up.");
                 }
             }
-
-            await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
-            await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
         catch (Exception ex)
         {
