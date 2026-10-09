@@ -85,6 +85,8 @@ func initDatabase() error {
 	if err != nil {
 		return fmt.Errorf("failed to open database connection: %w", err)
 	}
+	db.SetMaxOpenConns(2)
+	db.SetMaxIdleConns(2)
 
 	reg, err = otelsql.RegisterDBStatsMetrics(db, dbAttrs)
 	if err != nil {
