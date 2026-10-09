@@ -1,33 +1,36 @@
 name: Stack smoke
 
 # Starts every service of the demo (core, Kafka group, observability stack) on a
-# GitHub-hosted runner, drives orders through the storefront with Playwright, and
-# checks that they reached PostgreSQL through Kafka. Answers whether the runner can
-# hold the whole stack and gives a base for load fixtures.
+# GitHub-hosted runner and drives it with k6: checkouts that write orders to PostgreSQL
+# through Kafka, then an arrival-rate ramp on the catalog that reads from PostgreSQL.
+# Answers whether the runner can hold the whole stack, and gives the base numbers the
+# load fixtures (O1, O5) are compared against. On a branch, services whose src/ changed
+# against main are rebuilt from source, so a fixture branch runs its own code.
 
 on:
   workflow_dispatch:
     inputs:
-      orders:
-        description: Orders the Playwright test places
-        default: "5"
-      locust_users:
-        description: Concurrent Locust users (9 HTTP to 1 browser)
-        default: "20"
-      locust_duration:
-        description: Locust run time
-        default: 5m
-      k6_rates:
-        description: k6 arrival rates per second, one stage each
-        default: "20,50,200,400"
-      k6_stage:
-        description: Seconds held at each k6 rate
+      checkout_rate:
+        description: k6 checkouts per second
+        default: "3"
+      checkout_duration:
+        description: k6 checkout run time
+        default: 2m
+      catalog_rates:
+        description: k6 catalog arrival rates per second, one stage each
+        default: "20,50,100,200"
+      catalog_stage:
+        description: Seconds held at each catalog rate
         default: "60"
+      lock_contention:
+        description: Turn on productCatalogLockContention (positive control)
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
       - .github/workflows/stack-smoke.yml
-      - test/e2e/**
+      - test/load/**
 
 permissions:
   contents: read
@@ -37,12 +40,12 @@ env:
     docker compose --env-file .env --env-file .env.override
     -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml
   LOCUST_AUTOSTART: "false"
-  ORDERS: ${{ inputs.orders || '5' }}
-  LOCUST_USERS: ${{ inputs.locust_users || '20' }}
-  LOCUST_DURATION: ${{ inputs.locust_duration || '5m' }}
-  K6_RATES: ${{ inputs.k6_rates || '20,50,200,400' }}
-  K6_STAGE: ${{ inputs.k6_stage || '60' }}
-  K6_RAMP: "10"
+  CHECKOUT_RATE: ${{ inputs.checkout_rate || '3' }}
+  CHECKOUT_DURATION: ${{ inputs.checkout_duration || '2m' }}
+  RATES: ${{ inputs.catalog_rates || '20,50,100,200' }}
+  STAGE: ${{ inputs.catalog_stage || '60' }}
+  RAMP: "10"
+  K6: grafana/k6:1.3.0
 
 jobs:
   stack:
@@ -51,6 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Free disk space
@@ -69,6 +73,20 @@ jobs:
           echo "pull took $(( $(date +%s) - start ))s"
           docker system df
 
+      - name: Build services changed against main
+        run: |
+          changed=$(git diff --name-only origin/main...HEAD | awk -F/ '$1=="src"{print $2}' | sort -u \
+            | grep -xF -f <($COMPOSE config --services) || true)
+          if [[ -z $changed ]]; then echo "no service changed, running the published images"; exit 0; fi
+          echo "building from source: $changed"
+          $COMPOSE build $changed
+
+      - name: Turn on productCatalogLockContention
+        if: inputs.lock_contention
+        run: |
+          f=src/flagd/demo.flagd.json
+          jq '.flags.productCatalogLockContention.defaultVariant = "on"' $f > $f.new && mv $f.new $f
+
       - name: Start all services
         run: $COMPOSE up -d --no-build --force-recreate --remove-orphans
 
@@ -84,100 +102,53 @@ jobs:
           sleep 30
           $COMPOSE ps -a --format 'table {{.Service}}\t{{.State}}\t{{.Status}}'
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Playwright
-        working-directory: test/e2e
-        run: |
-          npm install --no-audit --no-fund
-          npx playwright install --with-deps chromium
-
-      - name: Place orders through the storefront
-        working-directory: test/e2e
-        run: npx playwright test
-
-      - name: Verify orders reached PostgreSQL
-        run: |
-          psql() { docker exec astronomy-db psql -U postgres -d astronomy_db -tAc "$1"; }
-          for i in $(seq 1 24); do
-            orders=$(psql 'SELECT count(*) FROM accounting."order"')
-            (( orders >= ORDERS )) && break
-            sleep 5
-          done
-          items=$(psql 'SELECT count(*) FROM accounting.orderitem')
-          catalog=$(psql "SELECT coalesce(sum(calls),0) FROM pg_stat_statements WHERE query ILIKE '%catalog.products%'")
-          echo "orders=$orders orderitems=$items catalog_queries=$catalog"
-          (( orders >= ORDERS )) || { echo "expected at least $ORDERS orders in accounting.order"; exit 1; }
-          (( catalog > 0 )) || { echo "no catalog.products queries recorded"; exit 1; }
-
-      - name: Run the upstream Locust load generator
+      - name: k6 checkouts write orders to PostgreSQL
         run: |
           psql() { docker exec astronomy-db psql -U postgres -d astronomy_db -tAc "$1"; }
           before=$(psql 'SELECT count(*) FROM accounting."order"')
-          # The idle web-UI instance stays up; this headless run uses the same locustfile,
-          # HttpUser plus the Playwright browser user (LOCUST_BROWSER_TRAFFIC_ENABLED=true).
-          docker exec load-generator locust --skip-log-setup -f locustfile.py --headless \
-            --users "$LOCUST_USERS" --spawn-rate 2 --run-time "$LOCUST_DURATION" \
-            --host http://frontend-proxy:8080 --csv /tmp/locust --only-summary > locust.log 2>&1 &
-          pid=$!
-          secs=$(( ${LOCUST_DURATION%m} * 60 ))
-          sleep $(( secs / 2 ))
-          echo "docker stats at mid-run:"
-          docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}'
-          uptime; free -h
-          wait $pid || true
-          tail -40 locust.log
-          docker cp load-generator:/tmp/locust_stats.csv locust_stats.csv
-          docker cp load-generator:/tmp/locust_failures.csv locust_failures.csv
-          after=$(psql 'SELECT count(*) FROM accounting."order"')
-          echo "orders during load: $(( after - before ))"
-          python3 - <<'PY'
-          import csv
-          rows = [r for r in csv.DictReader(open("locust_stats.csv")) if r["Name"] != "Aggregated"]
-          print(f"{'endpoint':55} {'reqs':>6} {'fails':>6} {'p50':>6} {'p95':>6} {'p99':>6}")
-          for r in rows:
-              print(f"{r['Type']+' '+r['Name'][:50]:55} {r['Request Count']:>6} {r['Failure Count']:>6} "
-                    f"{r['50%']:>6} {r['95%']:>6} {r['99%']:>6}")
-          app = [r for r in rows if "/prompt" not in r["Name"]]
-          reqs = sum(int(r["Request Count"]) for r in app)
-          fails = sum(int(r["Failure Count"]) for r in app)
-          ratio = fails / reqs if reqs else 1
-          print(f"storefront requests={reqs} failures={fails} ({ratio:.2%}); agent /prompt excluded, no agent service")
-          raise SystemExit(0 if reqs and ratio < 0.01 else 1)
-          PY
-          (( after > before )) || { echo "no orders reached PostgreSQL during load"; exit 1; }
+          rc=0
+          docker run --rm -u "$(id -u):$(id -g)" --network opentelemetry-demo -v "$PWD/test/load:/load" -v "$PWD:/out" \
+            -e RATE="$CHECKOUT_RATE" -e DURATION="$CHECKOUT_DURATION" \
+            $K6 run -q --summary-export /out/k6-checkout.json /load/checkout.js > k6-checkout.log 2>&1 || rc=$?
+          tail -5 k6-checkout.log
+          placed=$(jq '.metrics.checkout_succeeded.passes' k6-checkout.json)
+          # accounting consumes the orders topic asynchronously.
+          for i in $(seq 1 24); do
+            written=$(( $(psql 'SELECT count(*) FROM accounting."order"') - before ))
+            (( written >= placed )) && break
+            sleep 5
+          done
+          echo "orderitems total: $(psql 'SELECT count(*) FROM accounting.orderitem')"
+          python3 test/load/report.py checkout k6-checkout.json "$written"
+          exit $rc
 
-      - name: Run the k6 arrival-rate ramp on the catalog
+      - name: k6 catalog ramp reads from PostgreSQL
         run: |
-          prom() { curl -s localhost:9090/api/v1/query --data-urlencode "query=$1" | jq -r '.data.result[0].value[1] // "n/a"'; }
-          waits_before=$(prom 'sum(db_sql_connection_wait_total)')
-          stages=$(tr -cd , <<<"$K6_RATES" | wc -c); stages=$(( stages + 1 ))
-          docker run --rm --network opentelemetry-demo -v "$PWD/test/load:/scripts" -v "$PWD:/out" \
-            -e RATES="$K6_RATES" -e STAGE="$K6_STAGE" -e RAMP="$K6_RAMP" \
-            grafana/k6:1.3.0 run -q --summary-export /out/k6-summary.json /scripts/catalog-arrival.js > k6.log 2>&1 &
+          psql() { docker exec astronomy-db psql -U postgres -d astronomy_db -tAc "$1"; }
+          sql="SELECT coalesce(sum(calls),0) FROM pg_stat_statements WHERE query ILIKE '%catalog.products%'"
+          # Warm-up, not recorded.
+          docker run --rm -i --network opentelemetry-demo $K6 run -q --vus 5 --duration 30s - >/dev/null 2>&1 <<'JS'
+          import http from "k6/http";
+          export default function () { http.get("http://frontend-proxy:8080/api/products/OLJCESPC7Z?currencyCode=USD"); }
+          JS
+          sleep 20  # let a metric export land before the start mark
+          queries_before=$(psql "$sql")
+          start=$(date +%s)
+          stages=$(( $(tr -cd , <<<"$RATES" | wc -c) + 1 ))
+          docker run --rm -u "$(id -u):$(id -g)" --network opentelemetry-demo -v "$PWD/test/load:/load" -v "$PWD:/out" \
+            -e RATES -e STAGE -e RAMP \
+            $K6 run -q --summary-export /out/k6-catalog.json /load/catalog-arrival.js > k6-catalog.log 2>&1 &
           pid=$!
-          sleep $(( stages * (K6_STAGE + K6_RAMP) - K6_STAGE / 2 ))
+          sleep $(( stages * (STAGE + RAMP) - STAGE / 2 ))
           echo "docker stats in the last stage:"
           docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}'
           uptime
           rc=0; wait $pid || rc=$?
-          sleep 15
-          waits_after=$(prom 'sum(db_sql_connection_wait_total)')
-          tail -5 k6.log
-          echo "catalog DB pool waits during k6: before=$waits_before after=$waits_after"
-          python3 - <<'PY'
-          import json, os
-          m = json.load(open("k6-summary.json"))["metrics"]
-          rates = os.environ["K6_RATES"].split(",")
-          print(f"{'rate/s':>7} {'p50 ms':>8} {'p95 ms':>8} {'p99 ms':>8}")
-          for i, r in enumerate(rates):
-              d = m.get(f"http_req_duration{{stage:{i}}}", {})
-              print(f"{r:>7} {d.get('med', 0):>8.1f} {d.get('p(95)', 0):>8.1f} {d.get('p(99)', 0):>8.1f}")
-          print(f"requests={m['http_reqs']['count']} failed={m['http_req_failed']['value']:.2%} "
-                f"dropped_iterations={m.get('dropped_iterations', {}).get('count', 0)}")
-          PY
+          sleep 25  # last metric export
+          end=$(date +%s)
+          tail -5 k6-catalog.log
+          echo "catalog.products queries during the ramp: $(( $(psql "$sql") - queries_before ))"
+          python3 test/load/report.py catalog k6-catalog.json http://localhost:9090 "$start" "$end"
           exit $rc
 
       - name: Check containers stayed up
@@ -201,13 +172,9 @@ jobs:
         with:
           name: stack-smoke
           path: |
-            test/e2e/playwright-report
-            test/e2e/test-results
             compose.log
-            locust.log
-            locust_*.csv
-            k6.log
-            k6-summary.json
+            k6-*.log
+            k6-*.json
           if-no-files-found: ignore
 
       - name: Tear down
