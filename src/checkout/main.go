@@ -72,6 +72,10 @@ var (
 	tracer            trace.Tracer
 	resource          *sdkresource.Resource
 	initResourcesOnce sync.Once
+
+	// placeOrderMu serializes order placement so a double-submitted checkout
+	// cannot charge the card or ship the same cart twice.
+	placeOrderMu sync.Mutex
 )
 
 const emailRequestTimeout = time.Second
@@ -304,6 +308,9 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 }
 
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+	placeOrderMu.Lock()
+	defer placeOrderMu.Unlock()
+
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
 		attribute.String("user.id", req.UserId),
