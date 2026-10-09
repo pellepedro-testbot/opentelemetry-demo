@@ -39,6 +39,10 @@ from metrics import (
 cached_ids = []
 first_run = True
 
+# Product IDs returned by the catalog so far. Kept between requests so we can
+# still recommend products if a ListProducts call fails.
+known_product_ids = []
+
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
         prod_list = get_product_list(request.product_ids)
@@ -92,8 +96,7 @@ def get_product_list(request_product_ids):
                 product_ids = cached_ids
         else:
             span.set_attribute("demo.feature_flag.recommendation_cache", False)
-            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
-            product_ids = [x.id for x in cat_response.products]
+            product_ids = get_catalog_product_ids()
 
         span.set_attribute("demo.product.count", len(product_ids))
 
@@ -111,6 +114,17 @@ def get_product_list(request_product_ids):
         span.set_attribute("demo.product.filtered.list", prod_list)
 
         return prod_list
+
+
+def get_catalog_product_ids():
+    try:
+        cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
+        known_product_ids.extend(x.id for x in cat_response.products)
+    except grpc.RpcError as e:
+        if not known_product_ids:
+            raise
+        logger.warning(f"ListProducts failed, using known product ids: {e}")
+    return list(dict.fromkeys(known_product_ids))
 
 
 def must_map_env(key: str):
