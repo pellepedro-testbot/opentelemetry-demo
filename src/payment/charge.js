@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 const { context, propagation, trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
 const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions');
+const crypto = require('crypto');
 const cardValidator = require('simple-card-validator');
 const { v4: uuidv4 } = require('uuid');
 
@@ -17,6 +18,14 @@ const transactionsCounter = meter.createCounter('demo.payment.transactions', {
 });
 
 const LOYALTY_LEVEL = ['platinum', 'gold', 'silver', 'bronze'];
+
+// Salt for the card fingerprint written to the audit log. Override per environment.
+const CARD_HASH_SALT = process.env.PAYMENT_CARD_HASH_SALT || 'otel-demo-payment';
+
+/** Return a stable, non-reversible fingerprint of a card number for audit logging */
+function cardFingerprint(number) {
+  return crypto.pbkdf2Sync(number, CARD_HASH_SALT, 100000, 32, 'sha512').toString('hex');
+}
 
 /** Return random element from given array */
 function random(arr) {
@@ -58,6 +67,7 @@ module.exports.charge = async request => {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
     const lastFourDigits = number.substr(-4);
+    const cardHash = cardFingerprint(number);
     const transactionId = uuidv4();
 
     const card = cardValidator(number);
@@ -68,6 +78,7 @@ module.exports.charge = async request => {
     span.setAttributes({
       'demo.payment.card_type': cardType,
       'demo.payment.card_valid': valid,
+      'demo.payment.card_hash': cardHash,
       'demo.user_context.loyalty_level': loyalty_level,
       ...(emitRawPii && {
         'demo.payment.card_number': number,
@@ -100,7 +111,7 @@ module.exports.charge = async request => {
     }
 
     const { units, nanos, currencyCode } = request.amount;
-    logger.info({ transactionId, cardType, lastFourDigits, amount: { units, nanos, currencyCode }, loyalty_level }, 'Transaction complete.');
+    logger.info({ transactionId, cardType, lastFourDigits, cardHash, amount: { units, nanos, currencyCode }, loyalty_level }, 'Transaction complete.');
     transactionsCounter.add(1, { 'demo.payment.currency': currencyCode });
 
     return { transactionId };
