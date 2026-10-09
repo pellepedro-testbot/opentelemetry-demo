@@ -6,8 +6,11 @@
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <math.h>
+#include <regex>
+#include <sstream>
 #include <pthread.h>
 #include <demo.grpc.pb.h>
 #include <grpc/health/v1/health.grpc.pb.h>
@@ -82,7 +85,8 @@ namespace
     return EventId{0, name};
   }
 
-  std::unordered_map<std::string, double> currency_conversion
+  // Built-in rates, used when the rates file cannot be read.
+  const std::unordered_map<std::string, double> default_currency_conversion
   {
     {"EUR", 1.0},
     {"USD", 1.1305},
@@ -118,6 +122,33 @@ namespace
     {"THB", 36.012},
     {"ZAR", 16.0583},
   };
+
+  const char* rates_file_env = std::getenv("CURRENCY_RATES_FILE");
+  std::string rates_file = rates_file_env != nullptr
+      ? rates_file_env
+      : "/usr/local/share/currency/currency_conversion.json";
+
+  // Reads the conversion rates (relative to EUR) from the rates file so that
+  // rate updates are picked up without restarting the service.
+  std::unordered_map<std::string, double> loadCurrencyConversion()
+  {
+    std::ifstream file(rates_file);
+    if (!file.is_open()) {
+      return default_currency_conversion;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    const std::string content = buffer.str();
+
+    std::unordered_map<std::string, double> rates;
+    static const std::regex entry(R"re("([A-Z]{3})"\s*:\s*"?([0-9]+(?:\.[0-9]+)?)"?)re");
+    for (std::sregex_iterator it(content.begin(), content.end(), entry), end; it != end; ++it) {
+      rates[(*it)[1].str()] = std::stod((*it)[2].str());
+    }
+
+    return rates.empty() ? default_currency_conversion : rates;
+  }
 
   const char* version_env = std::getenv("VERSION");
   std::string version = version_env != nullptr ? version_env : "unknown";
@@ -164,6 +195,7 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
 
     span->AddEvent("Processing supported currencies request");
 
+    const auto currency_conversion = loadCurrencyConversion();
     for (auto &code : currency_conversion) {
       response->add_currency_codes(code.first);
     }
@@ -226,6 +258,7 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
 
     try {
       // Do the conversion work
+      auto currency_conversion = loadCurrencyConversion();
       Money from = request->from();
       string from_code = from.currency_code();
       double rate = currency_conversion[from_code];
