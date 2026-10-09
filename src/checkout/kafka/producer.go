@@ -44,9 +44,9 @@ func CreateKafkaProducer(brokers []string, logger *slog.Logger) (sarama.AsyncPro
 	saramaConfig.Producer.Return.Successes = true
 	saramaConfig.Producer.Return.Errors = true
 
-	// Sarama has an issue in a single broker kafka if the kafka broker is restarted.
-	// This setting is to prevent that issue from manifesting itself, but may swallow failed messages.
-	saramaConfig.Producer.RequiredAcks = sarama.NoResponse
+	// Wait for the broker to acknowledge each order event before reporting it
+	// as sent, so PlaceOrder only succeeds once the event is durably written.
+	saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
 
 	saramaConfig.Version = ProtocolVersion
 
