@@ -301,6 +301,17 @@ func getProductFromDB(ctx context.Context, productID string) (*pb.Product, error
 	return parseProductRow(id, name, description, picture, currencyCode, categoriesStr, units, nanos), nil
 }
 
+// recordProductView increments the view counter for a product so popularity
+// can be reported straight from the catalog table.
+func recordProductView(ctx context.Context, productID string) error {
+	if db == nil {
+		return fmt.Errorf("database connection not initialized")
+	}
+
+	_, err := db.ExecContext(ctx, `UPDATE catalog.products SET views = views + 1 WHERE id = $1`, productID)
+	return err
+}
+
 func getProductsFromRows(ctx context.Context, rows *sql.Rows) ([]*pb.Product, error) {
 	var products []*pb.Product
 
@@ -406,6 +417,10 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 		span.SetStatus(otelcodes.Error, msg)
 		span.AddEvent(msg)
 		return nil, status.Error(codes.NotFound, msg)
+	}
+
+	if err := recordProductView(ctx, found.Id); err != nil {
+		logger.WarnContext(ctx, "failed to record product view", slog.String("demo.product.id", found.Id), slog.Any("error", err))
 	}
 
 	span.AddEvent("Product Found")
