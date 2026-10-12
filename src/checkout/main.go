@@ -74,8 +74,6 @@ var (
 	initResourcesOnce sync.Once
 )
 
-const emailRequestTimeout = time.Second
-
 func initResource() *sdkresource.Resource {
 	initResourcesOnce.Do(func() {
 		extraResources, _ := sdkresource.New(
@@ -597,10 +595,7 @@ func (cs *checkout) sendOrderConfirmation(ctx context.Context, email string, ord
 		return fmt.Errorf("failed to marshal order to JSON: %+v", err)
 	}
 
-	emailCtx, cancel := context.WithTimeout(ctx, emailRequestTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(emailCtx, "POST", cs.emailSvcAddr+"/send_order_confirmation", bytes.NewBuffer(emailPayload))
+	req, err := http.NewRequestWithContext(ctx, "POST", cs.emailSvcAddr+"/send_order_confirmation", bytes.NewBuffer(emailPayload))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %+v", err)
 	}
