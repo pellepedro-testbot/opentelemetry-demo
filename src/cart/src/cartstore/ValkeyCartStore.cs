@@ -226,6 +226,32 @@ public class ValkeyCartStore : ICartStore
         }
     }
 
+    public async Task<long> GetCartCountAsync()
+    {
+        try
+        {
+            EnsureRedisConnected();
+
+            var server = _redis.GetServer(_redis.GetEndPoints()[0]);
+
+            long count = 0;
+            await foreach (var key in server.KeysAsync(pattern: "*"))
+            {
+                // Skip the connectivity test key written in EnsureRedisConnected.
+                if (key != CartFieldName)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
+        }
+    }
+
     public bool Ping()
     {
         try
