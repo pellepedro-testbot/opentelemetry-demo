@@ -12,6 +12,7 @@ interface IContext {
   cart: IProductCart;
   addItem(item: CartItem): void;
   updateItemQuantity(productId: string, newQuantity: number): void;
+  removeItem(productId: string): void;
   emptyCart(): void;
   placeOrder(order: PlaceOrderRequest): Promise<OrderResult>;
 }
@@ -20,6 +21,7 @@ export const Context = createContext<IContext>({
   cart: { userId: '', items: [] },
   addItem: () => {},
   updateItemQuantity: () => {},
+  removeItem: () => {},
   emptyCart: () => {},
   placeOrder: () => Promise.resolve({} as OrderResult),
 });
@@ -76,13 +78,23 @@ const CartProvider = ({ children }: IProps) => {
     },
     [addCartMutation, cart.items, selectedCurrency]
   );
+
+  // The cart service has no remove call, so a line is removed by taking away
+  // its whole quantity.
+  const removeItem = useCallback(
+    (productId: string) => updateItemQuantity(productId, 0),
+    [updateItemQuantity]
+  );
   const emptyCart = useCallback(() => emptyCartMutation.mutateAsync(), [emptyCartMutation]);
   const placeOrder = useCallback(
     (order: PlaceOrderRequest) => placeOrderMutation.mutateAsync({ ...order, currencyCode: selectedCurrency }),
     [placeOrderMutation, selectedCurrency]
   );
 
-  const value = useMemo(() => ({ cart, addItem, updateItemQuantity, emptyCart, placeOrder }), [cart, addItem, updateItemQuantity, emptyCart, placeOrder]);
+  const value = useMemo(
+    () => ({ cart, addItem, updateItemQuantity, removeItem, emptyCart, placeOrder }),
+    [cart, addItem, updateItemQuantity, removeItem, emptyCart, placeOrder]
+  );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 };
