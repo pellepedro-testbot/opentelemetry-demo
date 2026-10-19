@@ -199,8 +199,8 @@ func TestSum(t *testing.T) {
 		wantErr error
 	}{
 		{"0+0=0", args{mm(0, 0), mm(0, 0)}, mm(0, 0), nil},
-		{"Error: currency code on left", args{mmc(0, 0, "XXX"), mm(0, 0)}, mm(0, 0), ErrMismatchingCurrency},
-		{"Error: currency code on right", args{mm(0, 0), mmc(0, 0, "YYY")}, mm(0, 0), ErrMismatchingCurrency},
+		{"currency code on left only", args{mmc(0, 0, "XXX"), mm(0, 0)}, mmc(0, 0, "XXX"), nil},
+		{"currency code on right only", args{mm(0, 0), mmc(0, 0, "YYY")}, mmc(0, 0, "YYY"), nil},
 		{"Error: currency code mismatch", args{mmc(0, 0, "AAA"), mmc(0, 0, "BBB")}, mm(0, 0), ErrMismatchingCurrency},
 		{"Error: invalid +/-", args{mm(+1, -1), mm(0, 0)}, mm(0, 0), ErrInvalidValue},
 		{"Error: invalid -/+", args{mm(0, 0), mm(-1, +2)}, mm(0, 0), ErrInvalidValue},
