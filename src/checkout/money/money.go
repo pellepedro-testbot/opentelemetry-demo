@@ -75,13 +75,17 @@ func Must(v *pb.Money, err error) *pb.Money {
 	return v
 }
 
-// Sum adds two values. Returns an error if one of the values are invalid or
-// currency codes are not matching (unless currency code is unspecified for
-// both).
+// Sum adds two values. Returns an error if one of the values is invalid or
+// both values carry different currency codes. A value with no currency code
+// takes the other value's code.
 func Sum(l, r *pb.Money) (*pb.Money, error) {
+	code := l.GetCurrencyCode()
+	if code == "" {
+		code = r.GetCurrencyCode()
+	}
 	if !IsValid(l) || !IsValid(r) {
 		return &pb.Money{}, ErrInvalidValue
-	} else if l.GetCurrencyCode() != r.GetCurrencyCode() {
+	} else if l.GetCurrencyCode() != "" && r.GetCurrencyCode() != "" && l.GetCurrencyCode() != r.GetCurrencyCode() {
 		return &pb.Money{}, ErrMismatchingCurrency
 	}
 	units := l.GetUnits() + r.GetUnits()
@@ -105,7 +109,31 @@ func Sum(l, r *pb.Money) (*pb.Money, error) {
 	return &pb.Money{
 		Units:        units,
 		Nanos:        nanos,
-		CurrencyCode: l.GetCurrencyCode()}, nil
+		CurrencyCode: code}, nil
+}
+
+// SumAll adds any number of values, starting from zero. The result takes the
+// currency of the values that carry one; it fails like Sum if a value is
+// invalid or two values carry different currencies.
+func SumAll(values ...*pb.Money) (*pb.Money, error) {
+	total := &pb.Money{}
+	for _, v := range values {
+		var err error
+		if total, err = Sum(total, v); err != nil {
+			return &pb.Money{}, err
+		}
+	}
+	return total, nil
+}
+
+// Multiply returns the value times n, computed in one step instead of by
+// repeated addition. Nanos that overflow into whole units are carried.
+func Multiply(m *pb.Money, n uint32) *pb.Money {
+	totalNanos := int64(m.GetNanos()) * int64(n)
+	return &pb.Money{
+		Units:        m.GetUnits()*int64(n) + totalNanos/nanosMod,
+		Nanos:        int32(totalNanos % nanosMod),
+		CurrencyCode: m.GetCurrencyCode()}
 }
 
 // MultiplySlow is a slow multiplication operation done through adding the value
