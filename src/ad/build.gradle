@@ -63,6 +63,7 @@ dependencies {
         runtimeOnly "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
                 "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     }
+    testImplementation "dev.skyramp:skyramp-library:1.3.52"
 }
 
 // Default protoSourceDir is in /opentelemetry-demo/pb. Optionally override the
