@@ -14,6 +14,7 @@ Environment.GetEnvironmentVariables()
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
+        services.AddSingleton<ConsumerHealth>();
         services.AddHostedService<Consumer>();
     })
     .Build();
