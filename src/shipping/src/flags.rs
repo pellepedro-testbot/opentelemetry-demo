@@ -20,7 +20,8 @@ use open_feature_flagd::{FlagdOptions, FlagdProvider};
 use tracing::{info, warn};
 
 /// Connection attempts made before the server starts; later attempts run in the background.
-const STARTUP_ATTEMPTS: u32 = 3;
+/// One is enough: the flagd provider itself retries five times (about 15 s) before it gives up.
+const STARTUP_ATTEMPTS: u32 = 1;
 const FIRST_RETRY_DELAY: Duration = Duration::from_secs(1);
 const MAX_RETRY_DELAY: Duration = Duration::from_secs(30);
 
@@ -142,7 +143,7 @@ fn next_delay(delay: Duration) -> Duration {
     (delay * 2).min(MAX_RETRY_DELAY)
 }
 
-/// Connects to flagd, trying a few times before returning. If flagd is still
+/// Connects to flagd once before returning. If flagd is still
 /// not reachable, shipping starts with default flag values and a background
 /// task keeps trying until flagd answers.
 pub async fn connect(flags: Arc<FlagdWhenReady>) {
