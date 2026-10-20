@@ -35,6 +35,7 @@ repositories {
 dependencies {
     implementation("com.google.protobuf:protobuf-java:${protobufVersion}")
     testImplementation(kotlin("test"))
+    testImplementation("dev.skyramp:skyramp-library:1.3.52")
     implementation(kotlin("script-runtime"))
     implementation("org.apache.kafka:kafka-clients:4.3.1")
     implementation("com.google.api.grpc:proto-google-common-protos:2.77.0")
