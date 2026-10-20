@@ -1,7 +1,10 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+require "fileutils"
 require "ostruct"
+require "time"
+require "tmpdir"
 require "pony"
 require "sinatra"
 require "open_feature/sdk"
@@ -39,6 +42,33 @@ otlp_metric_exporter = OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter.n
 OpenTelemetry.meter_provider.add_metric_reader(otlp_metric_exporter)
 meter = OpenTelemetry.meter_provider.meter("email")
 $confirmation_counter = meter.create_counter("demo.notification.confirmations", unit: "1", description: "Counts the number of order confirmation emails sent")
+$archived_counter = meter.create_counter("demo.notification.confirmations.archived", unit: "1", description: "Counts the confirmation emails kept for support")
+
+# Support keeps a copy of every confirmation email, so they can see exactly what a
+# customer was sent. Copies go to EMAIL_ARCHIVE_DIR (a folder under the system temp
+# folder by default); set EMAIL_ARCHIVE_ENABLED=false to turn this off.
+EMAIL_ARCHIVE_ENABLED = ENV.fetch("EMAIL_ARCHIVE_ENABLED", "true") != "false"
+EMAIL_ARCHIVE_DIR = ENV.fetch("EMAIL_ARCHIVE_DIR", File.join(Dir.tmpdir, "sent-emails"))
+
+def archive_email(order_id, to, body)
+  return unless EMAIL_ARCHIVE_ENABLED
+
+  FileUtils.mkdir_p(EMAIL_ARCHIVE_DIR)
+  safe_id = order_id.to_s.gsub(/[^A-Za-z0-9._-]/, "_")
+  path = File.join(EMAIL_ARCHIVE_DIR, "#{safe_id}.eml")
+  File.write(path, "To: #{to}\nSubject: Your confirmation email\nDate: #{Time.now.utc.iso8601}\n\n#{body}")
+  $archived_counter.add(1)
+  $logger.on_emit(
+    timestamp: Time.now,
+    severity_text: 'INFO',
+    body: 'Order confirmation email archived',
+    attributes: { 'demo.order.id' => order_id.to_s, 'demo.email.archive_path' => path },
+    event_name: 'email.confirmation_archived',
+  )
+rescue SystemCallError => e
+  # A copy for support must never stop the customer's email.
+  puts "Could not archive the confirmation email for order #{order_id}: #{e.message}"
+end
 
 post "/send_order_confirmation" do
   data = JSON.parse(request.body.read, object_class: OpenStruct)
@@ -77,6 +107,8 @@ def send_email(data)
       body:     confirmation_content + " " * whitespace_length,
       via:      :test
     )
+
+    archive_email(data.order.order_id, data.email, confirmation_content)
 
     # If not clearing the deliveries, the emails will accumulate in the test mailer
     # We use this to create a memory leak.
