@@ -18,7 +18,7 @@ interface IProps {
 }
 
 const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
-  const { updateItemQuantity } = useCart();
+  const { updateItemQuantity, removeItem } = useCart();
   const { selectedCurrency } = useCurrency();
   const address: Address = {
     streetAddress: '1600 Amphitheatre Parkway',
@@ -62,7 +62,13 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
         <label>Total</label>
       </S.CardItemsHeader>
       {productList.map(({ productId, product, quantity }) => (
-        <CartItem key={productId} product={product} quantity={quantity} onQuantityChange={updateItemQuantity} />
+        <CartItem
+          key={productId}
+          product={product}
+          quantity={quantity}
+          onQuantityChange={updateItemQuantity}
+          onRemove={removeItem}
+        />
       ))}
       {shouldShowPrice && (
         <>
