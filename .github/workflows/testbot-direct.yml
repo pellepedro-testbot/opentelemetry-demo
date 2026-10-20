@@ -1,0 +1,28 @@
+name: Testbot direct
+on:
+  pull_request:
+    branches: [rel/base-ci]
+    types: [opened, reopened]
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+jobs:
+  testbot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: skyramp/testbot@v1
+        with:
+          skyrampLicenseFile: ${{ secrets.SKYRAMP_LICENSE }}
+          anthropicApiKey: ${{ secrets.ANTHROPIC_API_KEY }}
+          pipeline: staged
+          engineVersion: next-v3
+          skyrampMcpVersion: next
+          model: opus
+          effort: medium
+          # track B (relB*) mirrors the web app's cut-off; the full release gets 200
+          testbotTimeout: ${{ startsWith(github.head_ref, 'relB') && '80' || '200' }}
