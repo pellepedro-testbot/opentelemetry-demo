@@ -17,7 +17,12 @@ public class ValkeyCartStore : ICartStore
 {
     private readonly ILogger _logger;
     private const string CartFieldName = "cart";
+    // Sorted set of users whose cart holds items, scored by the cart's expiry time.
+    private const string ActiveCartsKey = "carts:active";
     private const int RedisRetryNumber = 30;
+
+    // The cart page offers up to 10 of a product, and a line never holds more.
+    public const int MaxQuantityPerLine = 10;
 
     private volatile ConnectionMultiplexer _redis;
     private volatile bool _isRedisConnectionOpened;
@@ -139,31 +144,21 @@ public class ValkeyCartStore : ICartStore
             // Access the cart from the cache
             var value = await db.HashGetAsync(userId, CartFieldName);
 
-            Oteldemo.Cart cart;
-            if (value.IsNull)
-            {
-                cart = new Oteldemo.Cart
-                {
-                    UserId = userId
-                };
-                cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
-            }
-            else
-            {
-                cart = Oteldemo.Cart.Parser.ParseFrom((byte[])value);
-                var existingItem = cart.Items.SingleOrDefault(i => i.ProductId == productId);
-                if (existingItem == null)
-                {
-                    cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
-                }
-                else
-                {
-                    existingItem.Quantity += quantity;
-                }
-            }
+            var cart = value.IsNull
+                ? new Oteldemo.Cart { UserId = userId }
+                : Oteldemo.Cart.Parser.ParseFrom((byte[])value);
+            ApplyQuantity(cart, productId, quantity);
 
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
+            if (cart.Items.Count > 0)
+            {
+                await db.SortedSetAddAsync(ActiveCartsKey, userId, DateTimeOffset.UtcNow.AddMinutes(60).ToUnixTimeSeconds());
+            }
+            else
+            {
+                await db.SortedSetRemoveAsync(ActiveCartsKey, userId);
+            }
         }
         catch (Exception ex)
         {
@@ -172,6 +167,29 @@ public class ValkeyCartStore : ICartStore
         finally
         {
             addItemHistogram.Record(stopwatch.Elapsed.TotalSeconds);
+        }
+    }
+
+    // Adds quantity to the product's line in the cart, or starts a new line for it.
+    // A negative quantity takes items away; the cart page sends minus the current
+    // quantity when a shopper chooses Remove. A line holds at most MaxQuantityPerLine.
+    internal static void ApplyQuantity(Oteldemo.Cart cart, string productId, int quantity)
+    {
+        var line = cart.Items.SingleOrDefault(i => i.ProductId == productId);
+        if (line == null)
+        {
+            cart.Items.Add(new Oteldemo.CartItem
+            {
+                ProductId = productId,
+                Quantity = Math.Min(quantity, MaxQuantityPerLine)
+            });
+            return;
+        }
+
+        line.Quantity = Math.Min(line.Quantity + quantity, MaxQuantityPerLine);
+        if (line.Quantity <= 0)
+        {
+            cart.Items.Remove(line);
         }
     }
 
@@ -186,6 +204,7 @@ public class ValkeyCartStore : ICartStore
             // Update the cache with empty cart for given user
             await db.HashSetAsync(userId, new[] { new HashEntry(CartFieldName, _emptyCartBytes) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
+            await db.SortedSetRemoveAsync(ActiveCartsKey, userId);
         }
         catch (Exception ex)
         {
@@ -223,6 +242,24 @@ public class ValkeyCartStore : ICartStore
         finally
         {
             getCartHistogram.Record(stopwatch.Elapsed.TotalSeconds);
+        }
+    }
+
+    public async Task<long> GetCartCountAsync()
+    {
+        try
+        {
+            EnsureRedisConnected();
+
+            var db = _redis.GetDatabase();
+
+            // Drop carts that have expired, then count the rest.
+            await db.SortedSetRemoveRangeByScoreAsync(ActiveCartsKey, double.NegativeInfinity, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            return await db.SortedSetLengthAsync(ActiveCartsKey);
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
         }
     }
 

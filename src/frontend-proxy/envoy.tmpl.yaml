@@ -36,63 +36,112 @@ static_resources:
                       domains:
                         - "*"
                       routes:
-                        - match: { path: "/loadgen" }
-                          redirect: { path_redirect: "/loadgen/" }
-                        - match: { prefix: "/loadgen/" }
-                          route: { cluster: loadgen, prefix_rewrite: "/" }
-                        - match: { prefix: "/otlp-http/" }
+                        # Routes are grouped by what they serve and sorted by
+                        # path inside each group. Envoy uses the first route
+                        # that matches, so the catch-all "/" must stay last.
+                        # Each route is named; the name is logged as
+                        # url.template in the access log.
+
+                        # --- Storefront assets -----------------------------
+                        - name: images
+                          match: { prefix: "/images/" }
                           route:
-                            {
-                              cluster: opentelemetry_collector_http,
-                              prefix_rewrite: "/",
-                            }
-                        - match: { path: "/jaeger" }
-                          redirect: { path_redirect: "/jaeger/" }
-                        - match: { prefix: "/jaeger/" }
-                          route: { cluster: jaeger }
-                        - match: { path: "/grafana" }
+                            cluster: image-provider
+                            prefix_rewrite: "/"
+                            retry_policy: &retry_on_connect_failure
+                              retry_on: "connect-failure,refused-stream"
+                              num_retries: 2
+
+                        # --- Observability UIs and telemetry intake ---------
+                        - name: grafana-redirect
+                          match: { path: "/grafana" }
                           redirect: { path_redirect: "/grafana/" }
-                        - match: { prefix: "/grafana/" }
-                          route: { cluster: grafana }
-                        - match: { path: "/opamp" }
-                          redirect: { path_redirect: "/opamp/" }
-                        - match: { prefix: "/opamp/" }
-                          route: { cluster: opamp, prefix_rewrite: "/" }
-                        - match: { path: "/telemetry" }
+                        - name: grafana
+                          match: { prefix: "/grafana/" }
+                          route:
+                            cluster: grafana
+                            retry_policy: *retry_on_connect_failure
+                        - name: jaeger-redirect
+                          match: { path: "/jaeger" }
+                          redirect: { path_redirect: "/jaeger/" }
+                        - name: jaeger
+                          match: { prefix: "/jaeger/" }
+                          route:
+                            cluster: jaeger
+                            retry_policy: *retry_on_connect_failure
+                        - name: otlp-http
+                          match: { prefix: "/otlp-http/" }
+                          route:
+                            cluster: opentelemetry_collector_http
+                            prefix_rewrite: "/"
+                        - name: profiles-redirect
+                          match: { path: "/profiles" }
+                          redirect: { path_redirect: "/profiles/" }
+                        - name: profiles
+                          match: { prefix: "/profiles/" }
+                          route:
+                            cluster: profiles
+                            retry_policy: *retry_on_connect_failure
+                        - name: telemetry-docs-redirect
+                          match: { path: "/telemetry" }
                           redirect: { path_redirect: "/telemetry/" }
-                        - match: { prefix: "/telemetry/" }
+                        - name: telemetry-docs
+                          match: { prefix: "/telemetry/" }
                           route:
-                            { cluster: telemetry-docs, prefix_rewrite: "/" }
-                        - match: { prefix: "/images/" }
+                            cluster: telemetry-docs
+                            prefix_rewrite: "/"
+                            retry_policy: *retry_on_connect_failure
+
+                        # --- Feature flags ----------------------------------
+                        # flagd streams flag changes, so its route never times out.
+                        - name: flagservice
+                          match: { prefix: "/flagservice/" }
                           route:
-                            { cluster: image-provider, prefix_rewrite: "/" }
-                        - match: { prefix: "/flagservice/" }
-                          route:
-                            {
-                              cluster: flagservice,
-                              prefix_rewrite: "/",
-                              timeout: 0s,
-                            }
-                        - match: { prefix: "/feature" }
+                            cluster: flagservice
+                            prefix_rewrite: "/"
+                            timeout: &no_timeout 0s
+                        - name: feature
+                          match: { prefix: "/feature" }
                           route:
                             cluster: flagd-ui
                             prefix_rewrite: "/"
                             upgrade_configs:
                               - upgrade_type: websocket
-                        - match: { path: "/profiles" }
-                          redirect: { path_redirect: "/profiles/" }
-                        - match: { prefix: "/profiles/" }
-                          route: { cluster: profiles }
-                        - match: { path: "/chatbot" }
+
+                        # --- Tools ------------------------------------------
+                        # The chatbot streams answers over a websocket, so its
+                        # route never times out either.
+                        - name: chatbot-redirect
+                          match: { path: "/chatbot" }
                           redirect: { path_redirect: "/chatbot/" }
-                        - match: { prefix: "/chatbot/" }
+                        - name: chatbot
+                          match: { prefix: "/chatbot/" }
                           route:
                             cluster: chatbot
                             prefix_rewrite: "/"
-                            timeout: 0s
+                            timeout: *no_timeout
                             upgrade_configs:
                               - upgrade_type: websocket
-                        - match: { prefix: "/" }  # Default/catch-all route - keep last since prefix:"/" matches everything
+                        - name: loadgen-redirect
+                          match: { path: "/loadgen" }
+                          redirect: { path_redirect: "/loadgen/" }
+                        - name: loadgen
+                          match: { prefix: "/loadgen/" }
+                          route:
+                            cluster: loadgen
+                            prefix_rewrite: "/"
+                        - name: opamp-redirect
+                          match: { path: "/opamp" }
+                          redirect: { path_redirect: "/opamp/" }
+                        - name: opamp
+                          match: { prefix: "/opamp/" }
+                          route:
+                            cluster: opamp
+                            prefix_rewrite: "/"
+
+                        # --- Storefront (catch-all, keep last) --------------
+                        - name: frontend
+                          match: { prefix: "/" }
                           route: { cluster: frontend }
                 http_filters:
                   - name: envoy.filters.http.fault
