@@ -93,6 +93,25 @@ public final class AdService {
           .setDescription("Counts ad requests by request and response type")
           .build();
 
+  // The ads each shopper has seen, so a page shows the same ads throughout a visit.
+  private static final SessionAds sessionAds = new SessionAds();
+
+  static {
+    meter
+        .gaugeBuilder("demo.ad.session_ads.entries")
+        .setDescription("Shopper and page pairs whose ads are remembered")
+        .ofLongs()
+        .buildWithCallback(m -> m.record(sessionAds.size()));
+    meter
+        .counterBuilder("demo.ad.session_ads.lookups")
+        .setDescription("Remembered-ads lookups, by result")
+        .buildWithCallback(
+            m -> {
+              m.record(sessionAds.hits(), Attributes.of(AttributeKey.stringKey("result"), "hit"));
+              m.record(sessionAds.misses(), Attributes.of(AttributeKey.stringKey("result"), "miss"));
+            });
+  }
+
   private static final AttributeKey<String> adRequestTypeKey =
       AttributeKey.stringKey("demo.ad.request_type");
   private static final AttributeKey<String> adResponseTypeKey =
@@ -192,8 +211,9 @@ public final class AdService {
 
         Baggage baggage = Baggage.fromContextOrNull(Context.current());
         MutableContext evaluationContext = new MutableContext();
+        String sessionId = null;
         if (baggage != null) {
-          final String sessionId = baggage.getEntryValue("session.id");
+          sessionId = baggage.getEntryValue("session.id");
           span.setAttribute("session.id", sessionId);
           evaluationContext.setTargetingKey(sessionId);
           evaluationContext.add("session", sessionId);
@@ -210,23 +230,38 @@ public final class AdService {
 
         span.setAttribute("demo.ad.context_keys", req.getContextKeysList().toString());
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
-        if (req.getContextKeysCount() > 0) {
+        List<String> categories = distinctCategories(req.getContextKeysList());
+        adRequestType =
+            req.getContextKeysCount() > 0 ? AdRequestType.TARGETED : AdRequestType.NOT_TARGETED;
+
+        // A shopper who saw ads for this page earlier in the visit gets the same ads again.
+        String sessionKey =
+            sessionId == null || sessionId.isBlank() ? null : SessionAds.key(sessionId, categories);
+        Optional<List<Ad>> remembered =
+            sessionKey == null ? Optional.empty() : sessionAds.recall(sessionKey);
+        span.setAttribute("demo.ad.session_ads.hit", remembered.isPresent());
+
+        if (remembered.isPresent()) {
+          allAds = new ArrayList<>(remembered.get());
+          adResponseType =
+              adRequestType == AdRequestType.TARGETED ? AdResponseType.TARGETED : AdResponseType.RANDOM;
+        } else if (adRequestType == AdRequestType.TARGETED) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          List<String> categories = distinctCategories(req.getContextKeysList());
           span.setAttribute("demo.ad.categories.count", categories.size());
           allAds.addAll(collectTargetedAds(service, categories));
-          adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
         } else {
           logger.info("Non-targeted ad request received, preparing random response.");
           allAds = service.getRandomAds();
-          adRequestType = AdRequestType.NOT_TARGETED;
           adResponseType = AdResponseType.RANDOM;
         }
         if (allAds.isEmpty()) {
           // Serve random ads.
           allAds = service.getRandomAds();
           adResponseType = AdResponseType.RANDOM;
+        }
+        if (sessionKey != null && remembered.isEmpty()) {
+          sessionAds.remember(sessionKey, allAds);
         }
         span.setAttribute("demo.ad.count", allAds.size());
         span.setAttribute("demo.ad.request_type", adRequestType.name());
