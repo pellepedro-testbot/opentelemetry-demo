@@ -47,6 +47,58 @@ def jaeger_resource_spans(jaeger_url, service, num_traces=1, timeout=10):
     resp.raise_for_status()
     return resp.json().get("result", {}).get("resourceSpans") or []
 
+
+def _otlp_value(value):
+    for kind in ("stringValue", "boolValue", "doubleValue"):
+        if kind in value:
+            return value[kind]
+    if "intValue" in value:
+        return int(value["intValue"])
+    return value
+
+
+def otlp_attributes(attributes):
+    """OTLP JSON key/value attributes as a plain dict."""
+    return {a["key"]: _otlp_value(a.get("value", {})) for a in attributes or []}
+
+
+def jaeger_traces(jaeger_url, service, num_traces=200):
+    """The service's recent spans from Jaeger, grouped by trace id."""
+    traces = {}
+    for resource_spans in jaeger_resource_spans(jaeger_url, service, num_traces=num_traces, timeout=30):
+        for scope_spans in resource_spans.get("scopeSpans", []):
+            for span in scope_spans.get("spans", []):
+                traces.setdefault(span["traceId"], []).append(span)
+    return traces
+
+
+def find_trace(jaeger_url, service, predicate, num_traces=200):
+    """The spans of the first recent trace of the service that has a span matching predicate."""
+    for spans in jaeger_traces(jaeger_url, service, num_traces).values():
+        if any(predicate(span) for span in spans):
+            return spans
+    return None
+
+
+def merged_attributes(spans):
+    merged = {}
+    for span in spans:
+        merged.update(otlp_attributes(span.get("attributes")))
+    return merged
+
+
+def event_names(spans):
+    return {event["name"] for span in spans for event in span.get("events", [])}
+
+
+def event_attributes(spans, name):
+    return [
+        otlp_attributes(event.get("attributes"))
+        for span in spans
+        for event in span.get("events", [])
+        if event["name"] == name
+    ]
+
 PROMETHEUS_HOST = os.environ.get("PROMETHEUS_HOST", "prometheus")
 PROMETHEUS_PORT = os.environ.get("PROMETHEUS_PORT", "9090")
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", f"http://{PROMETHEUS_HOST}:{PROMETHEUS_PORT}")
