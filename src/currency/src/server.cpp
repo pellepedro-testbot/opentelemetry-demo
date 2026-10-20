@@ -434,6 +434,7 @@ int main(int argc, char **argv) {
 
   uint16_t port = atoi(argv[1]);
 
+  std::cout << "Telemetry export: " << telemetryExportName(telemetryExportMode()) << std::endl;
   auto tracer_provider = initTracer();
   auto meter_provider = initMeter();
   auto logger_provider = initLogger();
