@@ -33,9 +33,21 @@ namespace Accounting
 
         [LoggerMessage(
             Level = LogLevel.Information,
-            EventName = "accounting.consumer.closing",
-            Message = "Closing consumer")]
-        public static partial void ConsumerClosing(ILogger logger);
+            EventName = "accounting.consumer.started",
+            Message = "Consuming {topic} as group {groupId}")]
+        public static partial void ConsumerStarted(ILogger logger, string topic, string groupId);
+
+        [LoggerMessage(
+            Level = LogLevel.Information,
+            EventName = "accounting.consumer.stopping",
+            Message = "Stopping consumer after {ordersProcessed} orders")]
+        public static partial void ConsumerStopping(ILogger logger, long ordersProcessed);
+
+        [LoggerMessage(
+            Level = LogLevel.Information,
+            EventName = "accounting.consumer.stopped",
+            Message = "Consumer stopped after {ordersProcessed} orders")]
+        public static partial void ConsumerStopped(ILogger logger, long ordersProcessed);
 
         [LoggerMessage(
             Level = LogLevel.Information,

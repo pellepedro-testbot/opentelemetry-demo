@@ -9,18 +9,26 @@ using System.Diagnostics;
 
 namespace Accounting;
 
-internal class Consumer : BackgroundService
+// Runs the order consumer for the lifetime of the host: StartAsync starts the
+// consume loop on its own thread, StopAsync cancels it and waits for the
+// message in flight to finish.
+internal sealed class Consumer : IHostedService, IDisposable
 {
     private static readonly string TopicName = Environment.GetEnvironmentVariable("KAFKA_TOPIC") ?? "orders";
+    private const string GroupId = "accounting";
 
     private readonly ILogger _logger;
+    private readonly ConsumerHealth _health;
     private readonly IConsumer<string, byte[]> _consumer;
     private readonly OrderRepository? _repository;
+    private readonly CancellationTokenSource _stopping = new();
+    private Task? _loop;
     private static readonly ActivitySource MyActivitySource = new("Accounting.Consumer");
 
-    public Consumer(ILogger<Consumer> logger)
+    public Consumer(ILogger<Consumer> logger, ConsumerHealth health)
     {
         _logger = logger;
+        _health = health;
 
         var servers = Environment.GetEnvironmentVariable("KAFKA_ADDR")
             ?? throw new InvalidOperationException("The KAFKA_ADDR environment variable is not set.");
@@ -34,10 +42,34 @@ internal class Consumer : BackgroundService
         _repository = dbConnectionString == null ? null : new OrderRepository(dbConnectionString);
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        await Task.Yield();
+        // Consume blocks, so the loop gets a thread of its own instead of a pool thread.
+        _loop = Task.Factory.StartNew(() => ConsumeLoop(_stopping.Token),
+            CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        Log.ConsumerStarted(_logger, TopicName, GroupId);
+        return Task.CompletedTask;
+    }
 
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (_loop == null)
+        {
+            return;
+        }
+
+        Log.ConsumerStopping(_logger, _health.OrdersProcessed);
+        _stopping.Cancel();
+
+        // Wait for the order in flight, but never longer than the host allows for shutdown.
+        await Task.WhenAny(_loop, Task.Delay(Timeout.Infinite, cancellationToken)).ConfigureAwait(false);
+        _health.MarkStopped();
+        Log.ConsumerStopped(_logger, _health.OrdersProcessed);
+    }
+
+    private void ConsumeLoop(CancellationToken stoppingToken)
+    {
+        _health.MarkConsuming();
         try
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -47,6 +79,7 @@ internal class Consumer : BackgroundService
                     using var activity = MyActivitySource.StartActivity("order-consumed",  ActivityKind.Internal);
                     var consumeResult = _consumer.Consume(stoppingToken);
                     ProcessMessage(consumeResult.Message);
+                    _health.RecordMessage();
                 }
                 catch (ConsumeException e)
                 {
@@ -56,11 +89,6 @@ internal class Consumer : BackgroundService
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-        }
-        finally
-        {
-            Log.ConsumerClosing(_logger);
-            _consumer.Close();
         }
     }
 
@@ -100,7 +128,7 @@ internal class Consumer : BackgroundService
     {
         var conf = new ConsumerConfig
         {
-            GroupId = "accounting",
+            GroupId = GroupId,
             BootstrapServers = servers,
             // https://github.com/confluentinc/confluent-kafka-dotnet/tree/07de95ed647af80a0db39ce6a8891a630423b952#basic-consumer-example
             AutoOffsetReset = AutoOffsetReset.Earliest,
@@ -111,9 +139,9 @@ internal class Consumer : BackgroundService
             .Build();
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
-        _consumer?.Dispose();
-        base.Dispose();
+        _consumer.Dispose();
+        _stopping.Dispose();
     }
 }
