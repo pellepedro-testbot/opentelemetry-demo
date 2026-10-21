@@ -118,7 +118,6 @@ internal class Consumer : BackgroundService
                 ShippingTrackingId = order.ShippingTrackingId,
                 ShippingCostCurrencyCode = order.ShippingCost.CurrencyCode,
                 ShippingCostUnits = order.ShippingCost.Units,
-                ShippingCostNanos = order.ShippingCost.Nanos,
                 StreetAddress = order.ShippingAddress.StreetAddress,
                 City = order.ShippingAddress.City,
                 State = order.ShippingAddress.State,
