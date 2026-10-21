@@ -199,8 +199,11 @@ func TestSum(t *testing.T) {
 		wantErr error
 	}{
 		{"0+0=0", args{mm(0, 0), mm(0, 0)}, mm(0, 0), nil},
-		{"Error: currency code on left", args{mmc(0, 0, "XXX"), mm(0, 0)}, mm(0, 0), ErrMismatchingCurrency},
-		{"Error: currency code on right", args{mm(0, 0), mmc(0, 0, "YYY")}, mm(0, 0), ErrMismatchingCurrency},
+		{"currency code on left only", args{mmc(0, 0, "XXX"), mm(0, 0)}, mmc(0, 0, "XXX"), nil},
+		{"currency code on right only", args{mm(0, 0), mmc(0, 0, "YYY")}, mmc(0, 0, "YYY"), nil},
+		{"no currency takes the right currency", args{mm(0, 0), mmc(1, 500000000, "USD")}, mmc(1, 500000000, "USD"), nil},
+		{"no currency takes the left currency", args{mmc(2, 0, "USD"), mm(0, 0)}, mmc(2, 0, "USD"), nil},
+		{"both without currency", args{mm(1, 0), mm(2, 0)}, mm(3, 0), nil},
 		{"Error: currency code mismatch", args{mmc(0, 0, "AAA"), mmc(0, 0, "BBB")}, mm(0, 0), ErrMismatchingCurrency},
 		{"Error: invalid +/-", args{mm(+1, -1), mm(0, 0)}, mm(0, 0), ErrInvalidValue},
 		{"Error: invalid -/+", args{mm(0, 0), mm(-1, +2)}, mm(0, 0), ErrInvalidValue},
@@ -229,5 +232,63 @@ func TestSum(t *testing.T) {
 				t.Errorf("Sum([%v],[%v]) = %v, want %v", tt.args.l, tt.args.r, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestSumAll(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      []*pb.Money
+		want    *pb.Money
+		wantErr error
+	}{
+		{"no values is zero", nil, mm(0, 0), nil},
+		{"one currency with carry", []*pb.Money{mmc(1, 600000000, "USD"), mmc(2, 700000000, "USD"), mmc(0, 700000000, "USD")}, mmc(5, 0, "USD"), nil},
+		{"two currencies", []*pb.Money{mmc(1, 0, "USD"), mmc(1, 0, "EUR")}, mm(0, 0), ErrMismatchingCurrency},
+		{"zero without currency between two currencies", []*pb.Money{mmc(1, 0, "USD"), {}, mmc(1, 0, "EUR")}, mm(0, 0), ErrMismatchingCurrency},
+		{"invalid value", []*pb.Money{mmc(1, 0, "USD"), mm(1, -1)}, mm(0, 0), ErrInvalidValue},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := SumAll(tt.in...)
+			if err != tt.wantErr {
+				t.Errorf("SumAll(%v): expected err=\"%v\" got=\"%v\"", tt.in, tt.wantErr, err)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SumAll(%v) = %v, want %v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMultiply(t *testing.T) {
+	tests := []struct {
+		name string
+		in   *pb.Money
+		n    uint32
+		want *pb.Money
+	}{
+		{"nanos carried into units", mmc(1, 750000000, "USD"), 3, mmc(5, 250000000, "USD")},
+		{"by zero", mmc(3, 500000000, "USD"), 0, mmc(0, 0, "USD")},
+		{"by one", mmc(3, 500000000, "EUR"), 1, mmc(3, 500000000, "EUR")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Multiply(tt.in, tt.n); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Multiply(%v, %d) = %v, want %v", tt.in, tt.n, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMultiplyMatchesMultiplySlow(t *testing.T) {
+	values := []*pb.Money{mmc(0, 999999999, "USD"), mmc(12, 340000000, "JPY"), mmc(7, 1, "EUR")}
+	for _, v := range values {
+		for n := uint32(1); n <= 12; n++ {
+			got, want := Multiply(v, n), MultiplySlow(v, n)
+			if !AreEquals(got, want) {
+				t.Errorf("Multiply(%v, %d) = %v, MultiplySlow gives %v", v, n, got, want)
+			}
+		}
 	}
 }
