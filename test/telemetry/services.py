@@ -6,6 +6,7 @@ Service-signal matrix: single source of truth for which services emit which tele
 
 To add a new service: add an entry to SIGNAL_MATRIX.
 To mark a service as full-only (Kafka-dependent): add it to FULL_ONLY_SERVICES.
+To mark a service as agentic-only (compose.agent.yaml): add it to AGENTIC_ONLY_SERVICES.
 """
 
 SIGNAL_MATRIX = {
@@ -14,7 +15,7 @@ SIGNAL_MATRIX = {
     "checkout": {"traces": True, "metrics": True, "logs": True},
     "currency": {"traces": True, "metrics": True, "logs": True},
     "email": {"traces": True, "metrics": True, "logs": True},
-    "frontend": {"traces": True, "metrics": True, "logs": False},
+    "frontend": {"traces": True, "metrics": True, "logs": True},
     "frontend-proxy": {"traces": True, "metrics": True, "logs": True},
     "frontend-web": {"traces": True, "metrics": True, "logs": False},
     "image-provider": {"traces": True, "metrics": True, "logs": False},
@@ -27,22 +28,36 @@ SIGNAL_MATRIX = {
     "accounting": {"traces": True, "metrics": True, "logs": True},
     "fraud-detection": {"traces": True, "metrics": True, "logs": True},
     "load-generator": {"traces": True, "metrics": True, "logs": True},
+    # Agentic services (compose.agent.yaml only): traces via Traceloop SDK /
+    # OTel SDK; no OTLP metrics or log exporters configured.
+    "agent":   {"traces": True, "metrics": False, "logs": False},
+    "mcp":     {"traces": True, "metrics": False, "logs": False},
+    "chatbot": {"traces": True, "metrics": False, "logs": False},
 }
 
 # Services excluded from minimal scope:
 # - accounting, fraud-detection, kafka: require Kafka (not in minimal compose)
-# - frontend-web: requires LOCUST_BROWSER_TRAFFIC_ENABLED=true (disabled in minimal)
-#   without browser traffic, so traces don't appear within the test timeout
+# - frontend-web: LOCUST_BROWSER_TRAFFIC_ENABLED is on in every scope, but
+#   LOCUST_BROWSER_USER_WEIGHT (1) is low relative to LOCUST_HTTP_USER_WEIGHT
+#   (9), so browser-driven traces are too infrequent to reliably land within
+#   the test timeout
 FULL_ONLY_SERVICES = {"accounting", "fraud-detection", "frontend-web", "kafka"}
 
-MINIMAL_SERVICES = [s for s in SIGNAL_MATRIX if s not in FULL_ONLY_SERVICES]
-ALL_SERVICES = list(SIGNAL_MATRIX.keys())
+# Services that only run when compose.agent.yaml is included (make start-agentic).
+# Excluded from minimal/full scopes; covered by the agentic scope.
+AGENTIC_ONLY_SERVICES = {"agent", "mcp", "chatbot"}
+
+MINIMAL_SERVICES = [s for s in SIGNAL_MATRIX if s not in FULL_ONLY_SERVICES and s not in AGENTIC_ONLY_SERVICES]
+ALL_SERVICES = [s for s in SIGNAL_MATRIX if s not in AGENTIC_ONLY_SERVICES]
+AGENTIC_SERVICES = [s for s in SIGNAL_MATRIX if s in AGENTIC_ONLY_SERVICES]
 
 
 def services_for_scope(scope: str) -> list[str]:
     """Return service list based on test scope."""
     if scope == "full":
         return ALL_SERVICES
+    if scope == "agentic":
+        return AGENTIC_SERVICES
     return MINIMAL_SERVICES
 
 
@@ -86,11 +101,21 @@ SERVICE_EDGES = [
     # different pattern than the parent->child walker used here.
 ]
 
+# Directed edges expected in the agentic service graph:
+# chatbot calls agent via HTTP (RequestsInstrumentor injects traceparent).
+# Note: the agent->mcp edge requires MCP_ENABLED=True and a cassette recorded
+# with MCP tools; it is not asserted here to keep the default test run stable.
+AGENTIC_EDGES = [
+    ("chatbot", "agent"),
+]
+
 
 def edges_for_scope(scope: str) -> list[tuple[str, str]]:
     """Return the inter-service edges applicable to the given scope."""
     if scope == "full":
         return SERVICE_EDGES
+    if scope == "agentic":
+        return AGENTIC_EDGES
     return [
         (p, c) for p, c in SERVICE_EDGES
         if p not in FULL_ONLY_SERVICES and c not in FULL_ONLY_SERVICES
