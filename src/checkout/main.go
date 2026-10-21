@@ -411,7 +411,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	if err := cs.sendOrderConfirmation(ctx, req.Email, orderResult); err != nil {
 		logger.Warn(fmt.Sprintf("failed to send order confirmation: %+v", err))
 	} else {
-		logger.Info("order confirmation email sent")
+		logger.Info("order confirmation email sent", slog.String("demo.order.id", orderID.String()))
 	}
 
 	// send to kafka only if kafka broker address is set
