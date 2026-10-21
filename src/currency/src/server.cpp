@@ -164,7 +164,9 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
 
     span->AddEvent("Processing supported currencies request");
 
+    // Rates are quoted against EUR, so list the currencies that have a rate.
     for (auto &code : currency_conversion) {
+      if (code.first == "EUR") continue;
       response->add_currency_codes(code.first);
     }
 
