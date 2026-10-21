@@ -447,10 +447,8 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	if err != nil {
 		return out, fmt.Errorf("shipping quote failure: %+v", err)
 	}
-	shippingPrice, err := cs.convertCurrency(ctx, shippingUSD, userCurrency)
-	if err != nil {
-		return out, fmt.Errorf("failed to convert shipping cost to currency: %+v", err)
-	}
+	// Shipping is quoted per order; label it in the shopper's currency.
+	shippingPrice := &pb.Money{CurrencyCode: userCurrency, Units: shippingUSD.GetUnits(), Nanos: shippingUSD.GetNanos()}
 
 	out.shippingCostLocalized = shippingPrice
 	out.cartItems = cartItems
