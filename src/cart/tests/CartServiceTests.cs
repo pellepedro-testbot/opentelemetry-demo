@@ -163,6 +163,25 @@ public class CartServiceTests
         Assert.Empty(cart.Items);
     }
 
+    [Fact]
+    public async Task GetCart_StoreCannotCountCarts_CartCountHeaderIsZero()
+    {
+        using var server = await _host.StartAsync();
+        var httpClient = server.GetTestClient();
+
+        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress, new GrpcChannelOptions
+        {
+            HttpClient = httpClient
+        });
+        var client = new CartServiceClient(channel);
+
+        using var call = client.GetCartAsync(new GetCartRequest { UserId = Guid.NewGuid().ToString() });
+        var headers = await call.ResponseHeadersAsync;
+        await call.ResponseAsync;
+
+        Assert.Equal("0", headers.GetValue("x-cart-count"));
+    }
+
     private sealed class InMemoryCartStore : ICartStore
     {
         private readonly ConcurrentDictionary<string, Cart> _carts = new();
