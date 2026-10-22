@@ -162,6 +162,13 @@ public class ValkeyCartStore : ICartStore
                 }
             }
 
+            // Remove the product once its quantity drops to 0 or below
+            var item = cart.Items.Single(i => i.ProductId == productId);
+            if (item.Quantity <= 0)
+            {
+                cart.Items.Remove(item);
+            }
+
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
