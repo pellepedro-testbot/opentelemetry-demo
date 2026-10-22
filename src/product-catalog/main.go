@@ -341,6 +341,11 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		}
 	}
 
+	var badge string
+	if id == "66VCHSJNUP" {
+		badge = "Bestseller"
+	}
+
 	return &pb.Product{
 		Id:          id,
 		Name:        name,
@@ -352,6 +357,7 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 			Nanos:        nanos,
 		},
 		Categories: categories,
+		Badge:      badge,
 	}
 }
 

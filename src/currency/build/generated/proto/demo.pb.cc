@@ -705,6 +705,9 @@ inline constexpr Product::Impl_::Impl_(
         picture_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        badge_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         price_usd_{nullptr} {}
 
 template <typename>
@@ -1235,19 +1238,21 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::oteldemo::ListRecommendationsResponse, _impl_.product_ids_),
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_._has_bits_),
-        9, // hasbit index offset
+        10, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.id_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.name_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.description_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.picture_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.price_usd_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.categories_),
+        PROTOBUF_FIELD_OFFSET(::oteldemo::Product, _impl_.badge_),
         0,
         1,
         2,
         3,
-        4,
+        5,
         ~0u,
+        4,
         0x000, // bitmap
         PROTOBUF_FIELD_OFFSET(::oteldemo::ListProductsResponse, _impl_.products_),
         0x081, // bitmap
@@ -1459,40 +1464,40 @@ static const ::_pbi::MigrationSchema
         {32, sizeof(::oteldemo::ListRecommendationsRequest)},
         {39, sizeof(::oteldemo::ListRecommendationsResponse)},
         {41, sizeof(::oteldemo::Product)},
-        {56, sizeof(::oteldemo::ListProductsResponse)},
-        {58, sizeof(::oteldemo::GetProductRequest)},
-        {63, sizeof(::oteldemo::SearchProductsRequest)},
-        {68, sizeof(::oteldemo::SearchProductsResponse)},
-        {70, sizeof(::oteldemo::GetQuoteRequest)},
-        {77, sizeof(::oteldemo::GetQuoteResponse)},
-        {82, sizeof(::oteldemo::ShipOrderRequest)},
-        {89, sizeof(::oteldemo::ShipOrderResponse)},
-        {94, sizeof(::oteldemo::Address)},
-        {107, sizeof(::oteldemo::Money)},
-        {116, sizeof(::oteldemo::GetSupportedCurrenciesResponse)},
-        {118, sizeof(::oteldemo::CurrencyConversionRequest)},
-        {125, sizeof(::oteldemo::CreditCardInfo)},
-        {136, sizeof(::oteldemo::ChargeRequest)},
-        {143, sizeof(::oteldemo::ChargeResponse)},
-        {148, sizeof(::oteldemo::OrderItem)},
-        {155, sizeof(::oteldemo::OrderResult)},
-        {168, sizeof(::oteldemo::SendOrderConfirmationRequest)},
-        {175, sizeof(::oteldemo::PlaceOrderRequest)},
-        {188, sizeof(::oteldemo::PlaceOrderResponse)},
-        {193, sizeof(::oteldemo::AdRequest)},
-        {195, sizeof(::oteldemo::AdResponse)},
-        {197, sizeof(::oteldemo::Ad)},
-        {204, sizeof(::oteldemo::Flag)},
-        {213, sizeof(::oteldemo::GetFlagRequest)},
-        {218, sizeof(::oteldemo::GetFlagResponse)},
-        {223, sizeof(::oteldemo::CreateFlagRequest)},
-        {232, sizeof(::oteldemo::CreateFlagResponse)},
-        {237, sizeof(::oteldemo::UpdateFlagRequest)},
-        {244, sizeof(::oteldemo::UpdateFlagResponse)},
-        {245, sizeof(::oteldemo::ListFlagsRequest)},
-        {246, sizeof(::oteldemo::ListFlagsResponse)},
-        {248, sizeof(::oteldemo::DeleteFlagRequest)},
-        {253, sizeof(::oteldemo::DeleteFlagResponse)},
+        {58, sizeof(::oteldemo::ListProductsResponse)},
+        {60, sizeof(::oteldemo::GetProductRequest)},
+        {65, sizeof(::oteldemo::SearchProductsRequest)},
+        {70, sizeof(::oteldemo::SearchProductsResponse)},
+        {72, sizeof(::oteldemo::GetQuoteRequest)},
+        {79, sizeof(::oteldemo::GetQuoteResponse)},
+        {84, sizeof(::oteldemo::ShipOrderRequest)},
+        {91, sizeof(::oteldemo::ShipOrderResponse)},
+        {96, sizeof(::oteldemo::Address)},
+        {109, sizeof(::oteldemo::Money)},
+        {118, sizeof(::oteldemo::GetSupportedCurrenciesResponse)},
+        {120, sizeof(::oteldemo::CurrencyConversionRequest)},
+        {127, sizeof(::oteldemo::CreditCardInfo)},
+        {138, sizeof(::oteldemo::ChargeRequest)},
+        {145, sizeof(::oteldemo::ChargeResponse)},
+        {150, sizeof(::oteldemo::OrderItem)},
+        {157, sizeof(::oteldemo::OrderResult)},
+        {170, sizeof(::oteldemo::SendOrderConfirmationRequest)},
+        {177, sizeof(::oteldemo::PlaceOrderRequest)},
+        {190, sizeof(::oteldemo::PlaceOrderResponse)},
+        {195, sizeof(::oteldemo::AdRequest)},
+        {197, sizeof(::oteldemo::AdResponse)},
+        {199, sizeof(::oteldemo::Ad)},
+        {206, sizeof(::oteldemo::Flag)},
+        {215, sizeof(::oteldemo::GetFlagRequest)},
+        {220, sizeof(::oteldemo::GetFlagResponse)},
+        {225, sizeof(::oteldemo::CreateFlagRequest)},
+        {234, sizeof(::oteldemo::CreateFlagResponse)},
+        {239, sizeof(::oteldemo::UpdateFlagRequest)},
+        {246, sizeof(::oteldemo::UpdateFlagResponse)},
+        {247, sizeof(::oteldemo::ListFlagsRequest)},
+        {248, sizeof(::oteldemo::ListFlagsResponse)},
+        {250, sizeof(::oteldemo::DeleteFlagRequest)},
+        {255, sizeof(::oteldemo::DeleteFlagResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::oteldemo::_CartItem_default_instance_._instance,
@@ -1551,112 +1556,113 @@ const char descriptor_table_protodef_demo_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "ty\"B\n\032ListRecommendationsRequest\022\017\n\007user"
     "_id\030\001 \001(\t\022\023\n\013product_ids\030\002 \003(\t\"2\n\033ListRe"
     "commendationsResponse\022\023\n\013product_ids\030\001 \003"
-    "(\t\"\201\001\n\007Product\022\n\n\002id\030\001 \001(\t\022\014\n\004name\030\002 \001(\t"
+    "(\t\"\220\001\n\007Product\022\n\n\002id\030\001 \001(\t\022\014\n\004name\030\002 \001(\t"
     "\022\023\n\013description\030\003 \001(\t\022\017\n\007picture\030\004 \001(\t\022\""
     "\n\tprice_usd\030\005 \001(\0132\017.oteldemo.Money\022\022\n\nca"
-    "tegories\030\006 \003(\t\";\n\024ListProductsResponse\022#"
-    "\n\010products\030\001 \003(\0132\021.oteldemo.Product\"\037\n\021G"
-    "etProductRequest\022\n\n\002id\030\001 \001(\t\"&\n\025SearchPr"
-    "oductsRequest\022\r\n\005query\030\001 \001(\t\"<\n\026SearchPr"
-    "oductsResponse\022\"\n\007results\030\001 \003(\0132\021.otelde"
-    "mo.Product\"X\n\017GetQuoteRequest\022\"\n\007address"
-    "\030\001 \001(\0132\021.oteldemo.Address\022!\n\005items\030\002 \003(\013"
-    "2\022.oteldemo.CartItem\"5\n\020GetQuoteResponse"
-    "\022!\n\010cost_usd\030\001 \001(\0132\017.oteldemo.Money\"Y\n\020S"
-    "hipOrderRequest\022\"\n\007address\030\001 \001(\0132\021.oteld"
-    "emo.Address\022!\n\005items\030\002 \003(\0132\022.oteldemo.Ca"
-    "rtItem\"(\n\021ShipOrderResponse\022\023\n\013tracking_"
-    "id\030\001 \001(\t\"a\n\007Address\022\026\n\016street_address\030\001 "
-    "\001(\t\022\014\n\004city\030\002 \001(\t\022\r\n\005state\030\003 \001(\t\022\017\n\007coun"
-    "try\030\004 \001(\t\022\020\n\010zip_code\030\005 \001(\t\"<\n\005Money\022\025\n\r"
-    "currency_code\030\001 \001(\t\022\r\n\005units\030\002 \001(\003\022\r\n\005na"
-    "nos\030\003 \001(\005\"8\n\036GetSupportedCurrenciesRespo"
-    "nse\022\026\n\016currency_codes\030\001 \003(\t\"K\n\031CurrencyC"
-    "onversionRequest\022\035\n\004from\030\001 \001(\0132\017.oteldem"
-    "o.Money\022\017\n\007to_code\030\002 \001(\t\"\220\001\n\016CreditCardI"
-    "nfo\022\032\n\022credit_card_number\030\001 \001(\t\022\027\n\017credi"
-    "t_card_cvv\030\002 \001(\005\022#\n\033credit_card_expirati"
-    "on_year\030\003 \001(\005\022$\n\034credit_card_expiration_"
-    "month\030\004 \001(\005\"_\n\rChargeRequest\022\037\n\006amount\030\001"
-    " \001(\0132\017.oteldemo.Money\022-\n\013credit_card\030\002 \001"
-    "(\0132\030.oteldemo.CreditCardInfo\"(\n\016ChargeRe"
-    "sponse\022\026\n\016transaction_id\030\001 \001(\t\"L\n\tOrderI"
-    "tem\022 \n\004item\030\001 \001(\0132\022.oteldemo.CartItem\022\035\n"
-    "\004cost\030\002 \001(\0132\017.oteldemo.Money\"\266\001\n\013OrderRe"
-    "sult\022\020\n\010order_id\030\001 \001(\t\022\034\n\024shipping_track"
-    "ing_id\030\002 \001(\t\022&\n\rshipping_cost\030\003 \001(\0132\017.ot"
-    "eldemo.Money\022+\n\020shipping_address\030\004 \001(\0132\021"
-    ".oteldemo.Address\022\"\n\005items\030\005 \003(\0132\023.oteld"
-    "emo.OrderItem\"S\n\034SendOrderConfirmationRe"
-    "quest\022\r\n\005email\030\001 \001(\t\022$\n\005order\030\002 \001(\0132\025.ot"
-    "eldemo.OrderResult\"\235\001\n\021PlaceOrderRequest"
-    "\022\017\n\007user_id\030\001 \001(\t\022\025\n\ruser_currency\030\002 \001(\t"
-    "\022\"\n\007address\030\003 \001(\0132\021.oteldemo.Address\022\r\n\005"
-    "email\030\005 \001(\t\022-\n\013credit_card\030\006 \001(\0132\030.oteld"
-    "emo.CreditCardInfo\":\n\022PlaceOrderResponse"
-    "\022$\n\005order\030\001 \001(\0132\025.oteldemo.OrderResult\"!"
-    "\n\tAdRequest\022\024\n\014context_keys\030\001 \003(\t\"\'\n\nAdR"
-    "esponse\022\031\n\003ads\030\001 \003(\0132\014.oteldemo.Ad\"(\n\002Ad"
-    "\022\024\n\014redirect_url\030\001 \001(\t\022\014\n\004text\030\002 \001(\t\":\n\004"
-    "Flag\022\014\n\004name\030\001 \001(\t\022\023\n\013description\030\002 \001(\t\022"
-    "\017\n\007enabled\030\003 \001(\010\"\036\n\016GetFlagRequest\022\014\n\004na"
-    "me\030\001 \001(\t\"/\n\017GetFlagResponse\022\034\n\004flag\030\001 \001("
-    "\0132\016.oteldemo.Flag\"G\n\021CreateFlagRequest\022\014"
-    "\n\004name\030\001 \001(\t\022\023\n\013description\030\002 \001(\t\022\017\n\007ena"
-    "bled\030\003 \001(\010\"2\n\022CreateFlagResponse\022\034\n\004flag"
-    "\030\001 \001(\0132\016.oteldemo.Flag\"2\n\021UpdateFlagRequ"
-    "est\022\014\n\004name\030\001 \001(\t\022\017\n\007enabled\030\002 \001(\010\"\024\n\022Up"
-    "dateFlagResponse\"\022\n\020ListFlagsRequest\"1\n\021"
-    "ListFlagsResponse\022\034\n\004flag\030\001 \003(\0132\016.otelde"
-    "mo.Flag\"!\n\021DeleteFlagRequest\022\014\n\004name\030\001 \001"
-    "(\t\"\024\n\022DeleteFlagResponse2\270\001\n\013CartService"
-    "\0226\n\007AddItem\022\030.oteldemo.AddItemRequest\032\017."
-    "oteldemo.Empty\"\000\0225\n\007GetCart\022\030.oteldemo.G"
-    "etCartRequest\032\016.oteldemo.Cart\"\000\022:\n\tEmpty"
-    "Cart\022\032.oteldemo.EmptyCartRequest\032\017.oteld"
-    "emo.Empty\"\0002}\n\025RecommendationService\022d\n\023"
-    "ListRecommendations\022$.oteldemo.ListRecom"
-    "mendationsRequest\032%.oteldemo.ListRecomme"
-    "ndationsResponse\"\0002\361\001\n\025ProductCatalogSer"
-    "vice\022A\n\014ListProducts\022\017.oteldemo.Empty\032\036."
-    "oteldemo.ListProductsResponse\"\000\022>\n\nGetPr"
-    "oduct\022\033.oteldemo.GetProductRequest\032\021.ote"
-    "ldemo.Product\"\000\022U\n\016SearchProducts\022\037.otel"
-    "demo.SearchProductsRequest\032 .oteldemo.Se"
-    "archProductsResponse\"\0002\236\001\n\017ShippingServi"
-    "ce\022C\n\010GetQuote\022\031.oteldemo.GetQuoteReques"
-    "t\032\032.oteldemo.GetQuoteResponse\"\000\022F\n\tShipO"
-    "rder\022\032.oteldemo.ShipOrderRequest\032\033.oteld"
-    "emo.ShipOrderResponse\"\0002\253\001\n\017CurrencyServ"
-    "ice\022U\n\026GetSupportedCurrencies\022\017.oteldemo"
-    ".Empty\032(.oteldemo.GetSupportedCurrencies"
-    "Response\"\000\022A\n\007Convert\022#.oteldemo.Currenc"
-    "yConversionRequest\032\017.oteldemo.Money\"\0002O\n"
-    "\016PaymentService\022=\n\006Charge\022\027.oteldemo.Cha"
-    "rgeRequest\032\030.oteldemo.ChargeResponse\"\0002b"
-    "\n\014EmailService\022R\n\025SendOrderConfirmation\022"
-    "&.oteldemo.SendOrderConfirmationRequest\032"
-    "\017.oteldemo.Empty\"\0002\\\n\017CheckoutService\022I\n"
-    "\nPlaceOrder\022\033.oteldemo.PlaceOrderRequest"
-    "\032\034.oteldemo.PlaceOrderResponse\"\0002B\n\tAdSe"
-    "rvice\0225\n\006GetAds\022\023.oteldemo.AdRequest\032\024.o"
-    "teldemo.AdResponse\"\0002\377\002\n\022FeatureFlagServ"
-    "ice\022@\n\007GetFlag\022\030.oteldemo.GetFlagRequest"
-    "\032\031.oteldemo.GetFlagResponse\"\000\022I\n\nCreateF"
-    "lag\022\033.oteldemo.CreateFlagRequest\032\034.oteld"
-    "emo.CreateFlagResponse\"\000\022I\n\nUpdateFlag\022\033"
-    ".oteldemo.UpdateFlagRequest\032\034.oteldemo.U"
-    "pdateFlagResponse\"\000\022F\n\tListFlags\022\032.oteld"
-    "emo.ListFlagsRequest\032\033.oteldemo.ListFlag"
-    "sResponse\"\000\022I\n\nDeleteFlag\022\033.oteldemo.Del"
-    "eteFlagRequest\032\034.oteldemo.DeleteFlagResp"
-    "onse\"\000B\023Z\021genproto/oteldemob\006proto3"
+    "tegories\030\006 \003(\t\022\r\n\005badge\030\007 \001(\t\";\n\024ListPro"
+    "ductsResponse\022#\n\010products\030\001 \003(\0132\021.otelde"
+    "mo.Product\"\037\n\021GetProductRequest\022\n\n\002id\030\001 "
+    "\001(\t\"&\n\025SearchProductsRequest\022\r\n\005query\030\001 "
+    "\001(\t\"<\n\026SearchProductsResponse\022\"\n\007results"
+    "\030\001 \003(\0132\021.oteldemo.Product\"X\n\017GetQuoteReq"
+    "uest\022\"\n\007address\030\001 \001(\0132\021.oteldemo.Address"
+    "\022!\n\005items\030\002 \003(\0132\022.oteldemo.CartItem\"5\n\020G"
+    "etQuoteResponse\022!\n\010cost_usd\030\001 \001(\0132\017.otel"
+    "demo.Money\"Y\n\020ShipOrderRequest\022\"\n\007addres"
+    "s\030\001 \001(\0132\021.oteldemo.Address\022!\n\005items\030\002 \003("
+    "\0132\022.oteldemo.CartItem\"(\n\021ShipOrderRespon"
+    "se\022\023\n\013tracking_id\030\001 \001(\t\"a\n\007Address\022\026\n\016st"
+    "reet_address\030\001 \001(\t\022\014\n\004city\030\002 \001(\t\022\r\n\005stat"
+    "e\030\003 \001(\t\022\017\n\007country\030\004 \001(\t\022\020\n\010zip_code\030\005 \001"
+    "(\t\"<\n\005Money\022\025\n\rcurrency_code\030\001 \001(\t\022\r\n\005un"
+    "its\030\002 \001(\003\022\r\n\005nanos\030\003 \001(\005\"8\n\036GetSupported"
+    "CurrenciesResponse\022\026\n\016currency_codes\030\001 \003"
+    "(\t\"K\n\031CurrencyConversionRequest\022\035\n\004from\030"
+    "\001 \001(\0132\017.oteldemo.Money\022\017\n\007to_code\030\002 \001(\t\""
+    "\220\001\n\016CreditCardInfo\022\032\n\022credit_card_number"
+    "\030\001 \001(\t\022\027\n\017credit_card_cvv\030\002 \001(\005\022#\n\033credi"
+    "t_card_expiration_year\030\003 \001(\005\022$\n\034credit_c"
+    "ard_expiration_month\030\004 \001(\005\"_\n\rChargeRequ"
+    "est\022\037\n\006amount\030\001 \001(\0132\017.oteldemo.Money\022-\n\013"
+    "credit_card\030\002 \001(\0132\030.oteldemo.CreditCardI"
+    "nfo\"(\n\016ChargeResponse\022\026\n\016transaction_id\030"
+    "\001 \001(\t\"L\n\tOrderItem\022 \n\004item\030\001 \001(\0132\022.oteld"
+    "emo.CartItem\022\035\n\004cost\030\002 \001(\0132\017.oteldemo.Mo"
+    "ney\"\266\001\n\013OrderResult\022\020\n\010order_id\030\001 \001(\t\022\034\n"
+    "\024shipping_tracking_id\030\002 \001(\t\022&\n\rshipping_"
+    "cost\030\003 \001(\0132\017.oteldemo.Money\022+\n\020shipping_"
+    "address\030\004 \001(\0132\021.oteldemo.Address\022\"\n\005item"
+    "s\030\005 \003(\0132\023.oteldemo.OrderItem\"S\n\034SendOrde"
+    "rConfirmationRequest\022\r\n\005email\030\001 \001(\t\022$\n\005o"
+    "rder\030\002 \001(\0132\025.oteldemo.OrderResult\"\235\001\n\021Pl"
+    "aceOrderRequest\022\017\n\007user_id\030\001 \001(\t\022\025\n\ruser"
+    "_currency\030\002 \001(\t\022\"\n\007address\030\003 \001(\0132\021.oteld"
+    "emo.Address\022\r\n\005email\030\005 \001(\t\022-\n\013credit_car"
+    "d\030\006 \001(\0132\030.oteldemo.CreditCardInfo\":\n\022Pla"
+    "ceOrderResponse\022$\n\005order\030\001 \001(\0132\025.oteldem"
+    "o.OrderResult\"!\n\tAdRequest\022\024\n\014context_ke"
+    "ys\030\001 \003(\t\"\'\n\nAdResponse\022\031\n\003ads\030\001 \003(\0132\014.ot"
+    "eldemo.Ad\"(\n\002Ad\022\024\n\014redirect_url\030\001 \001(\t\022\014\n"
+    "\004text\030\002 \001(\t\":\n\004Flag\022\014\n\004name\030\001 \001(\t\022\023\n\013des"
+    "cription\030\002 \001(\t\022\017\n\007enabled\030\003 \001(\010\"\036\n\016GetFl"
+    "agRequest\022\014\n\004name\030\001 \001(\t\"/\n\017GetFlagRespon"
+    "se\022\034\n\004flag\030\001 \001(\0132\016.oteldemo.Flag\"G\n\021Crea"
+    "teFlagRequest\022\014\n\004name\030\001 \001(\t\022\023\n\013descripti"
+    "on\030\002 \001(\t\022\017\n\007enabled\030\003 \001(\010\"2\n\022CreateFlagR"
+    "esponse\022\034\n\004flag\030\001 \001(\0132\016.oteldemo.Flag\"2\n"
+    "\021UpdateFlagRequest\022\014\n\004name\030\001 \001(\t\022\017\n\007enab"
+    "led\030\002 \001(\010\"\024\n\022UpdateFlagResponse\"\022\n\020ListF"
+    "lagsRequest\"1\n\021ListFlagsResponse\022\034\n\004flag"
+    "\030\001 \003(\0132\016.oteldemo.Flag\"!\n\021DeleteFlagRequ"
+    "est\022\014\n\004name\030\001 \001(\t\"\024\n\022DeleteFlagResponse2"
+    "\270\001\n\013CartService\0226\n\007AddItem\022\030.oteldemo.Ad"
+    "dItemRequest\032\017.oteldemo.Empty\"\000\0225\n\007GetCa"
+    "rt\022\030.oteldemo.GetCartRequest\032\016.oteldemo."
+    "Cart\"\000\022:\n\tEmptyCart\022\032.oteldemo.EmptyCart"
+    "Request\032\017.oteldemo.Empty\"\0002}\n\025Recommenda"
+    "tionService\022d\n\023ListRecommendations\022$.ote"
+    "ldemo.ListRecommendationsRequest\032%.oteld"
+    "emo.ListRecommendationsResponse\"\0002\361\001\n\025Pr"
+    "oductCatalogService\022A\n\014ListProducts\022\017.ot"
+    "eldemo.Empty\032\036.oteldemo.ListProductsResp"
+    "onse\"\000\022>\n\nGetProduct\022\033.oteldemo.GetProdu"
+    "ctRequest\032\021.oteldemo.Product\"\000\022U\n\016Search"
+    "Products\022\037.oteldemo.SearchProductsReques"
+    "t\032 .oteldemo.SearchProductsResponse\"\0002\236\001"
+    "\n\017ShippingService\022C\n\010GetQuote\022\031.oteldemo"
+    ".GetQuoteRequest\032\032.oteldemo.GetQuoteResp"
+    "onse\"\000\022F\n\tShipOrder\022\032.oteldemo.ShipOrder"
+    "Request\032\033.oteldemo.ShipOrderResponse\"\0002\253"
+    "\001\n\017CurrencyService\022U\n\026GetSupportedCurren"
+    "cies\022\017.oteldemo.Empty\032(.oteldemo.GetSupp"
+    "ortedCurrenciesResponse\"\000\022A\n\007Convert\022#.o"
+    "teldemo.CurrencyConversionRequest\032\017.otel"
+    "demo.Money\"\0002O\n\016PaymentService\022=\n\006Charge"
+    "\022\027.oteldemo.ChargeRequest\032\030.oteldemo.Cha"
+    "rgeResponse\"\0002b\n\014EmailService\022R\n\025SendOrd"
+    "erConfirmation\022&.oteldemo.SendOrderConfi"
+    "rmationRequest\032\017.oteldemo.Empty\"\0002\\\n\017Che"
+    "ckoutService\022I\n\nPlaceOrder\022\033.oteldemo.Pl"
+    "aceOrderRequest\032\034.oteldemo.PlaceOrderRes"
+    "ponse\"\0002B\n\tAdService\0225\n\006GetAds\022\023.oteldem"
+    "o.AdRequest\032\024.oteldemo.AdResponse\"\0002\377\002\n\022"
+    "FeatureFlagService\022@\n\007GetFlag\022\030.oteldemo"
+    ".GetFlagRequest\032\031.oteldemo.GetFlagRespon"
+    "se\"\000\022I\n\nCreateFlag\022\033.oteldemo.CreateFlag"
+    "Request\032\034.oteldemo.CreateFlagResponse\"\000\022"
+    "I\n\nUpdateFlag\022\033.oteldemo.UpdateFlagReque"
+    "st\032\034.oteldemo.UpdateFlagResponse\"\000\022F\n\tLi"
+    "stFlags\022\032.oteldemo.ListFlagsRequest\032\033.ot"
+    "eldemo.ListFlagsResponse\"\000\022I\n\nDeleteFlag"
+    "\022\033.oteldemo.DeleteFlagRequest\032\034.oteldemo"
+    ".DeleteFlagResponse\"\000B\023Z\021genproto/otelde"
+    "mob\006proto3"
 };
 static ::absl::once_flag descriptor_table_demo_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_demo_2eproto = {
     false,
     false,
-    4395,
+    4410,
     descriptor_table_protodef_demo_2eproto,
     "demo.proto",
     &descriptor_table_demo_2eproto_once,
@@ -3802,7 +3808,8 @@ PROTOBUF_NDEBUG_INLINE Product::Impl_::Impl_(
         id_(arena, from.id_),
         name_(arena, from.name_),
         description_(arena, from.description_),
-        picture_(arena, from.picture_) {}
+        picture_(arena, from.picture_),
+        badge_(arena, from.badge_) {}
 
 Product::Product(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -3818,7 +3825,7 @@ Product::Product(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.price_usd_ = ((cached_has_bits & 0x00000010u) != 0)
+  _impl_.price_usd_ = ((cached_has_bits & 0x00000020u) != 0)
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.price_usd_)
                 : nullptr;
 
@@ -3832,7 +3839,8 @@ PROTOBUF_NDEBUG_INLINE Product::Impl_::Impl_(
         id_(arena),
         name_(arena),
         description_(arena),
-        picture_(arena) {}
+        picture_(arena),
+        badge_(arena) {}
 
 inline void Product::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -3850,6 +3858,7 @@ inline void Product::SharedDtor(MessageLite& self) {
   this_._impl_.name_.Destroy();
   this_._impl_.description_.Destroy();
   this_._impl_.picture_.Destroy();
+  this_._impl_.badge_.Destroy();
   delete this_._impl_.price_usd_;
   this_._impl_.~Impl_();
 }
@@ -3909,16 +3918,16 @@ Product::GetClassData() const {
   return Product_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 1, 59, 2>
+const ::_pbi::TcParseTable<3, 7, 1, 64, 2>
 Product::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(Product, _impl_._has_bits_),
     0, // no _extensions_
-    6, 56,  // max_field_number, fast_idx_mask
+    7, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967232,  // skipmap
+    4294967168,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    6,  // num_field_entries
+    7,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     Product_class_data_.base(),
@@ -3943,11 +3952,13 @@ Product::_table_ = {
      {34, 3, 0, PROTOBUF_FIELD_OFFSET(Product, _impl_.picture_)}},
     // .oteldemo.Money price_usd = 5;
     {::_pbi::TcParser::FastMtS1,
-     {42, 4, 0, PROTOBUF_FIELD_OFFSET(Product, _impl_.price_usd_)}},
+     {42, 5, 0, PROTOBUF_FIELD_OFFSET(Product, _impl_.price_usd_)}},
     // repeated string categories = 6;
     {::_pbi::TcParser::FastUR1,
      {50, 63, 0, PROTOBUF_FIELD_OFFSET(Product, _impl_.categories_)}},
-    {::_pbi::TcParser::MiniParse, {}},
+    // string badge = 7;
+    {::_pbi::TcParser::FastUS1,
+     {58, 4, 0, PROTOBUF_FIELD_OFFSET(Product, _impl_.badge_)}},
   }}, {{
     65535, 65535
   }}, {{
@@ -3964,23 +3975,27 @@ Product::_table_ = {
     {PROTOBUF_FIELD_OFFSET(Product, _impl_.picture_), _Internal::kHasBitsOffset + 3, 0,
     (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // .oteldemo.Money price_usd = 5;
-    {PROTOBUF_FIELD_OFFSET(Product, _impl_.price_usd_), _Internal::kHasBitsOffset + 4, 0,
+    {PROTOBUF_FIELD_OFFSET(Product, _impl_.price_usd_), _Internal::kHasBitsOffset + 5, 0,
     (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // repeated string categories = 6;
     {PROTOBUF_FIELD_OFFSET(Product, _impl_.categories_), -1, 0,
     (0 | ::_fl::kFcRepeated | ::_fl::kUtf8String | ::_fl::kRepSString)},
+    // string badge = 7;
+    {PROTOBUF_FIELD_OFFSET(Product, _impl_.badge_), _Internal::kHasBitsOffset + 4, 0,
+    (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::oteldemo::Money>()},
   }},
   {{
-    "\20\2\4\13\7\0\12\0"
+    "\20\2\4\13\7\0\12\5"
     "oteldemo.Product"
     "id"
     "name"
     "description"
     "picture"
     "categories"
+    "badge"
   }},
 };
 PROTOBUF_NOINLINE void Product::Clear() {
@@ -3992,7 +4007,7 @@ PROTOBUF_NOINLINE void Product::Clear() {
 
   _impl_.categories_.Clear();
   cached_has_bits = _impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     if ((cached_has_bits & 0x00000001u) != 0) {
       _impl_.id_.ClearNonDefaultToEmpty();
     }
@@ -4006,6 +4021,9 @@ PROTOBUF_NOINLINE void Product::Clear() {
       _impl_.picture_.ClearNonDefaultToEmpty();
     }
     if ((cached_has_bits & 0x00000010u) != 0) {
+      _impl_.badge_.ClearNonDefaultToEmpty();
+    }
+    if ((cached_has_bits & 0x00000020u) != 0) {
       ABSL_DCHECK(_impl_.price_usd_ != nullptr);
       _impl_.price_usd_->Clear();
     }
@@ -4071,7 +4089,7 @@ PROTOBUF_NOINLINE void Product::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // .oteldemo.Money price_usd = 5;
-  if ((cached_has_bits & 0x00000010u) != 0) {
+  if ((cached_has_bits & 0x00000020u) != 0) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         5, *this_._impl_.price_usd_, this_._impl_.price_usd_->GetCachedSize(), target,
         stream);
@@ -4083,6 +4101,16 @@ PROTOBUF_NOINLINE void Product::Clear() {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         s.data(), static_cast<int>(s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "oteldemo.Product.categories");
     target = stream->WriteString(6, s, target);
+  }
+
+  // string badge = 7;
+  if ((cached_has_bits & 0x00000010u) != 0) {
+    if (!this_._internal_badge().empty()) {
+      const ::std::string& _s = this_._internal_badge();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "oteldemo.Product.badge");
+      target = stream->WriteStringMaybeAliased(7, _s, target);
+    }
   }
 
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -4121,7 +4149,7 @@ PROTOBUF_NOINLINE void Product::Clear() {
     }
   }
   cached_has_bits = this_._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     // string id = 1;
     if ((cached_has_bits & 0x00000001u) != 0) {
       if (!this_._internal_id().empty()) {
@@ -4150,8 +4178,15 @@ PROTOBUF_NOINLINE void Product::Clear() {
                                         this_._internal_picture());
       }
     }
-    // .oteldemo.Money price_usd = 5;
+    // string badge = 7;
     if ((cached_has_bits & 0x00000010u) != 0) {
+      if (!this_._internal_badge().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_badge());
+      }
+    }
+    // .oteldemo.Money price_usd = 5;
+    if ((cached_has_bits & 0x00000020u) != 0) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.price_usd_);
     }
@@ -4171,7 +4206,7 @@ void Product::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google:
 
   _this->_internal_mutable_categories()->MergeFrom(from._internal_categories());
   cached_has_bits = from._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     if ((cached_has_bits & 0x00000001u) != 0) {
       if (!from._internal_id().empty()) {
         _this->_internal_set_id(from._internal_id());
@@ -4209,6 +4244,15 @@ void Product::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google:
       }
     }
     if ((cached_has_bits & 0x00000010u) != 0) {
+      if (!from._internal_badge().empty()) {
+        _this->_internal_set_badge(from._internal_badge());
+      } else {
+        if (_this->_impl_.badge_.IsDefault()) {
+          _this->_internal_set_badge("");
+        }
+      }
+    }
+    if ((cached_has_bits & 0x00000020u) != 0) {
       ABSL_DCHECK(from._impl_.price_usd_ != nullptr);
       if (_this->_impl_.price_usd_ == nullptr) {
         _this->_impl_.price_usd_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.price_usd_);
@@ -4240,6 +4284,7 @@ void Product::InternalSwap(Product* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.name_, &other->_impl_.name_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.description_, &other->_impl_.description_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.picture_, &other->_impl_.picture_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.badge_, &other->_impl_.badge_, arena);
   swap(_impl_.price_usd_, other->_impl_.price_usd_);
 }
 
