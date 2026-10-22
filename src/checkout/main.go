@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -350,6 +351,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 
 	if req.UserId == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if !strings.Contains(req.Email, "@") {
+		return nil, status.Error(codes.InvalidArgument, "email is invalid")
 	}
 
 	if req.GetAddress().GetCountry() == "United States" && !isValidUSZipCode(req.GetAddress().GetZipCode()) {
