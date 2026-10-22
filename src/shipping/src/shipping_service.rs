@@ -52,6 +52,11 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
             _ => "DHL",
         }
         .into(),
+        zone: match &req.address {
+            Some(addr) if addr.country == "United States" => "domestic",
+            _ => "international",
+        }
+        .into(),
     };
 
     info!(

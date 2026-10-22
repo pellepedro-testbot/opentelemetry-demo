@@ -38,6 +38,7 @@ pub struct Money {
 pub struct GetQuoteResponse {
     pub cost_usd: Option<Money>,
     pub carrier: String,
+    pub zone: String,
 }
 
 #[derive(Debug, Default)]
