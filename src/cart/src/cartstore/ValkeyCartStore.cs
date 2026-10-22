@@ -168,11 +168,15 @@ public class ValkeyCartStore : ICartStore
             {
                 cart.Items.Remove(item);
             }
+            else if (item.Quantity > 10)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Maximum 10 per product"));
+            }
 
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not RpcException)
         {
             throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
         }
