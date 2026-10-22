@@ -9,6 +9,8 @@ import ProductCatalogService from '../../services/ProductCatalog.service';
 import { IProductCart, IProductCartItem } from '../../types/Cart';
 import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMiddleware';
 
+const MAX_PER_PRODUCT = 'Maximum 10 per product';
+
 type TResponse = IProductCart | Empty | { error: string };
 
 const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) => {
@@ -41,6 +43,9 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
       try {
         await CartGateway.addItem(userId, item!);
       } catch (error) {
+        if ((error as ServiceError)?.details === MAX_PER_PRODUCT) {
+          return res.status(400).json({ error: MAX_PER_PRODUCT });
+        }
         // The cart service's input rejections are the client's error, not the server's
         if ((error as ServiceError)?.code === status.INVALID_ARGUMENT) {
           return res.status(400).json({ error: (error as ServiceError).details });

@@ -99,3 +99,7 @@ export const ProductPrice = styled(Text)`
     font-size: ${({ theme }) => theme.sizes.dLarge};
   }
 `;
+
+export const ErrorMessage = styled(Text)`
+  color: ${({ theme }) => theme.colors.otelRed};
+`;
