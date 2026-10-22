@@ -84,6 +84,9 @@ message Product {
     // Categories such as "clothing" or "kitchen" that can be used to look up
     // other related products.
     repeated string categories = 6;
+
+    // Badge shown on product cards, e.g. "Bestseller". Empty means no badge.
+    string badge = 7;
 }
 
 message ListProductsResponse {
