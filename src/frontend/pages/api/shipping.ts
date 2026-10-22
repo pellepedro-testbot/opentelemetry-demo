@@ -13,10 +13,20 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
   switch (method) {
     case 'GET': {
       const { itemList = '', currencyCode = 'USD', address = '' } = query;
+      if (!itemList) {
+        return res.status(400).json({ error: 'itemList is required' });
+      }
+      let items: CartItem[];
+      let shippingAddress: Address;
+      try {
+        items = JSON.parse(itemList as string) as CartItem[];
+        shippingAddress = JSON.parse(address as string) as Address;
+      } catch {
+        return res.status(400).json({ error: 'itemList and address must be JSON' });
+      }
       let quote;
       try {
-        quote = await ShippingGateway.getShippingCost(JSON.parse(itemList as string) as CartItem[],
-          JSON.parse(address as string) as Address);
+        quote = await ShippingGateway.getShippingCost(items, shippingAddress);
       } catch (error) {
         // Shipping's 400 (e.g. no items) is the client's error, not the server's
         const { status, body } = error as { status?: number; body?: string };
