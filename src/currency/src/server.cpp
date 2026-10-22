@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <chrono>
 #include <cerrno>
 #include <csignal>
@@ -167,6 +168,7 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     for (auto &code : currency_conversion) {
       response->add_currency_codes(code.first);
     }
+    std::sort(response->mutable_currency_codes()->begin(), response->mutable_currency_codes()->end());
 
     span->AddEvent("Currencies fetched, response sent back");
     span->SetStatus(StatusCode::kOk);
