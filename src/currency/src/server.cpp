@@ -227,13 +227,19 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     span->AddEvent("Processing currency conversion request");
 
     try {
+      string to_code = request->to_code();
+      if (currency_conversion.find(to_code) == currency_conversion.end()) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported to_code: " + to_code);
+      }
+
       // Do the conversion work
       Money from = request->from();
       string from_code = from.currency_code();
       double rate = currency_conversion[from_code];
       double one_euro = getDouble(from) / rate ;
 
-      string to_code = request->to_code();
       double to_rate = currency_conversion[to_code];
 
       double final = one_euro * to_rate;
