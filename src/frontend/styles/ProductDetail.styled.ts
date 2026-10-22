@@ -79,6 +79,19 @@ export const Description = styled(Text)`
   }
 `;
 
+export const Categories = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+export const Category = styled.span`
+  padding: 4px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.lightBorderGray};
+  border-radius: 16px;
+  color: ${({ theme }) => theme.colors.otelBlue};
+`;
+
 export const ProductPrice = styled(Text)`
   font-weight: ${({ theme }) => theme.fonts.bold};
 
