@@ -15,22 +15,23 @@ import * as S from './CartItems.styled';
 interface IProps {
   productList: IProductCartItem[];
   shouldShowPrice?: boolean;
+  country?: string;
 }
 
-const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
+const CartItems = ({ productList, shouldShowPrice = true, country = 'United States' }: IProps) => {
   const { updateItemQuantity } = useCart();
   const { selectedCurrency } = useCurrency();
   const address: Address = {
     streetAddress: '1600 Amphitheatre Parkway',
     city: 'Mountain View',
     state: 'CA',
-    country: 'United States',
+    country,
     zipCode: '94043',
   };
 
   const queryKey = ['shipping', productList, selectedCurrency, address];
   const queryFn = () => ApiGateway.getShippingCost(productList, selectedCurrency, address);
-  const queryOptions: UseQueryOptions<Money, Error> = {
+  const queryOptions: UseQueryOptions<Money & { carrier?: string }, Error> = {
     queryKey,
     queryFn,
   };
@@ -69,6 +70,10 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
           <S.DataRow>
             <span>Shipping</span>
             <ProductPrice price={shippingConst} />
+          </S.DataRow>
+          <S.DataRow>
+            <span>Carrier</span>
+            <span>{shippingConst.carrier}</span>
           </S.DataRow>
           <S.DataRow>
             <S.TotalText>Total</S.TotalText>

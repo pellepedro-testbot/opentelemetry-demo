@@ -25,9 +25,10 @@ export interface IFormData {
 
 interface IProps {
   onSubmit(formData: IFormData): void;
+  onCountryChange?(country: string): void;
 }
 
-const CheckoutForm = ({ onSubmit }: IProps) => {
+const CheckoutForm = ({ onSubmit, onCountryChange }: IProps) => {
   const [
     {
       email,
@@ -60,7 +61,8 @@ const CheckoutForm = ({ onSubmit }: IProps) => {
       ...formData,
       [e.target.name]: e.target.value,
     }));
-  }, []);
+    if (e.target.name === 'country') onCountryChange?.(e.target.value);
+  }, [onCountryChange]);
 
   return (
     <S.CheckoutForm

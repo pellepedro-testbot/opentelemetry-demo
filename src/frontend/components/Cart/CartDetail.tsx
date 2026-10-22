@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useRouter } from 'next/router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import CartItems from '../CartItems';
 import CheckoutForm from '../CheckoutForm';
 import { IFormData } from '../CheckoutForm/CheckoutForm';
@@ -21,6 +21,7 @@ const CartDetail = () => {
   } = useCart();
   const { selectedCurrency } = useCurrency();
   const { push } = useRouter();
+  const [country, setCountry] = useState('United States');
 
   const onPlaceOrder = useCallback(
     async ({
@@ -71,9 +72,9 @@ const CartDetail = () => {
             Empty Cart
           </S.EmptyCartButton>
         </S.Header>
-        <CartItems productList={items} />
+        <CartItems productList={items} country={country} />
       </div>
-      <CheckoutForm onSubmit={onPlaceOrder} />
+      <CheckoutForm onSubmit={onPlaceOrder} onCountryChange={setCountry} />
     </S.Container>
   );
 };
