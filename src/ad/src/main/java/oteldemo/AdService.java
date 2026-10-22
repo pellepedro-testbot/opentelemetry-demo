@@ -283,6 +283,7 @@ public final class AdService {
 
       // Pick from the distinct ads without replacement so no ad is served twice
       List<Ad> allAds = new ArrayList<>(new LinkedHashSet<>(adsMap.values()));
+      allAds.removeAll(adsMap.get("checkout"));
       for (int i = 0; i < MAX_ADS_TO_SERVE && !allAds.isEmpty(); i++) {
         ads.add(allAds.remove(random.nextInt(allAds.size())));
       }
@@ -344,6 +345,11 @@ public final class AdService {
             .setRedirectUrl("/product/L9ECAV7KIM")
             .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
             .build();
+    Ad freeReturns =
+        Ad.newBuilder()
+            .setRedirectUrl("/")
+            .setText("Free returns within 30 days")
+            .build();
     return ImmutableListMultimap.<String, Ad>builder()
         .putAll("binoculars", binoculars)
         .putAll("telescopes", explorerTelescope)
@@ -351,6 +357,7 @@ public final class AdService {
         .putAll("assembly", opticalTube)
         .putAll("travel", travelTelescope)
         .putAll("home", explorerTelescope)
+        .putAll("checkout", freeReturns)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }
