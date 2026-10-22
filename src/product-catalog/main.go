@@ -433,6 +433,10 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
 	span := trace.SpanFromContext(ctx)
 
+	if strings.TrimSpace(req.Query) == "" {
+		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
+
 	result, err := searchProductsFromDB(ctx, req.Query)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
