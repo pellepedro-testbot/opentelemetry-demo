@@ -3,6 +3,7 @@
 
 import { NextPage } from 'next';
 import Head from 'next/head';
+import Ad from '../components/Ad';
 import Layout from '../components/Layout';
 import ProductList from '../components/ProductList';
 import * as S from '../styles/Home.styled';
@@ -11,12 +12,18 @@ import ApiGateway from '../gateways/Api.gateway';
 import Banner from '../components/Banner';
 import { CypressFields } from '../utils/enums/CypressFields';
 import { useCurrency } from '../providers/Currency.provider';
+import { Context as AdContext } from '../providers/Ad.provider';
 
 const Home: NextPage = () => {
   const { selectedCurrency } = useCurrency();
   const { data: productList = [] } = useQuery({
     queryKey: ['products', selectedCurrency],
     queryFn: () => ApiGateway.listProducts(selectedCurrency),
+  });
+  const { data: adList = [] } = useQuery({
+    queryKey: ['ads', ['home']],
+    queryFn: () => ApiGateway.listAds(['home']),
+    refetchOnWindowFocus: false,
   });
 
   return (
@@ -38,6 +45,9 @@ const Home: NextPage = () => {
             </S.Content>
           </S.Row>
         </S.Container>
+        <AdContext.Provider value={{ adList, recommendedProductList: [] }}>
+          <Ad />
+        </AdContext.Provider>
       </S.Home>
     </Layout>
   );
