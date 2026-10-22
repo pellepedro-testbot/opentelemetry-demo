@@ -25,12 +25,17 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
 
     let itemct: u32 = req.items.iter().map(|item| item.quantity as u32).sum();
 
-    let quote = match create_quote_from_count(itemct).await {
+    let mut quote = match create_quote_from_count(itemct).await {
         Ok(q) => q,
         Err(e) => {
             return HttpResponse::InternalServerError().body(format!("Failed to get quote: {}", e));
         }
     };
+
+    if (10..=50).contains(&itemct) {
+        quote.dollars = 0;
+        quote.cents = 0;
+    }
 
     let reply = GetQuoteResponse {
         cost_usd: Some(Money {
