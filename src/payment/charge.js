@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 const { context, propagation, trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
+const { status: grpcStatus } = require('@grpc/grpc-js');
 const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions');
 const cardValidator = require('simple-card-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -76,7 +77,9 @@ module.exports.charge = async request => {
     });
 
     if (!valid) {
-      throw new Error('Credit card info is invalid.');
+      const err = new Error('Credit card info is invalid.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
     }
 
     if (!['visa', 'mastercard'].includes(cardType)) {
