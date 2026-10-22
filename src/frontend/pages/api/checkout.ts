@@ -15,6 +15,7 @@ import ProductCatalogService from '../../services/ProductCatalog.service';
 // the only signal available to tell a payment decline apart from an unrelated internal error.
 const PAYMENT_FAILURE_PREFIX = 'failed to charge card:';
 const INVALID_ZIP_CODE = 'Invalid zip code';
+const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
@@ -37,6 +38,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details === INVALID_ZIP_CODE) {
           return res.status(400).json({ error: INVALID_ZIP_CODE });
+        }
+
+        if (details.startsWith(UNSUPPORTED_COUNTRY_PREFIX)) {
+          return res.status(400).json({ error: details });
         }
 
         if (details.startsWith(PAYMENT_FAILURE_PREFIX)) {

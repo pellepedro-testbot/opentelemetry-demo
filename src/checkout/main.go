@@ -357,6 +357,12 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "email is invalid")
 	}
 
+	switch country := req.GetAddress().GetCountry(); country {
+	case "United States", "USA", "Canada":
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "We do not ship to %s", country)
+	}
+
 	if req.GetAddress().GetCountry() == "United States" && !isValidUSZipCode(req.GetAddress().GetZipCode()) {
 		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
 	}
