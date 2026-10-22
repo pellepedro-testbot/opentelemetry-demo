@@ -69,6 +69,10 @@ pub async fn ship_order(
     req: web::Json<ShipOrderRequest>,
     flag_provider: web::Data<dyn FeatureProvider>,
 ) -> impl Responder {
+    if req.address.is_none() {
+        return HttpResponse::BadRequest().body("address is required");
+    }
+
     let is_outside_us = req
         .address
         .as_ref()
@@ -164,8 +168,18 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ship_order_no_address() {
-        let order = call_ship_order(None, mock_provider(0)).await;
-        assert!(!order.tracking_id.is_empty());
+        let app =
+            test::init_service(App::new().app_data(mock_provider(0)).service(ship_order)).await;
+        let req = test::TestRequest::post()
+            .uri("/ship-order")
+            .insert_header(ContentType::json())
+            .set_json(&ShipOrderRequest {
+                address: None,
+                items: vec![],
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
     #[actix_web::test]
