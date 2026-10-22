@@ -6,7 +6,6 @@
 package oteldemo;
 
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import io.grpc.*;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.*;
@@ -282,9 +281,10 @@ public final class AdService {
     // put the span into context, so if any child span is started the parent will be set properly
     try (Scope ignored = span.makeCurrent()) {
 
-      Collection<Ad> allAds = adsMap.values();
-      for (int i = 0; i < MAX_ADS_TO_SERVE; i++) {
-        ads.add(Iterables.get(allAds, random.nextInt(allAds.size())));
+      // Pick from the distinct ads without replacement so no ad is served twice
+      List<Ad> allAds = new ArrayList<>(new LinkedHashSet<>(adsMap.values()));
+      for (int i = 0; i < MAX_ADS_TO_SERVE && !allAds.isEmpty(); i++) {
+        ads.add(allAds.remove(random.nextInt(allAds.size())));
       }
       span.setAttribute("demo.ad.count", ads.size());
       adsServedCounter.labelValues("random").inc(ads.size());
