@@ -34,6 +34,11 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
             units: quote.dollars,
             nanos: quote.cents * NANOS_MULTIPLE,
         }),
+        carrier: match &req.address {
+            Some(addr) if addr.country == "United States" => "USPS",
+            _ => "DHL",
+        }
+        .into(),
     };
 
     info!(
