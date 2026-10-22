@@ -19,6 +19,10 @@ const NANOS_MULTIPLE: u32 = 10000000u32;
 
 #[post("/get-quote")]
 pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
+    if req.items.is_empty() {
+        return HttpResponse::BadRequest().body("items must not be empty");
+    }
+
     let itemct: u32 = req.items.iter().map(|item| item.quantity as u32).sum();
 
     let quote = match create_quote_from_count(itemct).await {
