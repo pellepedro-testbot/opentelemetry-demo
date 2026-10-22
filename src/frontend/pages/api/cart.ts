@@ -15,6 +15,9 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
   switch (method) {
     case 'GET': {
       const { sessionId = '', currencyCode = '' } = query;
+      if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId is required' });
+      }
       const { userId, items } = await CartGateway.getCart(sessionId as string);
 
       const productList: IProductCartItem[] = await Promise.all(
