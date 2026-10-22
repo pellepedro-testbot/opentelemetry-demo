@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import type { ServiceError } from '@grpc/grpc-js';
+import { status, type ServiceError } from '@grpc/grpc-js';
 import { context, Exception, SpanStatusCode, trace } from '@opentelemetry/api';
 import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMiddleware';
 import logger from '../../utils/telemetry/logger';
@@ -41,6 +41,12 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
               code: 'PAYMENT_FAILED',
             });
           }
+        }
+
+        // Rejections of the order itself (bad input, empty cart) are the client's error
+        const code = (error as ServiceError)?.code;
+        if (code === status.INVALID_ARGUMENT || code === status.FAILED_PRECONDITION) {
+          return res.status(400).json({ error: details });
         }
 
         logger.error({ err: error }, 'Checkout failed to place order');
