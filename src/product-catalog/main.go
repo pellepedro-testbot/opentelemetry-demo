@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -274,6 +275,21 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 	return products, nil
 }
 
+func searchProductsByCategoryFromDB(ctx context.Context, category string) ([]*pb.Product, error) {
+	products, err := loadProductsFromDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*pb.Product
+	for _, product := range products {
+		if slices.ContainsFunc(product.Categories, func(c string) bool { return strings.EqualFold(c, category) }) {
+			result = append(result, product)
+		}
+	}
+	return result, nil
+}
+
 func getProductFromDB(ctx context.Context, productID string) (*pb.Product, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database connection not initialized")
@@ -437,7 +453,13 @@ func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProdu
 		return nil, status.Error(codes.InvalidArgument, "query is required")
 	}
 
-	result, err := searchProductsFromDB(ctx, req.Query)
+	var result []*pb.Product
+	var err error
+	if category, ok := strings.CutPrefix(strings.TrimSpace(req.Query), "category:"); ok {
+		result, err = searchProductsByCategoryFromDB(ctx, strings.TrimSpace(category))
+	} else {
+		result, err = searchProductsFromDB(ctx, req.Query)
+	}
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to search products: %v", err)
