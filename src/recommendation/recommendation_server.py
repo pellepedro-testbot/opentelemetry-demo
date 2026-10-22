@@ -109,8 +109,14 @@ def get_product_list(request_product_ids):
         if not request_product_ids_str:
             accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
             filtered_products = [x for x in filtered_products if x in accessory_ids]
-        # Otherwise prefer products sharing a category with the input products
+        # Otherwise keep only products cheaper than every input product,
+        # preferring those sharing a category with the input products
         else:
+            prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
+            requested_prices = [prices[x] for x in request_product_ids if x in prices]
+            if requested_prices:
+                cheapest = min(requested_prices)
+                filtered_products = [x for x in filtered_products if x in prices and prices[x] < cheapest]
             requested_categories = {c for x in cat_response.products if x.id in request_product_ids for c in x.categories}
             related_ids = {x.id for x in cat_response.products if requested_categories.intersection(x.categories)}
             filtered_products.sort(key=lambda x: x not in related_ids)
