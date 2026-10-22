@@ -105,8 +105,8 @@ def get_product_list(request_product_ids):
 
         # Sample list of indices to return
         indices = random.sample(range(num_products), num_return)
-        # Fetch product ids from indices
-        prod_list = [filtered_products[i] for i in indices]
+        # Fetch product ids from indices, sorted ascending
+        prod_list = sorted(filtered_products[i] for i in indices)
 
         span.set_attribute("demo.product.filtered.list", prod_list)
 
