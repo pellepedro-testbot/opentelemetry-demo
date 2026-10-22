@@ -113,7 +113,7 @@ const ProductDetail: NextPage = () => {
               {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
             </S.Details>
           </S.Container>
-          <Recommendations />
+          <Recommendations title="Cheaper alternatives" />
         </S.ProductDetail>
         <Ad />
       </Layout>
