@@ -17,6 +17,7 @@ const PAYMENT_FAILURE_PREFIX = 'failed to charge card:';
 const INVALID_ZIP_CODE = 'Invalid zip code';
 const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
+const INVALID_CVV = 'Invalid CVV';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -49,6 +50,11 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
             if (details.includes(CARD_DECLINED)) {
               logger.info({ details }, 'Checkout card declined');
               return res.status(422).json({ error: CARD_DECLINED, code: 'PAYMENT_FAILED' });
+            }
+
+            if (details.includes(INVALID_CVV)) {
+              logger.info({ details }, 'Checkout invalid CVV');
+              return res.status(422).json({ error: INVALID_CVV, code: 'PAYMENT_FAILED' });
             }
 
             logger.info({ details }, 'Checkout payment declined');
