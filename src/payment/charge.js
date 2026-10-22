@@ -90,6 +90,13 @@ module.exports.charge = async request => {
       throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
     }
 
+    // proto3 does not send a zero CVV, so 000 arrives unset
+    if (!cvv) {
+      const err = new Error('Invalid CVV');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     if (number.replaceAll('-', '') === '4000000000000002') {
       throw new Error('Your card was declined.');
     }
