@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextApiHandler } from 'next';
+import type { ServiceError } from '@grpc/grpc-js';
 import CartGateway from '../../gateways/rpc/Cart.gateway';
 import { AddItemRequest, Empty } from '../../protos/demo';
 import ProductCatalogService from '../../services/ProductCatalog.service';
 import { IProductCart, IProductCartItem } from '../../types/Cart';
 import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMiddleware';
+
+const MAX_PER_PRODUCT = 'Maximum 10 per product';
 
 type TResponse = IProductCart | Empty | { error: string };
 
@@ -37,7 +40,14 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
     case 'POST': {
       const { userId, item } = body as AddItemRequest;
 
-      await CartGateway.addItem(userId, item!);
+      try {
+        await CartGateway.addItem(userId, item!);
+      } catch (error) {
+        if ((error as ServiceError)?.details === MAX_PER_PRODUCT) {
+          return res.status(400).json({ error: MAX_PER_PRODUCT });
+        }
+        throw error;
+      }
       const cart = await CartGateway.getCart(userId);
 
       return res.status(200).json(cart);
