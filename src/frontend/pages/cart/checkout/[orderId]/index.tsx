@@ -43,7 +43,7 @@ const Checkout: NextPage = () => {
   return (
     <AdProvider
       productIds={items.map(({ item }) => item?.productId || '')}
-      contextKeys={[...new Set(items.flatMap(({ item }) => item.product.categories))]}
+      contextKeys={['checkout']}
     >
       <Head>
         <title>Otel Demo - Checkout</title>
