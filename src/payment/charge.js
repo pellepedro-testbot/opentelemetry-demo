@@ -87,6 +87,10 @@ module.exports.charge = async request => {
       throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
     }
 
+    if (number.replace(/\D/g, '') === '4000000000000002') {
+      throw new Error('Your card was declined.');
+    }
+
     // Do not charge synthetic requests.
     if (syntheticRequest) {
       span.setAttribute('demo.payment.charged', false);
