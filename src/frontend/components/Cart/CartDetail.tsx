@@ -21,6 +21,7 @@ const CartDetail = () => {
   } = useCart();
   const { selectedCurrency } = useCurrency();
   const { push } = useRouter();
+  const [error, setError] = useState('');
   const [country, setCountry] = useState('United States');
 
   const onPlaceOrder = useCallback(
@@ -36,24 +37,31 @@ const CartDetail = () => {
       creditCardExpirationYear,
       creditCardNumber,
     }: IFormData) => {
-      const order = await placeOrder({
-        userId,
-        email,
-        address: {
-          streetAddress,
-          state,
-          country,
-          city,
-          zipCode,
-        },
-        userCurrency: selectedCurrency,
-        creditCard: {
-          creditCardCvv,
-          creditCardExpirationMonth,
-          creditCardExpirationYear,
-          creditCardNumber,
-        },
-      });
+      setError('');
+      let order;
+      try {
+        order = await placeOrder({
+          userId,
+          email,
+          address: {
+            streetAddress,
+            state,
+            country,
+            city,
+            zipCode,
+          },
+          userCurrency: selectedCurrency,
+          creditCard: {
+            creditCardCvv,
+            creditCardExpirationMonth,
+            creditCardExpirationYear,
+            creditCardNumber,
+          },
+        });
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
 
       push({
         pathname: `/cart/checkout/${order.orderId}`,
@@ -74,6 +82,7 @@ const CartDetail = () => {
         </S.Header>
         <CartItems productList={items} country={country} />
       </div>
+      {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
       <CheckoutForm onSubmit={onPlaceOrder} onCountryChange={setCountry} />
     </S.Container>
   );
