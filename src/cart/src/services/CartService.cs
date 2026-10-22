@@ -13,7 +13,6 @@ namespace cart.services;
 public class CartService : Oteldemo.CartService.CartServiceBase
 {
     private static readonly Empty Empty = new();
-    private readonly Random random = new Random();
     private readonly ICartStore _badCartStore;
     private readonly ICartStore _cartStore;
     private readonly IFeatureClient _featureFlagHelper;
@@ -28,9 +27,9 @@ public class CartService : Oteldemo.CartService.CartServiceBase
     public override async Task<Empty> AddItem(AddItemRequest request, ServerCallContext context)
     {
         var activity = Activity.Current;
-        activity?.SetTag("app.user.id", request.UserId);
-        activity?.SetTag("app.product.id", request.Item.ProductId);
-        activity?.SetTag("app.product.quantity", request.Item.Quantity);
+        activity?.SetTag("user.id", request.UserId);
+        activity?.SetTag("demo.product.id", request.Item.ProductId);
+        activity?.SetTag("demo.product.quantity", request.Item.Quantity);
 
         try
         {
@@ -49,18 +48,22 @@ public class CartService : Oteldemo.CartService.CartServiceBase
     public override async Task<Cart> GetCart(GetCartRequest request, ServerCallContext context)
     {
         var activity = Activity.Current;
-        activity?.SetTag("app.user.id", request.UserId);
+        activity?.SetTag("user.id", request.UserId);
         activity?.AddEvent(new("Fetch cart"));
 
         try
         {
-            var cart = await _cartStore.GetCartAsync(request.UserId);
+            var cartFailureRate = await _featureFlagHelper.GetDoubleValueAsync("cartFailure", 0);
+            var store = cartFailureRate > 0 && Random.Shared.NextDouble() < cartFailureRate
+                ? _badCartStore
+                : _cartStore;
+            var cart = await store.GetCartAsync(request.UserId);
             var totalCart = 0;
             foreach (var item in cart.Items)
             {
                 totalCart += item.Quantity;
             }
-            activity?.SetTag("app.cart.items.count", totalCart);
+            activity?.SetTag("demo.cart.items.count", totalCart);
 
             return cart;
         }
@@ -75,19 +78,12 @@ public class CartService : Oteldemo.CartService.CartServiceBase
     public override async Task<Empty> EmptyCart(EmptyCartRequest request, ServerCallContext context)
     {
         var activity = Activity.Current;
-        activity?.SetTag("app.user.id", request.UserId);
+        activity?.SetTag("user.id", request.UserId);
         activity?.AddEvent(new("Empty cart"));
 
         try
         {
-            if (await _featureFlagHelper.GetBooleanValueAsync("cartFailure", false))
-            {
-                await _badCartStore.EmptyCartAsync(request.UserId);
-            }
-            else
-            {
-                await _cartStore.EmptyCartAsync(request.UserId);
-            }
+            await _cartStore.EmptyCartAsync(request.UserId);
         }
         catch (RpcException ex)
         {
