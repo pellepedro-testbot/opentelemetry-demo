@@ -74,6 +74,7 @@ def get_product_list(request_product_ids):
         request_product_ids_str = ''.join(request_product_ids)
         request_product_ids = request_product_ids_str.split(',')
 
+        cat_response = None
         # Feature flag scenario - Cache Leak
         if check_feature_flag("recommendationCacheFailure"):
             span.set_attribute("demo.feature_flag.recommendation_cache", True)
@@ -100,19 +101,25 @@ def get_product_list(request_product_ids):
         # Create a filtered list of products excluding the products received as input
         filtered_products = list(set(product_ids) - set(request_product_ids))
 
+        random.shuffle(filtered_products)
+
+        if cat_response is None:
+            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
         # With no input products, recommend only accessories
         if not request_product_ids_str:
-            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
             accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
             filtered_products = [x for x in filtered_products if x in accessory_ids]
+        # Otherwise prefer products sharing a category with the input products
+        else:
+            requested_categories = {c for x in cat_response.products if x.id in request_product_ids for c in x.categories}
+            related_ids = {x.id for x in cat_response.products if requested_categories.intersection(x.categories)}
+            filtered_products.sort(key=lambda x: x not in related_ids)
         num_products = len(filtered_products)
         span.set_attribute("demo.product.filtered.count", num_products)
         num_return = min(max_responses, num_products)
 
-        # Sample list of indices to return
-        indices = random.sample(range(num_products), num_return)
-        # Fetch product ids from indices, sorted ascending
-        prod_list = sorted(filtered_products[i] for i in indices)
+        # Take the first products from the shuffled list, sorted ascending
+        prod_list = sorted(filtered_products[:num_return])
 
         span.set_attribute("demo.product.filtered.list", prod_list)
 
