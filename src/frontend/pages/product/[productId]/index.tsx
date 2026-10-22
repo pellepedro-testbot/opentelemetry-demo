@@ -65,7 +65,7 @@ const ProductDetail: NextPage = () => {
       contextKeys={[...new Set(categories)]}
     >
       <Head>
-        <title>Otel Demo - Product</title>
+        <title>{name ? `${name} - Otel Demo` : 'Otel Demo - Product'}</title>
       </Head>
       <Layout>
         <S.ProductDetail data-cy={CypressFields.ProductDetail}>
@@ -79,6 +79,11 @@ const ProductDetail: NextPage = () => {
             <S.Details $fullWidth={!picture}>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
+              <S.Categories>
+                {categories?.map(category => (
+                  <S.Category key={category}>{category}</S.Category>
+                ))}
+              </S.Categories>
               <S.ProductPrice>
                 <ProductPrice price={priceUsd} />
               </S.ProductPrice>

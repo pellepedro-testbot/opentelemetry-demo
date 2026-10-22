@@ -232,7 +232,7 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		ORDER BY p.id
+		ORDER BY p.name
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)
@@ -341,6 +341,11 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		}
 	}
 
+	var badge string
+	if id == "66VCHSJNUP" {
+		badge = "Bestseller"
+	}
+
 	return &pb.Product{
 		Id:          id,
 		Name:        name,
@@ -352,6 +357,7 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 			Nanos:        nanos,
 		},
 		Categories: categories,
+		Badge:      badge,
 	}
 }
 
@@ -426,6 +432,10 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 
 func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
 	span := trace.SpanFromContext(ctx)
+
+	if strings.TrimSpace(req.Query) == "" {
+		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
 
 	result, err := searchProductsFromDB(ctx, req.Query)
 	if err != nil {
