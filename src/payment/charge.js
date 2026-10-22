@@ -87,7 +87,9 @@ module.exports.charge = async request => {
     }
 
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
-      throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+      const err = new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+      err.code = grpcStatus.FAILED_PRECONDITION;
+      throw err;
     }
 
     // proto3 does not send a zero CVV, so 000 arrives unset
