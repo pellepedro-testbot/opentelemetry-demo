@@ -64,7 +64,7 @@ const CartDetail = () => {
 
       push({
         pathname: `/cart/checkout/${order.orderId}`,
-        query: { order: JSON.stringify(order) },
+        query: { order: JSON.stringify(order), email },
       });
     },
     [placeOrder, push, selectedCurrency]
