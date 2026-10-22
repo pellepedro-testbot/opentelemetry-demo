@@ -99,6 +99,12 @@ def get_product_list(request_product_ids):
 
         # Create a filtered list of products excluding the products received as input
         filtered_products = list(set(product_ids) - set(request_product_ids))
+
+        # With no input products, recommend only accessories
+        if not request_product_ids_str:
+            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
+            accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
+            filtered_products = [x for x in filtered_products if x in accessory_ids]
         num_products = len(filtered_products)
         span.set_attribute("demo.product.filtered.count", num_products)
         num_return = min(max_responses, num_products)

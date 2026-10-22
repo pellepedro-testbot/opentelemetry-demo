@@ -27,7 +27,7 @@ const Cart: NextPage = () => {
       <Layout>
         <S.Cart>
           {(!!items.length && <CartDetail />) || <EmptyCart />}
-          <Recommendations />
+          <Recommendations title={items.length ? undefined : 'Popular Accessories'} />
         </S.Cart>
       </Layout>
     </AdProvider>
