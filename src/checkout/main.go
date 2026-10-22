@@ -303,6 +303,18 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
+func isValidUSZipCode(zip string) bool {
+	if len(zip) != 5 {
+		return false
+	}
+	for _, c := range zip {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
@@ -338,6 +350,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 
 	if req.UserId == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if req.GetAddress().GetCountry() == "United States" && !isValidUSZipCode(req.GetAddress().GetZipCode()) {
+		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
 	}
 
 	orderID, err := uuid.NewUUID()
