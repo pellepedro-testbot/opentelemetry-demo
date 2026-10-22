@@ -38,7 +38,10 @@ const ShippingGateway = () => ({
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP error: ${response.status} ${response.statusText} - ${errorText}`);
+      throw Object.assign(new Error(`HTTP error: ${response.status} ${response.statusText} - ${errorText}`), {
+        status: response.status,
+        body: errorText,
+      });
     }
 
     const data = await response.json();

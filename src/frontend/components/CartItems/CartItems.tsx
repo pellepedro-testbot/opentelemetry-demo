@@ -34,6 +34,8 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
   const queryOptions: UseQueryOptions<Money & { carrier?: string }, Error> = {
     queryKey,
     queryFn,
+    // An empty cart has nothing to ship; shipping refuses an empty item list
+    enabled: productList.length > 0,
   };
   const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 } } = useQuery(queryOptions);
 
