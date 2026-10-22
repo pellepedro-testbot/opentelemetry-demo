@@ -61,10 +61,10 @@ const Apis = () => ({
     });
   },
 
-  listProducts(currencyCode: string) {
+  listProducts(currencyCode: string, category = '') {
     return request<Product[]>({
       url: `${basePath}/products`,
-      queryParams: { currencyCode },
+      queryParams: category ? { currencyCode, category } : { currencyCode },
     });
   },
   getProduct(productId: string, currencyCode: string) {

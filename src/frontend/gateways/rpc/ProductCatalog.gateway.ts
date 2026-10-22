@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ChannelCredentials } from '@grpc/grpc-js';
-import { ListProductsResponse, Product, ProductCatalogServiceClient } from '../../protos/demo';
+import { ListProductsResponse, Product, ProductCatalogServiceClient, SearchProductsResponse } from '../../protos/demo';
 
 const { PRODUCT_CATALOG_ADDR = '' } = process.env;
 
@@ -17,6 +17,11 @@ const ProductCatalogGateway = () => ({
   getProduct(id: string) {
     return new Promise<Product>((resolve, reject) =>
       client.getProduct({ id }, (error, response) => (error ? reject(error) : resolve(response)))
+    );
+  },
+  searchProducts(query: string) {
+    return new Promise<SearchProductsResponse>((resolve, reject) =>
+      client.searchProducts({ query }, (error, response) => (error ? reject(error) : resolve(response)))
     );
   },
 });
