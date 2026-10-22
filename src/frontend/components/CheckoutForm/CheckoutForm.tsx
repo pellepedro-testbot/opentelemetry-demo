@@ -25,10 +25,11 @@ export interface IFormData {
 
 interface IProps {
   onSubmit(formData: IFormData): void;
+  isPlacingOrder?: boolean;
   onCountryChange?(country: string): void;
 }
 
-const CheckoutForm = ({ onSubmit, onCountryChange }: IProps) => {
+const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IProps) => {
   const [
     {
       email,
@@ -195,7 +196,9 @@ const CheckoutForm = ({ onSubmit, onCountryChange }: IProps) => {
         <Link href="/">
           <S.CartButton $type="secondary">Continue Shopping</S.CartButton>
         </Link>
-        <S.CartButton data-cy={CypressFields.CheckoutPlaceOrder} type="submit">Place Order</S.CartButton>
+        <S.CartButton data-cy={CypressFields.CheckoutPlaceOrder} type="submit" disabled={isPlacingOrder}>
+          {isPlacingOrder ? 'Placing order...' : 'Place Order'}
+        </S.CartButton>
       </S.SubmitContainer>
     </S.CheckoutForm>
   );

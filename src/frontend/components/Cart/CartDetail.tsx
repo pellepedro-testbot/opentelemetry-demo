@@ -23,6 +23,7 @@ const CartDetail = () => {
   const { push } = useRouter();
   const [error, setError] = useState('');
   const [country, setCountry] = useState('United States');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const onPlaceOrder = useCallback(
     async ({
@@ -38,6 +39,7 @@ const CartDetail = () => {
       creditCardNumber,
     }: IFormData) => {
       setError('');
+      setIsPlacingOrder(true);
       let order;
       try {
         order = await placeOrder({
@@ -60,6 +62,7 @@ const CartDetail = () => {
         });
       } catch (e) {
         setError((e as Error).message);
+        setIsPlacingOrder(false);
         return;
       }
 
@@ -83,7 +86,7 @@ const CartDetail = () => {
         <CartItems productList={items} country={country} />
       </div>
       {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
-      <CheckoutForm onSubmit={onPlaceOrder} onCountryChange={setCountry} />
+      <CheckoutForm onSubmit={onPlaceOrder} isPlacingOrder={isPlacingOrder} onCountryChange={setCountry} />
     </S.Container>
   );
 };
