@@ -253,13 +253,13 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 		return nil, fmt.Errorf("database connection not initialized")
 	}
 
-	// Query products matching search query in name or description
+	// Query products matching search query in name, description or category
 	searchPattern := "%" + strings.ToLower(query) + "%"
 	rows, err := db.QueryContext(ctx, `
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		WHERE LOWER(p.name) LIKE $1 OR LOWER(p.description) LIKE $1
+		WHERE LOWER(p.name) LIKE $1 OR LOWER(p.description) LIKE $1 OR LOWER(p.categories) LIKE $1
 		ORDER BY p.id
 	`, searchPattern)
 	if err != nil {
