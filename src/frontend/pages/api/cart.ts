@@ -8,12 +8,15 @@ import ProductCatalogService from '../../services/ProductCatalog.service';
 import { IProductCart, IProductCartItem } from '../../types/Cart';
 import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMiddleware';
 
-type TResponse = IProductCart | Empty;
+type TResponse = IProductCart | Empty | { error: string };
 
 const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) => {
   switch (method) {
     case 'GET': {
       const { sessionId = '', currencyCode = '' } = query;
+      if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId is required' });
+      }
       const { userId, items } = await CartGateway.getCart(sessionId as string);
 
       const productList: IProductCartItem[] = await Promise.all(
