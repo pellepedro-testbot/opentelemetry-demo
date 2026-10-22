@@ -45,6 +45,15 @@ endif
 SEMCONVGEN_VERSION=0.11.0
 YAMLLINT_VERSION=1.30.0
 
+# Changelog fragment tooling (chloggen). Pinned to match the OpenTelemetry
+# Collector. Invoked from the repo root, which has no go.mod, so `go run` runs
+# the pinned tool without touching any local Go module.
+CHLOGGEN_VERSION=0.30.0
+CHLOGGEN_CONFIG=.chloggen/config.yaml
+CHLOGGEN=go run go.opentelemetry.io/build-tools/chloggen@v$(CHLOGGEN_VERSION)
+# Default changelog fragment filename is derived from the current branch name.
+FILENAME?=$(shell git branch --show-current | sed 's/[^a-zA-Z0-9]/_/g')
+
 .PHONY: all
 all: install-tools markdownlint misspell yamllint
 
@@ -87,6 +96,7 @@ checklicense:	$(ADDLICENSE)
 		-ignore node_modules/** \
 		-ignore .expo/** \
 		-ignore Pods/** \
+		-ignore ".chloggen/**" \
 		-ignore **/extras/** \
 		-ignore **/vendor/** \
 		-ignore **/.venv/** \
@@ -105,6 +115,7 @@ addlicense:	$(ADDLICENSE)
 		-ignore node_modules/** \
 		-ignore .expo/** \
 		-ignore Pods/** \
+		-ignore ".chloggen/**" \
 		-ignore **/extras/** \
 		-ignore **/vendor/** \
 		-ignore **/.venv/** \
@@ -123,13 +134,37 @@ checklinks:
 
 # Run all checks in order of speed / likely failure.
 .PHONY: check
-check: misspell markdownlint checklicense checklinks
+check: misspell markdownlint checklicense checklinks chlog-validate
 	@echo "All checks complete"
 
 # Attempt to fix issues / regenerate tables.
 .PHONY: fix
 fix: misspell-correction
 	@echo "All autofixes complete"
+
+# Changelog fragments (chloggen). See CONTRIBUTING.md for the workflow.
+# Create a new fragment for the current branch (edit the generated file after):
+#   make chlog-new
+.PHONY: chlog-new
+chlog-new:
+	$(CHLOGGEN) new --config $(CHLOGGEN_CONFIG) --filename $(FILENAME)
+
+# Validate that every fragment in .chloggen/ is well-formed. Run in CI.
+.PHONY: chlog-validate
+chlog-validate:
+	$(CHLOGGEN) validate --config $(CHLOGGEN_CONFIG)
+
+# Preview the CHANGELOG.md that the current fragments would produce.
+.PHONY: chlog-preview
+chlog-preview:
+	$(CHLOGGEN) update --config $(CHLOGGEN_CONFIG) --dry
+
+# Fold all fragments into CHANGELOG.md under the given version and delete them.
+# Run during the release process:
+#   make chlog-update VERSION=1.13.0
+.PHONY: chlog-update
+chlog-update:
+	$(CHLOGGEN) update --config $(CHLOGGEN_CONFIG) --version $(VERSION)
 
 .PHONY: install-tools
 install-tools: $(MISSPELL) $(ADDLICENSE)
@@ -145,6 +180,13 @@ ifneq ($(strip $(service)),)
 else
 	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) build
 endif
+
+# Build all services including the agentic layer (agent, mcp, chatbot).
+# Used by the agentic CI workflow so those images are present when
+# make run-telemetry-tests-agentic loads them from the artifact.
+.PHONY: build-agentic
+build-agentic:
+	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) $(DOCKER_COMPOSE_FILES_AGENT) build
 
 .PHONY: build-and-push
 build-and-push:
@@ -184,14 +226,9 @@ clean-images:
         false; \
     fi
 
-.PHONY: run-tests
-run-tests:
+.PHONY: run-frontend-tests
+run-frontend-tests:
 	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) $(DOCKER_COMPOSE_FILES_TESTS) run frontendTests
-	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) $(DOCKER_COMPOSE_FILES_TESTS) run traceBasedTests
-
-.PHONY: run-tracetesting
-run-tracetesting:
-	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) $(DOCKER_COMPOSE_FILES_TESTS) run traceBasedTests ${SERVICES_TO_TEST}
 
 .PHONY: run-telemetry-tests
 run-telemetry-tests: start
@@ -224,6 +261,25 @@ run-telemetry-tests-minimal: start-minimal
 		-e POLL_TIMEOUT=$${POLL_TIMEOUT:-180} \
 		-e WARMUP_PROBE_ENABLED=$${WARMUP_PROBE_ENABLED:-true} \
 		-e WARMUP_PROBE_CHECKOUTS=$${WARMUP_PROBE_CHECKOUTS:-5} \
+		-e WARMUP_PROBE_TIMEOUT=$${WARMUP_PROBE_TIMEOUT:-120} \
+		opentelemetry-demo-telemetry-tests; \
+	rc=$$?; \
+	$(MAKE) stop; \
+	exit $$rc
+
+.PHONY: run-telemetry-tests-agentic
+run-telemetry-tests-agentic:
+	$(DOCKER_COMPOSE_CMD) $(DOCKER_COMPOSE_ENV) $(DOCKER_COMPOSE_FILES) $(DOCKER_COMPOSE_FILES_AGENT) up --force-recreate --remove-orphans --detach
+	$(DOCKER_CMD) build -t opentelemetry-demo-telemetry-tests ./test/telemetry
+	@touch .env.override
+	@set +e; \
+	$(DOCKER_CMD) run --rm --network opentelemetry-demo \
+		--env-file .env --env-file .env.override \
+		-e TEST_SCOPE=agentic \
+		-e WARMUP_SECONDS=$${WARMUP_SECONDS:-240} \
+		-e POLL_TIMEOUT=$${POLL_TIMEOUT:-180} \
+		-e WARMUP_PROBE_ENABLED=false \
+		-e WARMUP_PROBE_CHECKOUTS=0 \
 		-e WARMUP_PROBE_TIMEOUT=$${WARMUP_PROBE_TIMEOUT:-120} \
 		opentelemetry-demo-telemetry-tests; \
 	rc=$$?; \

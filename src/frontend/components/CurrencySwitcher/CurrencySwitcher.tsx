@@ -22,7 +22,7 @@ const CurrencySwitcher = () => {
           value={selectedCurrency}
           data-cy={CypressFields.CurrencySwitcher}
         >
-          {currencyCodeList.map(currencyCode => (
+          {[...currencyCodeList].sort().map(currencyCode => (
             <option key={currencyCode} value={currencyCode}>
               {currencyCode}
             </option>
