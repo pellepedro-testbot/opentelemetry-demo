@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import org.apache.logging.log4j.Level;
@@ -208,8 +209,12 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          // Look up each distinct context key once so repeated keys do not duplicate ads
-          for (String contextKey : new LinkedHashSet<>(req.getContextKeysList())) {
+          // Look up each distinct context key once, ignoring case, so repeated keys do not duplicate ads
+          LinkedHashSet<String> contextKeys = new LinkedHashSet<>();
+          for (String contextKey : req.getContextKeysList()) {
+            contextKeys.add(contextKey.toLowerCase(Locale.ROOT));
+          }
+          for (String contextKey : contextKeys) {
             Collection<Ad> ads = service.getAdsByCategory(contextKey);
             allAds.addAll(ads);
           }
