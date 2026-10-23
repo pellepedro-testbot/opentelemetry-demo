@@ -10,15 +10,26 @@ import ProductCatalogService from '../../services/ProductCatalog.service';
 
 type TResponse = Product[] | Empty | { error: string };
 
+// Upper bound for maxResults; recommendation enforces the same limit
+const MAX_RESULTS_LIMIT = 100;
+
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
-      const { productIds = [], sessionId = '', currencyCode = '' } = query;
+      const { productIds = [], sessionId = '', currencyCode = '', maxResults = '' } = query;
+      if (maxResults !== '' && !/^\d+$/.test(maxResults as string)) {
+        return res.status(400).json({ error: 'maxResults must be a non-negative integer' });
+      }
+      const max = Number(maxResults);
+      if (max > MAX_RESULTS_LIMIT) {
+        return res.status(400).json({ error: `maxResults must not exceed ${MAX_RESULTS_LIMIT}` });
+      }
       let productList: string[];
       try {
         ({ productIds: productList } = await RecommendationsGateway.listRecommendations(
           sessionId as string,
-          productIds as string[]
+          productIds as string[],
+          max
         ));
       } catch (error) {
         // Ids the recommendation service refuses are the client's error, not the server's
@@ -28,7 +39,7 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
         throw error;
       }
       const recommendedProductList = await Promise.all(
-        productList.slice(0, 4).map(id => ProductCatalogService.getProduct(id, currencyCode as string))
+        productList.slice(0, max || 4).map(id => ProductCatalogService.getProduct(id, currencyCode as string))
       );
 
       return res.status(200).json(recommendedProductList);

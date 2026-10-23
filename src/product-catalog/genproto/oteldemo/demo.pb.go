@@ -325,9 +325,11 @@ func (*Empty) Descriptor() ([]byte, []int) {
 }
 
 type ListRecommendationsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ProductIds    []string               `protobuf:"bytes,2,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	UserId     string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ProductIds []string               `protobuf:"bytes,2,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
+	// Maximum number of product ids to return. 0 (unset) keeps the default of 5.
+	MaxResults    int32 `protobuf:"varint,3,opt,name=max_results,json=maxResults,proto3" json:"max_results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -374,6 +376,13 @@ func (x *ListRecommendationsRequest) GetProductIds() []string {
 		return x.ProductIds
 	}
 	return nil
+}
+
+func (x *ListRecommendationsRequest) GetMaxResults() int32 {
+	if x != nil {
+		return x.MaxResults
+	}
+	return 0
 }
 
 type ListRecommendationsResponse struct {
@@ -2256,11 +2265,13 @@ const file_demo_proto_rawDesc = "" +
 	"\x05items\x18\x02 \x03(\v2\x12.oteldemo.CartItemR\x05items\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\x03 \x01(\x03R\tupdatedAt\"\a\n" +
-	"\x05Empty\"V\n" +
+	"\x05Empty\"w\n" +
 	"\x1aListRecommendationsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vproduct_ids\x18\x02 \x03(\tR\n" +
-	"productIds\">\n" +
+	"productIds\x12\x1f\n" +
+	"\vmax_results\x18\x03 \x01(\x05R\n" +
+	"maxResults\">\n" +
 	"\x1bListRecommendationsResponse\x12\x1f\n" +
 	"\vproduct_ids\x18\x01 \x03(\tR\n" +
 	"productIds\"\xcd\x01\n" +

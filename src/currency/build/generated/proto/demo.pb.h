@@ -1552,6 +1552,7 @@ class ListRecommendationsRequest final : public ::google::protobuf::Message
   enum : int {
     kProductIdsFieldNumber = 2,
     kUserIdFieldNumber = 1,
+    kMaxResultsFieldNumber = 3,
   };
   // repeated string product_ids = 2;
   int product_ids_size() const;
@@ -1590,11 +1591,21 @@ class ListRecommendationsRequest final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_user_id();
 
   public:
+  // int32 max_results = 3;
+  void clear_max_results() ;
+  ::int32_t max_results() const;
+  void set_max_results(::int32_t value);
+
+  private:
+  ::int32_t _internal_max_results() const;
+  void _internal_set_max_results(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.ListRecommendationsRequest)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
                                    0, 62,
                                    2>
       _table_;
@@ -1618,6 +1629,7 @@ class ListRecommendationsRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::RepeatedPtrField<::std::string> product_ids_;
     ::google::protobuf::internal::ArenaStringPtr user_id_;
+    ::int32_t max_results_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -9828,6 +9840,30 @@ inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
 ListRecommendationsRequest::_internal_mutable_product_ids() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.product_ids_;
+}
+
+// int32 max_results = 3;
+inline void ListRecommendationsRequest::clear_max_results() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_results_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline ::int32_t ListRecommendationsRequest::max_results() const {
+  // @@protoc_insertion_point(field_get:oteldemo.ListRecommendationsRequest.max_results)
+  return _internal_max_results();
+}
+inline void ListRecommendationsRequest::set_max_results(::int32_t value) {
+  _internal_set_max_results(value);
+  _impl_._has_bits_[0] |= 0x00000002u;
+  // @@protoc_insertion_point(field_set:oteldemo.ListRecommendationsRequest.max_results)
+}
+inline ::int32_t ListRecommendationsRequest::_internal_max_results() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.max_results_;
+}
+inline void ListRecommendationsRequest::_internal_set_max_results(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_results_ = value;
 }
 
 // -------------------------------------------------------------------

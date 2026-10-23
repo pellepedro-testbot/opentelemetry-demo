@@ -52,6 +52,8 @@ export interface Empty {
 export interface ListRecommendationsRequest {
   userId: string;
   productIds: string[];
+  /** Maximum number of product ids to return. 0 (unset) keeps the default of 5. */
+  maxResults: number;
 }
 
 export interface ListRecommendationsResponse {
@@ -744,7 +746,7 @@ export const Empty: MessageFns<Empty> = {
 };
 
 function createBaseListRecommendationsRequest(): ListRecommendationsRequest {
-  return { userId: "", productIds: [] };
+  return { userId: "", productIds: [], maxResults: 0 };
 }
 
 export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> = {
@@ -754,6 +756,9 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     }
     for (const v of message.productIds) {
       writer.uint32(18).string(v!);
+    }
+    if (message.maxResults !== 0) {
+      writer.uint32(24).int32(message.maxResults);
     }
     return writer;
   },
@@ -787,6 +792,14 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
             message.productIds.push(reader.string());
             continue;
           }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
+
+            message.maxResults = reader.int32();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -811,6 +824,11 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
         : globalThis.Array.isArray(object?.product_ids)
         ? object.product_ids.map((e: any) => globalThis.String(e))
         : [],
+      maxResults: isSet(object.maxResults)
+        ? globalThis.Number(object.maxResults)
+        : isSet(object.max_results)
+        ? globalThis.Number(object.max_results)
+        : 0,
     };
   },
 
@@ -822,6 +840,9 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     if (message.productIds?.length) {
       obj.productIds = message.productIds;
     }
+    if (message.maxResults !== 0) {
+      obj.maxResults = Math.round(message.maxResults);
+    }
     return obj;
   },
 
@@ -832,6 +853,7 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     const message = createBaseListRecommendationsRequest();
     message.userId = object.userId ?? "";
     message.productIds = object.productIds?.map((e) => e) || [];
+    message.maxResults = object.maxResults ?? 0;
     return message;
   },
 };
