@@ -56,10 +56,10 @@ export const Select = styled.select`
   background: transparent;
   font-weight: ${({ theme }) => theme.fonts.regular};
   border: 1px solid ${({ theme }) => theme.colors.borderGray};
-  width: 130px;
+  width: 170px;
   height: 40px;
   flex-shrink: 0;
-  padding: 1px 0 0 45px;
+  padding: 1px 30px 0 45px;
   font-size: 16px;
   border-radius: 10px;
 `;
