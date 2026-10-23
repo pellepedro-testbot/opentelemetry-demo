@@ -94,6 +94,13 @@ module.exports.charge = async request => {
       throw new Error(`Sorry, we cannot process ${cardType} credit cards. Only VISA, MasterCard or American Express is accepted.`);
     }
 
+    const expirationMonth = month ?? 0;
+    if (!Number.isInteger(expirationMonth) || expirationMonth < 1 || expirationMonth > 12) {
+      const err = new Error('Credit card expiration month must be between 1 and 12.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
       const err = new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
       err.code = grpcStatus.FAILED_PRECONDITION;
