@@ -42,7 +42,7 @@ const Apis = () => ({
   },
 
   getShippingCost(itemList: IProductCartItem[], currencyCode: string, address: Address) {
-    return request<Money & { carrier: string; zone: string }>({
+    return request<Money & { carrier: string; zone: string; estimatedDeliveryDays: number }>({
       url: `${basePath}/shipping`,
       queryParams: {
         itemList: JSON.stringify(itemList.map(({ productId, quantity }) => ({ productId, quantity }))),

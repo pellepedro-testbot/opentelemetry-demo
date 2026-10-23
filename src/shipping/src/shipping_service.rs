@@ -57,6 +57,10 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
             _ => "international",
         }
         .into(),
+        estimated_delivery_days: match &req.address {
+            Some(addr) if addr.country == "United States" => 3,
+            _ => 10,
+        },
     };
 
     info!(
