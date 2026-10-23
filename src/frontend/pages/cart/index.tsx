@@ -3,6 +3,7 @@
 
 import { NextPage } from 'next';
 import Head from 'next/head';
+import Ad from '../../components/Ad';
 import Layout from '../../components/Layout';
 import Recommendations from '../../components/Recommendations';
 import * as S from '../../styles/Cart.styled';
@@ -19,7 +20,7 @@ const Cart: NextPage = () => {
   return (
     <AdProvider
       productIds={items.map(({ productId }) => productId)}
-      contextKeys={[...new Set(items.flatMap(({ product }) => product.categories))]}
+      contextKeys={items.length ? ['cart'] : []}
       maxRecommendations={2}
     >
       <Head>
@@ -30,6 +31,7 @@ const Cart: NextPage = () => {
           {(!!items.length && <CartDetail />) || <EmptyCart />}
           <Recommendations title={items.length ? undefined : 'Popular Accessories'} />
         </S.Cart>
+        {!!items.length && <Ad />}
       </Layout>
     </AdProvider>
   );
