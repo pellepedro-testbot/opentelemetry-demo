@@ -50,6 +50,22 @@ export const CategoryFilters = styled.div`
   margin-bottom: 24px;
 `;
 
+export const SearchForm = styled.form`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+`;
+
+export const SearchInput = styled.input`
+  flex: 1;
+  max-width: 400px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid ${({ theme }) => theme.colors.borderGray};
+  border-radius: 8px;
+  font-size: ${({ theme }) => theme.sizes.dMedium};
+`;
+
 export const CategoryButton = styled(Button)`
   height: auto;
   padding: 6px 16px;
