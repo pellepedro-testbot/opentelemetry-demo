@@ -36,6 +36,21 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
   };
   const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess } = useQuery(queryOptions);
 
+  const subtotal = useMemo<Money>(() => {
+    const nanoSum = productList.reduce(
+      (acc, { product: { priceUsd: { nanos = 0 } = {} }, quantity }) => acc + Number(nanos) * quantity,
+      0
+    );
+
+    return {
+      units:
+        productList.reduce((acc, { product: { priceUsd: { units = 0 } = {} }, quantity }) => acc + Number(units) * quantity, 0) +
+        Math.floor(nanoSum / 1000000000),
+      currencyCode: selectedCurrency,
+      nanos: nanoSum % 1000000000,
+    };
+  }, [productList, selectedCurrency]);
+
   const total = useMemo<Money>(() => {
     const nanoSum =
       productList.reduce((acc, { product: { priceUsd: { nanos = 0 } = {} }, quantity }) => acc + Number(nanos) * quantity, 0) +
@@ -66,6 +81,10 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
       ))}
       {shouldShowPrice && (
         <>
+          <S.DataRow>
+            <span>Subtotal</span>
+            <ProductPrice price={subtotal} />
+          </S.DataRow>
           <S.DataRow>
             <span>Shipping</span>
             {isSuccess && !Number(shippingConst.units) && !shippingConst.nanos ? (
