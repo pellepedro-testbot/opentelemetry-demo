@@ -27,7 +27,10 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         return HttpResponse::BadRequest().body("item quantity must be greater than 0");
     }
 
-    let itemct: u32 = req.items.iter().map(|item| item.quantity as u32).sum();
+    let itemct: u32 = req
+        .items
+        .iter()
+        .fold(0u32, |acc, item| acc.saturating_add(item.quantity));
 
     let mut quote = match create_quote_from_count(itemct).await {
         Ok(q) => q,
@@ -61,6 +64,12 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
             Some(addr) if addr.country == "United States" => 3,
             _ => 10,
         },
+        package_size: match itemct {
+            0..=3 => "small",
+            4..=9 => "medium",
+            _ => "large",
+        }
+        .into(),
     };
 
     info!(
