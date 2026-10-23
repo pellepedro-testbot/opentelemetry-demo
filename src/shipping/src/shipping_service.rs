@@ -82,6 +82,14 @@ pub async fn ship_order(
         return HttpResponse::BadRequest().body("address is required");
     }
 
+    if req
+        .address
+        .as_ref()
+        .is_some_and(|addr| addr.zip_code.trim().is_empty())
+    {
+        return HttpResponse::BadRequest().body("address.zip_code is required");
+    }
+
     if req.items.is_empty() {
         return HttpResponse::BadRequest().body("items must not be empty");
     }
