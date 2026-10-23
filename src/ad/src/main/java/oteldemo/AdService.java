@@ -215,9 +215,17 @@ public final class AdService {
           for (String contextKey : req.getContextKeysList()) {
             contextKeys.add(contextKey.strip().toLowerCase(Locale.ROOT));
           }
+          // Keys may share ads, so de-duplicate them before serving at most MAX_ADS_TO_SERVE
+          LinkedHashSet<Ad> targetedAds = new LinkedHashSet<>();
           for (String contextKey : contextKeys) {
             Collection<Ad> ads = service.getAdsByCategory(contextKey);
-            allAds.addAll(ads);
+            targetedAds.addAll(ads);
+          }
+          for (Ad ad : targetedAds) {
+            if (allAds.size() >= MAX_ADS_TO_SERVE) {
+              break;
+            }
+            allAds.add(ad);
           }
           adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
