@@ -78,7 +78,7 @@ const CartDetail = () => {
       <div>
         <S.Header>
           <S.CarTitle>Shopping Cart ({items.reduce((acc, { quantity }) => acc + quantity, 0)} items)</S.CarTitle>
-          <S.EmptyCartButton onClick={emptyCart} $type="link">
+          <S.EmptyCartButton onClick={() => window.confirm('Empty your cart?') && emptyCart()} $type="link">
             Empty Cart
           </S.EmptyCartButton>
         </S.Header>
