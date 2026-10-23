@@ -22,10 +22,10 @@ const Checkout: NextPage = () => {
   const { orderId, items = [], shippingAddress, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = JSON.parse((query.order || '{}') as string) as IProductCheckout;
 
   const orderTotal = useMemo<Money>(() => {
-    const itemsTotal = items.reduce((acc, { item, cost = { units: 0, nanos: 0, currencyCode: 'USD' } }) => {
+    const itemsTotal = items.reduce((acc, { cost = { units: 0, nanos: 0, currencyCode: 'USD' } }) => {
       return {
-        units: acc.units + (cost.units || 0) * item.quantity,
-        nanos: acc.nanos + (cost.nanos || 0) * item.quantity,
+        units: acc.units + (cost.units || 0),
+        nanos: acc.nanos + (cost.nanos || 0),
         currencyCode: cost.currencyCode || 'USD',
       };
     }, { units: 0, nanos: 0, currencyCode: 'USD' });
@@ -74,14 +74,10 @@ const Checkout: NextPage = () => {
               <S.ItemList>
                 {items.map(({ item, cost = { units: 0, currencyCode: 'USD', nanos: 0 } }) => {
                   const itemTotal: Money = {
-                    units: (cost.units || 0) * item.quantity,
-                    nanos: (cost.nanos || 0) * item.quantity,
+                    units: cost.units || 0,
+                    nanos: cost.nanos || 0,
                     currencyCode: cost.currencyCode || 'USD',
                   };
-                  // Handle nanos overflow
-                  const nanoExceed = Math.floor(itemTotal.nanos / 1000000000);
-                  itemTotal.units += nanoExceed;
-                  itemTotal.nanos = itemTotal.nanos % 1000000000;
 
                   return (
                     <S.OrderItem key={item.productId}>
