@@ -36,6 +36,14 @@ module.exports.charge = async request => {
       span.setAttribute('user_agent.synthetic.type', 'test');
     }
 
+    // A missing amount counts as zero; checked first so no other rejection can mask it
+    const { units: amountUnits = 0, nanos: amountNanos = 0 } = request.amount || {};
+    if (!(Number(amountUnits) + amountNanos / 1000000000 > 0)) {
+      const err = new Error('Amount must be greater than zero.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     await OpenFeature.setProviderAndWait(flagProvider);
 
     const numberVariant = await OpenFeature.getClient().getNumberValue("paymentFailure", 0);
