@@ -90,8 +90,8 @@ module.exports.charge = async request => {
       throw err;
     }
 
-    if (!['visa', 'mastercard'].includes(cardType)) {
-      throw new Error(`Sorry, we cannot process ${cardType} credit cards. Only VISA or MasterCard is accepted.`);
+    if (!['visa', 'mastercard', 'amex'].includes(cardType)) {
+      throw new Error(`Sorry, we cannot process ${cardType} credit cards. Only VISA, MasterCard or American Express is accepted.`);
     }
 
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
