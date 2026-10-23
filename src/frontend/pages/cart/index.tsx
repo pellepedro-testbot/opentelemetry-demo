@@ -15,12 +15,13 @@ import AdProvider from '../../providers/Ad.provider';
 const Cart: NextPage = () => {
   const {
     cart: { items },
+    isCartLoaded,
   } = useCart();
 
   return (
     <AdProvider
       productIds={items.map(({ productId }) => productId)}
-      contextKeys={items.length ? ['cart'] : []}
+      contextKeys={items.length ? ['cart'] : isCartLoaded ? ['empty-cart'] : []}
       maxRecommendations={2}
     >
       <Head>
@@ -31,7 +32,7 @@ const Cart: NextPage = () => {
           {(!!items.length && <CartDetail />) || <EmptyCart />}
           <Recommendations title={items.length ? undefined : 'Popular Accessories'} />
         </S.Cart>
-        {!!items.length && <Ad />}
+        <Ad />
       </Layout>
     </AdProvider>
   );
