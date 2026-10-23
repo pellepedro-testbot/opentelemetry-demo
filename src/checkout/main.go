@@ -385,6 +385,11 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
 	}
 
+	// Shipping refuses a blank zip after the card is charged; refuse it before, for every country.
+	if strings.TrimSpace(req.GetAddress().GetZipCode()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "Zip code is required")
+	}
+
 	if strings.TrimSpace(req.GetAddress().GetStreetAddress()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "Street address is required")
 	}
