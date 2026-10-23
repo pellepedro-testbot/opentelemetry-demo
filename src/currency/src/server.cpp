@@ -237,6 +237,11 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
       // Do the conversion work
       Money from = request->from();
       string from_code = from.currency_code();
+      if (currency_conversion.find(from_code) == currency_conversion.end()) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported from.currency_code: " + from_code);
+      }
       double rate = currency_conversion[from_code];
       double one_euro = getDouble(from) / rate ;
 
