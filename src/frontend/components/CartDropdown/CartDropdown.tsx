@@ -51,7 +51,7 @@ const CartDropdown = ({ productList, isOpen, onClose }: IProps) => {
     <S.CartDropdown ref={ref} data-cy={CypressFields.CartDropdown}>
       <S.ContentWrapper>
         <S.Header>
-          <S.Title>Shopping Cart</S.Title>
+          <S.Title>Shopping Cart ({productList.reduce((acc, { quantity }) => acc + quantity, 0)})</S.Title>
           <span onClick={onClose}>Close</span>
         </S.Header>
         <S.ItemList>
