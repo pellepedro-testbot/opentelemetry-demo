@@ -41,7 +41,10 @@ first_run = True
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
-        prod_list = get_product_list(request.product_ids)
+        try:
+            prod_list = get_product_list(request.product_ids)
+        except ValueError as e:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
         span = trace.get_current_span()
         span.set_attribute("demo.product.recommended.count", len(prod_list))
         logger.info(f"Receive ListRecommendations for product ids:{prod_list}")
@@ -70,8 +73,12 @@ def get_product_list(request_product_ids):
     with tracer.start_as_current_span("get_product_list") as span:
         max_responses = 5
 
-        # Formulate the list of characters to list of strings
-        request_product_ids_str = ''.join(request_product_ids)
+        # Formulate the list of characters to list of strings;
+        # a list of whole ids is joined with commas instead
+        if all(len(x) <= 1 for x in request_product_ids):
+            request_product_ids_str = ''.join(request_product_ids)
+        else:
+            request_product_ids_str = ','.join(request_product_ids)
         request_product_ids = request_product_ids_str.split(',')
 
         cat_response = None
@@ -113,6 +120,9 @@ def get_product_list(request_product_ids):
         # preferring those sharing a category with the input products
         else:
             prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
+            unknown_ids = [x for x in request_product_ids if x and x not in prices]
+            if unknown_ids:
+                raise ValueError(f"product_id not in catalog: {', '.join(unknown_ids)}")
             requested_prices = [prices[x] for x in request_product_ids if x in prices]
             if requested_prices:
                 cheapest = min(requested_prices)
