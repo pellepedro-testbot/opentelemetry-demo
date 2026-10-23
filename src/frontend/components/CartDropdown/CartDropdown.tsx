@@ -61,7 +61,11 @@ const CartDropdown = ({ productList, isOpen, onClose }: IProps) => {
               <S.Item key={id} data-cy={CypressFields.CartDropdownItem}>
                 {picture && <S.ItemImage src={'/images/products/' + picture} alt={name} />}
                 <S.ItemDetails $fullWidth={!picture}>
-                  <S.ItemName>{name}</S.ItemName>
+                  <S.ItemName>
+                    <Link href={`/product/${id}`} onClick={onClose}>
+                      {name}
+                    </Link>
+                  </S.ItemName>
                   <ProductPrice price={priceUsd} />
                   <S.ItemQuantity>Quantity: {quantity}</S.ItemQuantity>
                 </S.ItemDetails>
