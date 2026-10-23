@@ -67,6 +67,12 @@ const Apis = () => ({
       queryParams: category ? { currencyCode, category } : { currencyCode },
     });
   },
+  searchProducts(query: string, currencyCode: string) {
+    return request<Product[]>({
+      url: `${basePath}/products`,
+      queryParams: { currencyCode, q: query },
+    });
+  },
   getProduct(productId: string, currencyCode: string) {
     return request<Product>({
       url: `${basePath}/products/${productId}`,
