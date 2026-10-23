@@ -316,6 +316,19 @@ func isValidUSZipCode(zip string) bool {
 	return true
 }
 
+// isValidCurrencyCode reports whether code is a 3-letter uppercase currency code, like USD.
+func isValidCurrencyCode(code string) bool {
+	if len(code) != 3 {
+		return false
+	}
+	for _, c := range code {
+		if c < 'A' || c > 'Z' {
+			return false
+		}
+	}
+	return true
+}
+
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
@@ -355,6 +368,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 
 	if !strings.Contains(req.Email, "@") {
 		return nil, status.Error(codes.InvalidArgument, "email is invalid")
+	}
+
+	if !isValidCurrencyCode(req.UserCurrency) {
+		return nil, status.Error(codes.InvalidArgument, "user_currency must be a 3-letter uppercase code")
 	}
 
 	switch country := req.GetAddress().GetCountry(); country {
