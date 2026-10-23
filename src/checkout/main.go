@@ -384,6 +384,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
 	}
 
+	if strings.TrimSpace(req.GetAddress().GetStreetAddress()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "Street address is required")
+	}
+
 	if req.CreditCard == nil {
 		return nil, status.Error(codes.InvalidArgument, "credit_card is required")
 	}

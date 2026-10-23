@@ -20,6 +20,7 @@ const CARD_DECLINED = 'Your card was declined.';
 const INVALID_CVV = 'Invalid CVV';
 const CARD_EXPIRES_THIS_MONTH = 'Card expires this month';
 const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
+const STREET_ADDRESS_REQUIRED = 'Street address is required';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -45,6 +46,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details.startsWith(UNSUPPORTED_COUNTRY_PREFIX)) {
           return res.status(400).json({ error: details });
+        }
+
+        if (details === STREET_ADDRESS_REQUIRED) {
+          return res.status(400).json({ error: STREET_ADDRESS_REQUIRED });
         }
 
         if (details === ORDER_LIMIT_EXCEEDED) {
