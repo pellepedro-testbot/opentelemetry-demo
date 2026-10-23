@@ -244,6 +244,11 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
         span->End();
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported from.currency_code: " + from_code);
       }
+      if (from.units() < 0 || (from.units() <= 0 && from.nanos() < 0)) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "from amount must not be negative");
+      }
       double rate = from_rate->second;
       double one_euro = getDouble(from) / rate ;
 
