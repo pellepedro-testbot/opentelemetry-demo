@@ -19,6 +19,7 @@ const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
 const INVALID_CVV = 'Invalid CVV';
 const CARD_EXPIRES_THIS_MONTH = 'Card expires this month';
+const TEST_CARD_REJECTED = 'Test cards are not accepted';
 const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 const STREET_ADDRESS_REQUIRED = 'Street address is required';
 
@@ -71,6 +72,11 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
             if (details.includes(CARD_EXPIRES_THIS_MONTH)) {
               logger.info({ details }, 'Checkout card expires this month');
               return res.status(422).json({ error: CARD_EXPIRES_THIS_MONTH, code: 'PAYMENT_FAILED' });
+            }
+
+            if (details.includes(TEST_CARD_REJECTED)) {
+              logger.info({ details }, 'Checkout test card rejected');
+              return res.status(422).json({ error: TEST_CARD_REJECTED, code: 'PAYMENT_FAILED' });
             }
 
             logger.info({ details }, 'Checkout payment declined');
