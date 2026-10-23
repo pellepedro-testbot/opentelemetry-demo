@@ -25,9 +25,10 @@ export interface IFormData {
 
 interface IProps {
   onSubmit(formData: IFormData): void;
+  isPlacingOrder?: boolean;
 }
 
-const CheckoutForm = ({ onSubmit }: IProps) => {
+const CheckoutForm = ({ onSubmit, isPlacingOrder = false }: IProps) => {
   const [
     {
       email,
@@ -161,7 +162,7 @@ const CheckoutForm = ({ onSubmit }: IProps) => {
           <option value="9">September</option>
           <option value="10">October</option>
           <option value="11">November</option>
-          <option value="12">January</option>
+          <option value="12">December</option>
         </Input>
         <Input
           label="Year"
@@ -182,6 +183,7 @@ const CheckoutForm = ({ onSubmit }: IProps) => {
           type="password"
           id="credit_card_cvv"
           name="creditCardCvv"
+          placeholder="123"
           value={creditCardCvv}
           required
           pattern="\d{3}"
@@ -193,7 +195,9 @@ const CheckoutForm = ({ onSubmit }: IProps) => {
         <Link href="/">
           <S.CartButton $type="secondary">Continue Shopping</S.CartButton>
         </Link>
-        <S.CartButton data-cy={CypressFields.CheckoutPlaceOrder} type="submit">Place Order</S.CartButton>
+        <S.CartButton data-cy={CypressFields.CheckoutPlaceOrder} type="submit" disabled={isPlacingOrder}>
+          {isPlacingOrder ? 'Placing order...' : 'Place Order'}
+        </S.CartButton>
       </S.SubmitContainer>
     </S.CheckoutForm>
   );

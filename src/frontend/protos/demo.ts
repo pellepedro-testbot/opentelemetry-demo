@@ -42,6 +42,8 @@ export interface GetCartRequest {
 export interface Cart {
   userId: string;
   items: CartItem[];
+  /** Time of the last AddItem or EmptyCart, in Unix milliseconds (UTC). 0 when never set. */
+  updatedAt: number;
 }
 
 export interface Empty {
@@ -50,6 +52,8 @@ export interface Empty {
 export interface ListRecommendationsRequest {
   userId: string;
   productIds: string[];
+  /** Maximum number of product ids to return. 0 (unset) keeps the default of 5. */
+  maxResults: number;
 }
 
 export interface ListRecommendationsResponse {
@@ -69,6 +73,10 @@ export interface Product {
    * other related products.
    */
   categories: string[];
+  /** Badge shown on product cards, e.g. "Bestseller". Empty means no badge. */
+  badge: string;
+  /** Most units of this product the product page lets a shopper select at once. */
+  maxQuantity: number;
 }
 
 export interface ListProductsResponse {
@@ -579,7 +587,7 @@ export const GetCartRequest: MessageFns<GetCartRequest> = {
 };
 
 function createBaseCart(): Cart {
-  return { userId: "", items: [] };
+  return { userId: "", items: [], updatedAt: 0 };
 }
 
 export const Cart: MessageFns<Cart> = {
@@ -589,6 +597,9 @@ export const Cart: MessageFns<Cart> = {
     }
     for (const v of message.items) {
       CartItem.encode(v!, writer.uint32(18).fork()).join();
+    }
+    if (message.updatedAt !== 0) {
+      writer.uint32(24).int64(message.updatedAt);
     }
     return writer;
   },
@@ -622,6 +633,14 @@ export const Cart: MessageFns<Cart> = {
             message.items.push(CartItem.decode(reader, reader.uint32()));
             continue;
           }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
+
+            message.updatedAt = longToNumber(reader.int64());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -642,6 +661,11 @@ export const Cart: MessageFns<Cart> = {
         ? globalThis.String(object.user_id)
         : "",
       items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => CartItem.fromJSON(e)) : [],
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.Number(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.Number(object.updated_at)
+        : 0,
     };
   },
 
@@ -653,6 +677,9 @@ export const Cart: MessageFns<Cart> = {
     if (message.items?.length) {
       obj.items = message.items.map((e) => CartItem.toJSON(e));
     }
+    if (message.updatedAt !== 0) {
+      obj.updatedAt = Math.round(message.updatedAt);
+    }
     return obj;
   },
 
@@ -663,6 +690,7 @@ export const Cart: MessageFns<Cart> = {
     const message = createBaseCart();
     message.userId = object.userId ?? "";
     message.items = object.items?.map((e) => CartItem.fromPartial(e)) || [];
+    message.updatedAt = object.updatedAt ?? 0;
     return message;
   },
 };
@@ -720,7 +748,7 @@ export const Empty: MessageFns<Empty> = {
 };
 
 function createBaseListRecommendationsRequest(): ListRecommendationsRequest {
-  return { userId: "", productIds: [] };
+  return { userId: "", productIds: [], maxResults: 0 };
 }
 
 export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> = {
@@ -730,6 +758,9 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     }
     for (const v of message.productIds) {
       writer.uint32(18).string(v!);
+    }
+    if (message.maxResults !== 0) {
+      writer.uint32(24).int32(message.maxResults);
     }
     return writer;
   },
@@ -763,6 +794,14 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
             message.productIds.push(reader.string());
             continue;
           }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
+
+            message.maxResults = reader.int32();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -787,6 +826,11 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
         : globalThis.Array.isArray(object?.product_ids)
         ? object.product_ids.map((e: any) => globalThis.String(e))
         : [],
+      maxResults: isSet(object.maxResults)
+        ? globalThis.Number(object.maxResults)
+        : isSet(object.max_results)
+        ? globalThis.Number(object.max_results)
+        : 0,
     };
   },
 
@@ -798,6 +842,9 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     if (message.productIds?.length) {
       obj.productIds = message.productIds;
     }
+    if (message.maxResults !== 0) {
+      obj.maxResults = Math.round(message.maxResults);
+    }
     return obj;
   },
 
@@ -808,6 +855,7 @@ export const ListRecommendationsRequest: MessageFns<ListRecommendationsRequest> 
     const message = createBaseListRecommendationsRequest();
     message.userId = object.userId ?? "";
     message.productIds = object.productIds?.map((e) => e) || [];
+    message.maxResults = object.maxResults ?? 0;
     return message;
   },
 };
@@ -886,7 +934,16 @@ export const ListRecommendationsResponse: MessageFns<ListRecommendationsResponse
 };
 
 function createBaseProduct(): Product {
-  return { id: "", name: "", description: "", picture: "", priceUsd: undefined, categories: [] };
+  return {
+    id: "",
+    name: "",
+    description: "",
+    picture: "",
+    priceUsd: undefined,
+    categories: [],
+    badge: "",
+    maxQuantity: 0,
+  };
 }
 
 export const Product: MessageFns<Product> = {
@@ -908,6 +965,12 @@ export const Product: MessageFns<Product> = {
     }
     for (const v of message.categories) {
       writer.uint32(50).string(v!);
+    }
+    if (message.badge !== "") {
+      writer.uint32(58).string(message.badge);
+    }
+    if (message.maxQuantity !== 0) {
+      writer.uint32(64).int32(message.maxQuantity);
     }
     return writer;
   },
@@ -973,6 +1036,22 @@ export const Product: MessageFns<Product> = {
             message.categories.push(reader.string());
             continue;
           }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
+
+            message.badge = reader.string();
+            continue;
+          }
+          case 8: {
+            if (tag !== 64) {
+              break;
+            }
+
+            message.maxQuantity = reader.int32();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -999,6 +1078,12 @@ export const Product: MessageFns<Product> = {
       categories: globalThis.Array.isArray(object?.categories)
         ? object.categories.map((e: any) => globalThis.String(e))
         : [],
+      badge: isSet(object.badge) ? globalThis.String(object.badge) : "",
+      maxQuantity: isSet(object.maxQuantity)
+        ? globalThis.Number(object.maxQuantity)
+        : isSet(object.max_quantity)
+        ? globalThis.Number(object.max_quantity)
+        : 0,
     };
   },
 
@@ -1022,6 +1107,12 @@ export const Product: MessageFns<Product> = {
     if (message.categories?.length) {
       obj.categories = message.categories;
     }
+    if (message.badge !== "") {
+      obj.badge = message.badge;
+    }
+    if (message.maxQuantity !== 0) {
+      obj.maxQuantity = Math.round(message.maxQuantity);
+    }
     return obj;
   },
 
@@ -1038,6 +1129,8 @@ export const Product: MessageFns<Product> = {
       ? Money.fromPartial(object.priceUsd)
       : undefined;
     message.categories = object.categories?.map((e) => e) || [];
+    message.badge = object.badge ?? "";
+    message.maxQuantity = object.maxQuantity ?? 0;
     return message;
   },
 };

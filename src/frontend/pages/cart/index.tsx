@@ -3,6 +3,7 @@
 
 import { NextPage } from 'next';
 import Head from 'next/head';
+import Ad from '../../components/Ad';
 import Layout from '../../components/Layout';
 import Recommendations from '../../components/Recommendations';
 import * as S from '../../styles/Cart.styled';
@@ -14,12 +15,14 @@ import AdProvider from '../../providers/Ad.provider';
 const Cart: NextPage = () => {
   const {
     cart: { items },
+    isCartLoaded,
   } = useCart();
 
   return (
     <AdProvider
       productIds={items.map(({ productId }) => productId)}
-      contextKeys={[...new Set(items.flatMap(({ product }) => product.categories))]}
+      contextKeys={items.length ? ['cart'] : isCartLoaded ? ['empty-cart'] : []}
+      maxRecommendations={2}
     >
       <Head>
         <title>Otel Demo - Cart</title>
@@ -27,8 +30,9 @@ const Cart: NextPage = () => {
       <Layout>
         <S.Cart>
           {(!!items.length && <CartDetail />) || <EmptyCart />}
-          <Recommendations />
+          <Recommendations title={items.length ? undefined : 'Popular Accessories'} />
         </S.Cart>
+        <Ad />
       </Layout>
     </AdProvider>
   );

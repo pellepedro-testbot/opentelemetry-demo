@@ -10,6 +10,7 @@ import { useCurrency } from './Currency.provider';
 
 interface IContext {
   cart: IProductCart;
+  isCartLoaded: boolean;
   addItem(item: CartItem): void;
   updateItemQuantity(productId: string, newQuantity: number): void;
   emptyCart(): void;
@@ -17,7 +18,8 @@ interface IContext {
 }
 
 export const Context = createContext<IContext>({
-  cart: { userId: '', items: [] },
+  cart: { userId: '', items: [], updatedAt: 0 },
+  isCartLoaded: false,
   addItem: () => {},
   updateItemQuantity: () => {},
   emptyCart: () => {},
@@ -42,7 +44,7 @@ const CartProvider = ({ children }: IProps) => {
     [queryClient]
   );
 
-  const { data: cart = { userId: '', items: [] } } = useQuery({
+  const { data: cart = { userId: '', items: [], updatedAt: 0 }, isSuccess: isCartLoaded } = useQuery({
     queryKey: ['cart', selectedCurrency],
     queryFn: () => ApiGateway.getCart(selectedCurrency),
   });
@@ -82,7 +84,10 @@ const CartProvider = ({ children }: IProps) => {
     [placeOrderMutation, selectedCurrency]
   );
 
-  const value = useMemo(() => ({ cart, addItem, updateItemQuantity, emptyCart, placeOrder }), [cart, addItem, updateItemQuantity, emptyCart, placeOrder]);
+  const value = useMemo(
+    () => ({ cart, isCartLoaded, addItem, updateItemQuantity, emptyCart, placeOrder }),
+    [cart, isCartLoaded, addItem, updateItemQuantity, emptyCart, placeOrder]
+  );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 };

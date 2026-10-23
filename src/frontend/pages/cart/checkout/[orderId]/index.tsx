@@ -12,19 +12,42 @@ import Layout from '../../../../components/Layout';
 import ProductPrice from '../../../../components/ProductPrice';
 import Recommendations from '../../../../components/Recommendations';
 import AdProvider from '../../../../providers/Ad.provider';
-import { Money } from '../../../../protos/demo';
+import { Address, Money } from '../../../../protos/demo';
 import * as S from '../../../../styles/Checkout.styled';
-import { IProductCheckout } from '../../../../types/Cart';
+import { IProductCheckout, IProductCheckoutItem } from '../../../../types/Cart';
+
+const isAbsentOrObject = (value: unknown) => value === undefined || (typeof value === 'object' && value !== null);
+
+const parseOrder = (raw: unknown): IProductCheckout | undefined => {
+  if (typeof raw !== 'string') return undefined;
+  try {
+    const order = JSON.parse(raw);
+    const isValid =
+      typeof order === 'object' &&
+      order !== null &&
+      typeof order.orderId === 'string' &&
+      order.orderId !== '' &&
+      isAbsentOrObject(order.shippingAddress) &&
+      isAbsentOrObject(order.shippingCost) &&
+      (order.items === undefined ||
+        (Array.isArray(order.items) && order.items.every((entry: IProductCheckoutItem) => entry?.item?.product && isAbsentOrObject(entry.cost))));
+    return isValid ? order : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const Checkout: NextPage = () => {
   const { query } = useRouter();
-  const { orderId, items = [], shippingAddress, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = JSON.parse((query.order || '{}') as string) as IProductCheckout;
+  const email = query.email as string | undefined;
+  const order = parseOrder(query.order);
+  const { orderId, items = [], shippingAddress = {} as Address, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = order || ({} as IProductCheckout);
 
   const orderTotal = useMemo<Money>(() => {
-    const itemsTotal = items.reduce((acc, { item, cost = { units: 0, nanos: 0, currencyCode: 'USD' } }) => {
+    const itemsTotal = items.reduce((acc, { cost = { units: 0, nanos: 0, currencyCode: 'USD' } }) => {
       return {
-        units: acc.units + (cost.units || 0) * item.quantity,
-        nanos: acc.nanos + (cost.nanos || 0) * item.quantity,
+        units: acc.units + (cost.units || 0),
+        nanos: acc.nanos + (cost.nanos || 0),
         currencyCode: cost.currencyCode || 'USD',
       };
     }, { units: 0, nanos: 0, currencyCode: 'USD' });
@@ -39,10 +62,32 @@ const Checkout: NextPage = () => {
     };
   }, [items, shippingCost]);
 
+  if (!order) {
+    return (
+      <Layout>
+        <Head>
+          <title>Otel Demo - Checkout</title>
+        </Head>
+        <S.Checkout>
+          <S.Container>
+            <S.LeftColumn>
+              <S.Title>Order not found</S.Title>
+            </S.LeftColumn>
+            <S.ButtonContainer>
+              <Link href="/">
+                <Button type="submit">Continue Shopping</Button>
+              </Link>
+            </S.ButtonContainer>
+          </S.Container>
+        </S.Checkout>
+      </Layout>
+    );
+  }
+
   return (
     <AdProvider
       productIds={items.map(({ item }) => item?.productId || '')}
-      contextKeys={[...new Set(items.flatMap(({ item }) => item.product.categories))]}
+      contextKeys={['checkout']}
     >
       <Head>
         <title>Otel Demo - Checkout</title>
@@ -52,7 +97,9 @@ const Checkout: NextPage = () => {
           <S.Container>
             <S.LeftColumn>
               <S.Title>Your order is complete!</S.Title>
-              <S.Subtitle>We&apos;ve sent you a confirmation email.</S.Subtitle>
+              <S.Subtitle>
+                {email ? `Confirmation sent to ${email}` : <>We&apos;ve sent you a confirmation email.</>}
+              </S.Subtitle>
               <S.OrderInfo>
                 <S.InfoLabel>Order ID:</S.InfoLabel>
                 <S.InfoValue>{orderId}</S.InfoValue>
@@ -71,14 +118,10 @@ const Checkout: NextPage = () => {
               <S.ItemList>
                 {items.map(({ item, cost = { units: 0, currencyCode: 'USD', nanos: 0 } }) => {
                   const itemTotal: Money = {
-                    units: (cost.units || 0) * item.quantity,
-                    nanos: (cost.nanos || 0) * item.quantity,
+                    units: cost.units || 0,
+                    nanos: cost.nanos || 0,
                     currencyCode: cost.currencyCode || 'USD',
                   };
-                  // Handle nanos overflow
-                  const nanoExceed = Math.floor(itemTotal.nanos / 1000000000);
-                  itemTotal.units += nanoExceed;
-                  itemTotal.nanos = itemTotal.nanos % 1000000000;
 
                   return (
                     <S.OrderItem key={item.productId}>
@@ -96,6 +139,10 @@ const Checkout: NextPage = () => {
               </S.ItemList>
 
               <S.OrderSummary>
+                <S.SummaryRow>
+                  <span>Total items:</span>
+                  <span>{items.reduce((acc, { item }) => acc + (item?.quantity || 0), 0)}</span>
+                </S.SummaryRow>
                 <S.SummaryRow>
                   <span>Shipping:</span>
                   <ProductPrice price={shippingCost} />

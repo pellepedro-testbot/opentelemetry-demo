@@ -12,12 +12,13 @@ const CartIcon = () => {
   const {
     cart: { items },
   } = useCart();
+  const totalQuantity = items.reduce((acc, { quantity }) => acc + quantity, 0);
 
   return (
     <>
       <S.CartIcon data-cy={CypressFields.CartIcon} onClick={() => setIsOpen(true)}>
         <S.Icon src="/icons/CartIcon.svg" alt="Cart icon" title="Cart" />
-        {!!items.length && <S.ItemsCount data-cy={CypressFields.CartItemCount}>{items.length}</S.ItemsCount>}
+        {!!items.length && <S.ItemsCount data-cy={CypressFields.CartItemCount}>{totalQuantity}</S.ItemsCount>}
       </S.CartIcon>
       <CartDropdown productList={items} isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>

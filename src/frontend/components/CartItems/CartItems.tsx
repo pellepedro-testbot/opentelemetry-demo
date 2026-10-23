@@ -30,11 +30,26 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
 
   const queryKey = ['shipping', productList, selectedCurrency, address];
   const queryFn = () => ApiGateway.getShippingCost(productList, selectedCurrency, address);
-  const queryOptions: UseQueryOptions<Money, Error> = {
+  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string }, Error> = {
     queryKey,
     queryFn,
   };
-  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 } } = useQuery(queryOptions);
+  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess } = useQuery(queryOptions);
+
+  const subtotal = useMemo<Money>(() => {
+    const nanoSum = productList.reduce(
+      (acc, { product: { priceUsd: { nanos = 0 } = {} }, quantity }) => acc + Number(nanos) * quantity,
+      0
+    );
+
+    return {
+      units:
+        productList.reduce((acc, { product: { priceUsd: { units = 0 } = {} }, quantity }) => acc + Number(units) * quantity, 0) +
+        Math.floor(nanoSum / 1000000000),
+      currencyCode: selectedCurrency,
+      nanos: nanoSum % 1000000000,
+    };
+  }, [productList, selectedCurrency]);
 
   const total = useMemo<Money>(() => {
     const nanoSum =
@@ -67,9 +82,37 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
       {shouldShowPrice && (
         <>
           <S.DataRow>
-            <span>Shipping</span>
-            <ProductPrice price={shippingConst} />
+            <span>Subtotal</span>
+            <ProductPrice price={subtotal} />
           </S.DataRow>
+          <S.DataRow>
+            <span>Shipping</span>
+            {isSuccess && !Number(shippingConst.units) && !shippingConst.nanos ? (
+              <span>Free</span>
+            ) : (
+              <ProductPrice price={shippingConst} />
+            )}
+          </S.DataRow>
+          <S.DataRow>
+            <span>Carrier</span>
+            <span>{shippingConst.carrier}</span>
+          </S.DataRow>
+          <S.DataRow>
+            <span>Zone</span>
+            <span>{shippingConst.zone}</span>
+          </S.DataRow>
+          {shippingConst.estimatedDeliveryDays !== undefined && (
+            <S.DataRow>
+              <span>Delivery</span>
+              <span>Arrives in {shippingConst.estimatedDeliveryDays} days</span>
+            </S.DataRow>
+          )}
+          {shippingConst.packageSize && (
+            <S.DataRow>
+              <span>Package size</span>
+              <span>{shippingConst.packageSize}</span>
+            </S.DataRow>
+          )}
           <S.DataRow>
             <S.TotalText>Total</S.TotalText>
             <S.TotalText>

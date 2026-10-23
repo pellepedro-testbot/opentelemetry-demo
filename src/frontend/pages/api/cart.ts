@@ -2,19 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextApiHandler } from 'next';
+import type { ServiceError } from '@grpc/grpc-js';
 import CartGateway from '../../gateways/rpc/Cart.gateway';
 import { AddItemRequest, Empty } from '../../protos/demo';
 import ProductCatalogService from '../../services/ProductCatalog.service';
 import { IProductCart, IProductCartItem } from '../../types/Cart';
 import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMiddleware';
 
-type TResponse = IProductCart | Empty;
+const MAX_PER_PRODUCT = 'Maximum 10 per product';
+
+type TResponse = IProductCart | Empty | { error: string };
 
 const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) => {
   switch (method) {
     case 'GET': {
       const { sessionId = '', currencyCode = '' } = query;
-      const { userId, items } = await CartGateway.getCart(sessionId as string);
+      if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId is required' });
+      }
+      const { userId, items, updatedAt } = await CartGateway.getCart(sessionId as string);
 
       const productList: IProductCartItem[] = await Promise.all(
         items.map(async ({ productId, quantity }) => {
@@ -28,13 +34,20 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
         })
       );
 
-      return res.status(200).json({ userId, items: productList });
+      return res.status(200).json({ userId, items: productList, updatedAt });
     }
 
     case 'POST': {
       const { userId, item } = body as AddItemRequest;
 
-      await CartGateway.addItem(userId, item!);
+      try {
+        await CartGateway.addItem(userId, item!);
+      } catch (error) {
+        if ((error as ServiceError)?.details === MAX_PER_PRODUCT) {
+          return res.status(400).json({ error: MAX_PER_PRODUCT });
+        }
+        throw error;
+      }
       const cart = await CartGateway.getCart(userId);
 
       return res.status(200).json(cart);
@@ -48,7 +61,8 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
     }
 
     default: {
-      return res.status(405);
+      res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+      return res.status(405).send('');
     }
   }
 };

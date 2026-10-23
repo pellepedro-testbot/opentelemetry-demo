@@ -42,7 +42,7 @@ const Apis = () => ({
   },
 
   getShippingCost(itemList: IProductCartItem[], currencyCode: string, address: Address) {
-    return request<Money>({
+    return request<Money & { carrier: string; zone: string; estimatedDeliveryDays: number; packageSize: string }>({
       url: `${basePath}/shipping`,
       queryParams: {
         itemList: JSON.stringify(itemList.map(({ productId, quantity }) => ({ productId, quantity }))),
@@ -61,10 +61,16 @@ const Apis = () => ({
     });
   },
 
-  listProducts(currencyCode: string) {
+  listProducts(currencyCode: string, category = '') {
     return request<Product[]>({
       url: `${basePath}/products`,
-      queryParams: { currencyCode },
+      queryParams: category ? { currencyCode, category } : { currencyCode },
+    });
+  },
+  searchProducts(query: string, currencyCode: string) {
+    return request<Product[]>({
+      url: `${basePath}/products`,
+      queryParams: { currencyCode, q: query },
     });
   },
   getProduct(productId: string, currencyCode: string) {
@@ -73,13 +79,14 @@ const Apis = () => ({
       queryParams: { currencyCode },
     });
   },
-  listRecommendations(productIds: string[], currencyCode: string) {
+  listRecommendations(productIds: string[], currencyCode: string, maxResults?: number) {
     return request<Product[]>({
       url: `${basePath}/recommendations`,
       queryParams: {
         productIds,
         sessionId: userId,
         currencyCode,
+        ...(maxResults ? { maxResults } : {}),
       },
     });
   },
