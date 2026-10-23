@@ -54,6 +54,11 @@ const ProductDetail: NextPage = () => {
     }
   ) as { data: Product };
 
+  // Units of this product already in the cart, from the cart the provider already loads
+  const inCartQuantity = items
+    .filter(item => item.productId === productId)
+    .reduce((acc, item) => acc + (item.quantity || 0), 0);
+
   const lineTotalNanos = Number(priceUsd.nanos) * quantity;
   const lineTotal = {
     units: Number(priceUsd.units) * quantity + Math.floor(lineTotalNanos / 1_000_000_000),
@@ -104,6 +109,7 @@ const ProductDetail: NextPage = () => {
               <S.ProductPrice>
                 <ProductPrice price={priceUsd} />
               </S.ProductPrice>
+              {inCartQuantity > 0 && <S.Text>In your cart: {inCartQuantity}</S.Text>}
               <S.Text>Quantity</S.Text>
               <S.QuantityRow>
                 <Select
