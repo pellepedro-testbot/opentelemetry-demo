@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using cart.cartstore;
 using CartServiceImplementation = cart.services.CartService;
+using Grpc.Core;
 using Grpc.Net.Client;
 using Oteldemo;
 using Microsoft.AspNetCore.Builder;
@@ -161,6 +162,109 @@ public class CartServiceTests
         await client.EmptyCartAsync(new EmptyCartRequest { UserId = userId });
         cart = await client.GetCartAsync(getCartRequest);
         Assert.Empty(cart.Items);
+    }
+
+    private static CartServiceClient CreateClient(IHost server)
+    {
+        var httpClient = server.GetTestClient();
+        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress, new GrpcChannelOptions
+        {
+            HttpClient = httpClient
+        });
+        return new CartServiceClient(channel);
+    }
+
+    [Fact]
+    public async Task AddItem_EmptyUserId_InvalidArgument()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () => await client.AddItemAsync(new AddItemRequest
+        {
+            UserId = "",
+            Item = new CartItem { ProductId = "OLJCESPC7Z", Quantity = 1 }
+        }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddItem_EmptyProductId_InvalidArgument()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+        string userId = Guid.NewGuid().ToString();
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () => await client.AddItemAsync(new AddItemRequest
+        {
+            UserId = userId,
+            Item = new CartItem { ProductId = "", Quantity = 1 }
+        }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
+        var cart = await client.GetCartAsync(new GetCartRequest { UserId = userId });
+        Assert.Empty(cart.Items);
+    }
+
+    [Fact]
+    public async Task AddItem_MissingItem_InvalidArgument()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+            await client.AddItemAsync(new AddItemRequest { UserId = Guid.NewGuid().ToString() }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddItem_ZeroQuantity_InvalidArgumentAndCartUnchanged()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+        string userId = Guid.NewGuid().ToString();
+        await client.AddItemAsync(new AddItemRequest
+        {
+            UserId = userId,
+            Item = new CartItem { ProductId = "OLJCESPC7Z", Quantity = 1 }
+        });
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () => await client.AddItemAsync(new AddItemRequest
+        {
+            UserId = userId,
+            Item = new CartItem { ProductId = "OLJCESPC7Z", Quantity = 0 }
+        }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
+        var cart = await client.GetCartAsync(new GetCartRequest { UserId = userId });
+        Assert.Single(cart.Items);
+        Assert.Equal(1, cart.Items[0].Quantity);
+    }
+
+    [Fact]
+    public async Task GetCart_EmptyUserId_InvalidArgument()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+            await client.GetCartAsync(new GetCartRequest { UserId = "" }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task EmptyCart_EmptyUserId_InvalidArgument()
+    {
+        using var server = await _host.StartAsync();
+        var client = CreateClient(server);
+
+        var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+            await client.EmptyCartAsync(new EmptyCartRequest { UserId = "" }));
+
+        Assert.Equal(StatusCode.InvalidArgument, ex.StatusCode);
     }
 
     private sealed class InMemoryCartStore : ICartStore

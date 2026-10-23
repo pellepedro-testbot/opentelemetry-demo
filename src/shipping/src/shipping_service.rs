@@ -215,6 +215,230 @@ mod tests {
         assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
+    #[derive(serde::Deserialize)]
+    struct QuoteMoney {
+        units: u64,
+        nanos: u32,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct QuoteReply {
+        cost_usd: Option<QuoteMoney>,
+        carrier: String,
+        zone: String,
+        estimated_delivery_days: u32,
+        package_size: String,
+    }
+
+    // Stands in for the quote service: answers every request with a fixed price.
+    fn start_quote_stub() {
+        static STUB: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+        STUB.get_or_init(|| {
+            use std::io::{Read, Write};
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            std::env::set_var(
+                "QUOTE_ADDR",
+                format!("http://{}", listener.local_addr().unwrap()),
+            );
+            std::thread::spawn(move || {
+                for mut stream in listener.incoming().flatten() {
+                    let mut request = Vec::new();
+                    let mut buf = [0u8; 1024];
+                    loop {
+                        let n = stream.read(&mut buf).unwrap_or(0);
+                        if n == 0 {
+                            break;
+                        }
+                        request.extend_from_slice(&buf[..n]);
+                        let text = String::from_utf8_lossy(&request).to_lowercase();
+                        if let Some(end) = text.find("\r\n\r\n") {
+                            let length = text
+                                .lines()
+                                .find_map(|l| l.strip_prefix("content-length:"))
+                                .and_then(|v| v.trim().parse::<usize>().ok())
+                                .unwrap_or(0);
+                            if request.len() >= end + 4 + length {
+                                break;
+                            }
+                        }
+                    }
+                    let body = "8.99";
+                    let _ = write!(
+                        stream,
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    );
+                }
+            });
+        });
+    }
+
+    async fn post_get_quote(body: &str) -> actix_web::dev::ServiceResponse {
+        start_quote_stub();
+        let app = test::init_service(App::new().service(get_quote)).await;
+        let req = test::TestRequest::post()
+            .uri("/get-quote")
+            .insert_header(ContentType::json())
+            .set_payload(body.to_owned())
+            .to_request();
+        test::call_service(&app, req).await
+    }
+
+    async fn get_quote_for(items: &[u32], country: Option<&str>) -> QuoteReply {
+        let items: Vec<String> = items
+            .iter()
+            .map(|q| format!(r#"{{"product_id":"OLJCESPC7Z","quantity":{q}}}"#))
+            .collect();
+        let address = match country {
+            Some(c) => format!(
+                r#"{{"street_address":"1600 Amphitheatre Parkway","city":"Mountain View","state":"CA","country":"{c}","zip_code":"94043"}}"#
+            ),
+            None => "null".into(),
+        };
+        let resp = post_get_quote(&format!(
+            r#"{{"items":[{}],"address":{address}}}"#,
+            items.join(",")
+        ))
+        .await;
+        assert!(resp.status().is_success(), "status {}", resp.status());
+        test::read_body_json(resp).await
+    }
+
+    fn is_free(reply: &QuoteReply) -> bool {
+        let cost = reply.cost_usd.as_ref().expect("cost_usd");
+        cost.units == 0 && cost.nanos == 0
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_carrier_usps_for_united_states() {
+        let reply = get_quote_for(&[1], Some("United States")).await;
+        assert_eq!(reply.carrier, "USPS");
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_carrier_dhl_otherwise() {
+        assert_eq!(get_quote_for(&[1], Some("Canada")).await.carrier, "DHL");
+        assert_eq!(
+            get_quote_for(&[1], Some("united states")).await.carrier,
+            "DHL"
+        );
+        assert_eq!(get_quote_for(&[1], None).await.carrier, "DHL");
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_empty_items_bad_request() {
+        let resp = post_get_quote(r#"{"items":[],"address":null}"#).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_free_for_10_to_50_units() {
+        assert!(is_free(&get_quote_for(&[10], Some("United States")).await));
+        assert!(is_free(&get_quote_for(&[50], Some("United States")).await));
+        assert!(is_free(
+            &get_quote_for(&[5, 5], Some("United States")).await
+        ));
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_charged_for_9_and_51_units() {
+        assert!(!is_free(&get_quote_for(&[9], Some("United States")).await));
+        assert!(!is_free(&get_quote_for(&[51], Some("United States")).await));
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_zero_quantity_item_bad_request() {
+        let resp = post_get_quote(
+            r#"{"items":[{"product_id":"OLJCESPC7Z","quantity":1},{"product_id":"66VCHSJNUP","quantity":0}],"address":null}"#,
+        )
+        .await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_zone() {
+        assert_eq!(
+            get_quote_for(&[1], Some("United States")).await.zone,
+            "domestic"
+        );
+        assert_eq!(
+            get_quote_for(&[1], Some("Canada")).await.zone,
+            "international"
+        );
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_estimated_delivery_days() {
+        assert_eq!(
+            get_quote_for(&[1], Some("United States"))
+                .await
+                .estimated_delivery_days,
+            3
+        );
+        assert_eq!(
+            get_quote_for(&[1], Some("Canada"))
+                .await
+                .estimated_delivery_days,
+            10
+        );
+    }
+
+    #[actix_web::test]
+    async fn test_get_quote_package_size() {
+        for (units, size) in [
+            (1, "small"),
+            (3, "small"),
+            (4, "medium"),
+            (9, "medium"),
+            (10, "large"),
+            (50, "large"),
+        ] {
+            assert_eq!(
+                get_quote_for(&[units], Some("United States"))
+                    .await
+                    .package_size,
+                size,
+                "{units} units"
+            );
+        }
+    }
+
+    async fn post_ship_order(body: &str) -> actix_web::dev::ServiceResponse {
+        let app =
+            test::init_service(App::new().app_data(mock_provider(0)).service(ship_order)).await;
+        let req = test::TestRequest::post()
+            .uri("/ship-order")
+            .insert_header(ContentType::json())
+            .set_payload(body.to_owned())
+            .to_request();
+        test::call_service(&app, req).await
+    }
+
+    #[actix_web::test]
+    async fn test_ship_order_empty_items_bad_request() {
+        let resp = post_ship_order(
+            r#"{"address":{"street_address":"1600 Amphitheatre Parkway","city":"Mountain View","state":"CA","country":"United States","zip_code":"94043"},"items":[]}"#,
+        )
+        .await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_web::test]
+    async fn test_ship_order_blank_zip_code_bad_request() {
+        for zip in ["", "   "] {
+            let resp = post_ship_order(&format!(
+                r#"{{"address":{{"street_address":"1600 Amphitheatre Parkway","city":"Mountain View","state":"CA","country":"United States","zip_code":"{zip}"}},"items":[{{"product_id":"OLJCESPC7Z","quantity":1}}]}}"#
+            ))
+            .await;
+            assert_eq!(
+                resp.status(),
+                actix_web::http::StatusCode::BAD_REQUEST,
+                "zip {zip:?}"
+            );
+        }
+    }
+
     #[actix_web::test]
     async fn test_ship_order_us_address() {
         let order = call_ship_order(Some(make_address("US")), mock_provider(0)).await;
