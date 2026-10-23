@@ -376,6 +376,11 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		badge = "Bestseller"
 	}
 
+	maxQuantity := int32(10)
+	if id == "2ZYFJ3GM2N" {
+		maxQuantity = 3
+	}
+
 	return &pb.Product{
 		Id:          id,
 		Name:        name,
@@ -386,8 +391,9 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 			Units:        units,
 			Nanos:        nanos,
 		},
-		Categories: categories,
-		Badge:      badge,
+		Categories:  categories,
+		Badge:       badge,
+		MaxQuantity: maxQuantity,
 	}
 }
 

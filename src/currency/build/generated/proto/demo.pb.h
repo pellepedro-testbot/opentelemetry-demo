@@ -5389,6 +5389,7 @@ class Product final : public ::google::protobuf::Message
     kPictureFieldNumber = 4,
     kBadgeFieldNumber = 7,
     kPriceUsdFieldNumber = 5,
+    kMaxQuantityFieldNumber = 8,
   };
   // repeated string categories = 6;
   int categories_size() const;
@@ -5502,12 +5503,22 @@ class Product final : public ::google::protobuf::Message
   ::oteldemo::Money* PROTOBUF_NONNULL _internal_mutable_price_usd();
 
   public:
+  // int32 max_quantity = 8;
+  void clear_max_quantity() ;
+  ::int32_t max_quantity() const;
+  void set_max_quantity(::int32_t value);
+
+  private:
+  ::int32_t _internal_max_quantity() const;
+  void _internal_set_max_quantity(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.Product)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 7,
-                                   1, 64,
+  static const ::google::protobuf::internal::TcParseTable<3, 8,
+                                   1, 72,
                                    2>
       _table_;
 
@@ -5535,6 +5546,7 @@ class Product final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr picture_;
     ::google::protobuf::internal::ArenaStringPtr badge_;
     ::oteldemo::Money* PROTOBUF_NULLABLE price_usd_;
+    ::int32_t max_quantity_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -10423,6 +10435,30 @@ inline void Product::set_allocated_badge(::std::string* PROTOBUF_NULLABLE value)
     _impl_.badge_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:oteldemo.Product.badge)
+}
+
+// int32 max_quantity = 8;
+inline void Product::clear_max_quantity() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_quantity_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
+}
+inline ::int32_t Product::max_quantity() const {
+  // @@protoc_insertion_point(field_get:oteldemo.Product.max_quantity)
+  return _internal_max_quantity();
+}
+inline void Product::set_max_quantity(::int32_t value) {
+  _internal_set_max_quantity(value);
+  _impl_._has_bits_[0] |= 0x00000040u;
+  // @@protoc_insertion_point(field_set:oteldemo.Product.max_quantity)
+}
+inline ::int32_t Product::_internal_max_quantity() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.max_quantity_;
+}
+inline void Product::_internal_set_max_quantity(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_quantity_ = value;
 }
 
 // -------------------------------------------------------------------
