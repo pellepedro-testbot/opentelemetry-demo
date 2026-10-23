@@ -382,6 +382,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	}
 	span.AddEvent("prepared")
 
+	if prep.totalUSDNanos > maxOrderUSDNanos {
+		return nil, status.Error(codes.InvalidArgument, "Order exceeds the 5,000 USD limit")
+	}
+
 	total := &pb.Money{
 		CurrencyCode: req.UserCurrency,
 		Units:        0,
@@ -459,10 +463,14 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	return resp, nil
 }
 
+// maxOrderUSDNanos is the largest order total (items plus shipping, in USD nanos) PlaceOrder accepts.
+const maxOrderUSDNanos = 5000 * 1_000_000_000
+
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
 	cartItems             []*pb.CartItem
 	shippingCostLocalized *pb.Money
+	totalUSDNanos         int64
 }
 
 func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, userID, userCurrency string, address *pb.Address) (orderPrep, error) {
@@ -474,7 +482,7 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	if err != nil {
 		return out, fmt.Errorf("cart failure: %+v", err)
 	}
-	orderItems, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
+	orderItems, itemsUSDNanos, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
 	if err != nil {
 		return out, fmt.Errorf("failed to prepare order: %+v", err)
 	}
@@ -490,6 +498,7 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	out.shippingCostLocalized = shippingPrice
 	out.cartItems = cartItems
 	out.orderItems = orderItems
+	out.totalUSDNanos = itemsUSDNanos + usdNanos(shippingUSD)
 
 	var totalCart int32
 	for _, ci := range cartItems {
@@ -574,24 +583,31 @@ func (cs *checkout) emptyUserCart(ctx context.Context, userID string) error {
 	return nil
 }
 
-func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, userCurrency string) ([]*pb.OrderItem, error) {
+// prepOrderItems also returns the items' total in USD nanos, taken from the catalog's USD prices.
+func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, userCurrency string) ([]*pb.OrderItem, int64, error) {
 	out := make([]*pb.OrderItem, len(items))
+	var totalUSDNanos int64
 
 	for i, item := range items {
 		product, err := cs.productCatalogSvcClient.GetProduct(ctx, &pb.GetProductRequest{Id: item.GetProductId()})
 		if err != nil {
-			return nil, fmt.Errorf("failed to get product #%q", item.GetProductId())
+			return nil, 0, fmt.Errorf("failed to get product #%q", item.GetProductId())
 		}
 		price, err := cs.convertCurrency(ctx, product.GetPriceUsd(), userCurrency)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert price of %q to %s", item.GetProductId(), userCurrency)
+			return nil, 0, fmt.Errorf("failed to convert price of %q to %s", item.GetProductId(), userCurrency)
 		}
 		out[i] = &pb.OrderItem{
 			Item: item,
 			Cost: price,
 		}
+		totalUSDNanos += usdNanos(product.GetPriceUsd()) * int64(item.GetQuantity())
 	}
-	return out, nil
+	return out, totalUSDNanos, nil
+}
+
+func usdNanos(m *pb.Money) int64 {
+	return m.GetUnits()*1_000_000_000 + int64(m.GetNanos())
 }
 
 func (cs *checkout) convertCurrency(ctx context.Context, from *pb.Money, toCurrency string) (*pb.Money, error) {
