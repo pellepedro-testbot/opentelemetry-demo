@@ -42,7 +42,7 @@ first_run = True
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
         try:
-            prod_list = get_product_list(request.product_ids)
+            prod_list = get_product_list(request.product_ids, request.max_results)
         except ValueError as e:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
         span = trace.get_current_span()
@@ -67,11 +67,20 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
             status=health_pb2.HealthCheckResponse.UNIMPLEMENTED)
 
 
-def get_product_list(request_product_ids):
+# Upper bound for max_results; the frontend API enforces the same limit
+MAX_RESULTS_LIMIT = 100
+
+
+def get_product_list(request_product_ids, max_results=0):
     global first_run
     global cached_ids
     with tracer.start_as_current_span("get_product_list") as span:
-        max_responses = 5
+        if max_results < 0:
+            raise ValueError("max_results must not be negative")
+        if max_results > MAX_RESULTS_LIMIT:
+            raise ValueError(f"max_results must not exceed {MAX_RESULTS_LIMIT}")
+        # A positive max_results replaces the default count
+        max_responses = max_results or 5
 
         # Formulate the list of characters to list of strings;
         # a list of whole ids is joined with commas instead

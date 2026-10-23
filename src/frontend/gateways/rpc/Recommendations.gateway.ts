@@ -9,9 +9,9 @@ const { RECOMMENDATION_ADDR = '' } = process.env;
 const client = new RecommendationServiceClient(RECOMMENDATION_ADDR, ChannelCredentials.createInsecure());
 
 const RecommendationsGateway = () => ({
-  listRecommendations(userId: string, productIds: string[]) {
+  listRecommendations(userId: string, productIds: string[], maxResults = 0) {
     return new Promise<ListRecommendationsResponse>((resolve, reject) =>
-      client.listRecommendations({ userId, productIds }, (error, response) =>
+      client.listRecommendations({ userId, productIds, maxResults }, (error, response) =>
         error ? reject(error) : resolve(response)
       )
     );

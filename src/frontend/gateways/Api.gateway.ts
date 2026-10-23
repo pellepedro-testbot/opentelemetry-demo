@@ -79,13 +79,14 @@ const Apis = () => ({
       queryParams: { currencyCode },
     });
   },
-  listRecommendations(productIds: string[], currencyCode: string) {
+  listRecommendations(productIds: string[], currencyCode: string, maxResults?: number) {
     return request<Product[]>({
       url: `${basePath}/recommendations`,
       queryParams: {
         productIds,
         sessionId: userId,
         currencyCode,
+        ...(maxResults ? { maxResults } : {}),
       },
     });
   },

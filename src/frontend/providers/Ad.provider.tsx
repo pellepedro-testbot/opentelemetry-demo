@@ -21,11 +21,12 @@ interface IProps {
   children: React.ReactNode;
   productIds: string[];
   contextKeys: string[];
+  maxRecommendations?: number;
 }
 
 export const useAd = () => useContext(Context);
 
-const AdProvider = ({ children, productIds, contextKeys }: IProps) => {
+const AdProvider = ({ children, productIds, contextKeys, maxRecommendations }: IProps) => {
   const { selectedCurrency } = useCurrency();
   const { data: adList = [] } = useQuery({
     queryKey: ['ads', contextKeys],
@@ -39,8 +40,8 @@ const AdProvider = ({ children, productIds, contextKeys }: IProps) => {
     refetchOnWindowFocus: false,
   });
   const { data: recommendedProductList = [] } = useQuery({
-    queryKey: ['recommendations', productIds, 'selectedCurrency', selectedCurrency],
-    queryFn: () => ApiGateway.listRecommendations(productIds, selectedCurrency),
+    queryKey: ['recommendations', productIds, 'selectedCurrency', selectedCurrency, maxRecommendations],
+    queryFn: () => ApiGateway.listRecommendations(productIds, selectedCurrency, maxRecommendations),
     refetchOnWindowFocus: false,
   });
 
