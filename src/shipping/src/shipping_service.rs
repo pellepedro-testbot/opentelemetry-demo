@@ -78,6 +78,10 @@ pub async fn ship_order(
         return HttpResponse::BadRequest().body("address is required");
     }
 
+    if req.items.is_empty() {
+        return HttpResponse::BadRequest().body("items must not be empty");
+    }
+
     let is_outside_us = req
         .address
         .as_ref()
@@ -153,7 +157,10 @@ mod tests {
             .insert_header(ContentType::json())
             .set_json(&ShipOrderRequest {
                 address,
-                items: vec![],
+                items: vec![CartItem {
+                    product_id: "OLJCESPC7Z".into(),
+                    quantity: 1,
+                }],
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
