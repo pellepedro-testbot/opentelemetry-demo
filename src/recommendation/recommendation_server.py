@@ -70,6 +70,9 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
 # Upper bound for max_results; the frontend API enforces the same limit
 MAX_RESULTS_LIMIT = 100
 
+# Most expensive product that may be recommended: 1,000 USD in nanos
+MAX_PRICE_NANOS = 1_000 * 1_000_000_000
+
 
 def get_product_list(request_product_ids, max_results=0):
     global first_run
@@ -121,6 +124,9 @@ def get_product_list(request_product_ids, max_results=0):
 
         if cat_response is None:
             cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
+        prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
+        # Never recommend a product priced above 1,000 USD
+        filtered_products = [x for x in filtered_products if x in prices and prices[x] <= MAX_PRICE_NANOS]
         # With no input products, recommend only accessories
         if not request_product_ids_str:
             accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
@@ -128,7 +134,6 @@ def get_product_list(request_product_ids, max_results=0):
         # Otherwise keep only products cheaper than every input product,
         # preferring those sharing a category with the input products
         else:
-            prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
             unknown_ids = [x for x in request_product_ids if x and x not in prices]
             if unknown_ids:
                 raise ValueError(f"product_id not in catalog: {', '.join(unknown_ids)}")
