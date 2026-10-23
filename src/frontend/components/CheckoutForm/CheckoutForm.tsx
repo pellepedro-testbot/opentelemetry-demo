@@ -183,6 +183,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false }: IProps) => {
           type="password"
           id="credit_card_cvv"
           name="creditCardCvv"
+          placeholder="123"
           value={creditCardCvv}
           required
           pattern="\d{3}"
