@@ -4,6 +4,7 @@
 import { NextPage } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -85,6 +86,7 @@ const ProductDetail: NextPage = () => {
               />
             ) : null}
             <S.Details $fullWidth={!picture}>
+              <Link href="/">Back to products</Link>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
               <S.Categories>
