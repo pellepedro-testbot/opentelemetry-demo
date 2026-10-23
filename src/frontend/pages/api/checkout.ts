@@ -20,6 +20,7 @@ const CARD_DECLINED = 'Your card was declined.';
 const INVALID_CVV = 'Invalid CVV';
 const CARD_EXPIRES_THIS_MONTH = 'Card expires this month';
 const TEST_CARD_REJECTED = 'Test cards are not accepted';
+const CURRENCY_NOT_SUPPORTED = 'Currency not supported for payment';
 const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 const STREET_ADDRESS_REQUIRED = 'Street address is required';
 
@@ -77,6 +78,11 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
             if (details.includes(TEST_CARD_REJECTED)) {
               logger.info({ details }, 'Checkout test card rejected');
               return res.status(422).json({ error: TEST_CARD_REJECTED, code: 'PAYMENT_FAILED' });
+            }
+
+            if (details.includes(CURRENCY_NOT_SUPPORTED)) {
+              logger.info({ details }, 'Checkout currency not supported');
+              return res.status(422).json({ error: CURRENCY_NOT_SUPPORTED, code: 'PAYMENT_FAILED' });
             }
 
             logger.info({ details }, 'Checkout payment declined');

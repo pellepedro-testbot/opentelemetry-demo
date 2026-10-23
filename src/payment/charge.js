@@ -44,6 +44,12 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    if (!['USD', 'EUR', 'GBP'].includes(request.amount.currencyCode)) {
+      const err = new Error('Currency not supported for payment');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     await OpenFeature.setProviderAndWait(flagProvider);
 
     const numberVariant = await OpenFeature.getClient().getNumberValue("paymentFailure", 0);
