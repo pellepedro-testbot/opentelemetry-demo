@@ -242,6 +242,11 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
         span->End();
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported from.currency_code: " + from_code);
       }
+      if (from.nanos() < -999999999 || from.nanos() > 999999999) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "from.nanos must be between -999999999 and 999999999");
+      }
       if (from.units() < 0 || (from.units() <= 0 && from.nanos() < 0)) {
         span->SetStatus(StatusCode::kError);
         span->End();
