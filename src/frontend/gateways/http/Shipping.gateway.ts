@@ -22,7 +22,7 @@ const transformCartItems = (items: CartItem[]) =>
   }));
 
 const ShippingGateway = () => ({
-  async getShippingCost(itemList: CartItem[], address: Address): Promise<GetQuoteResponse & { carrier: string; zone: string; estimatedDeliveryDays: number }> {
+  async getShippingCost(itemList: CartItem[], address: Address): Promise<GetQuoteResponse & { carrier: string; zone: string; estimatedDeliveryDays: number; packageSize: string }> {
     const requestBody = {
       items: transformCartItems(itemList),
       address: transformAddress(address),
@@ -49,11 +49,12 @@ const ShippingGateway = () => ({
       nanos: data.cost_usd.nanos,
     } : undefined;
 
-    const transformedResponse: GetQuoteResponse & { carrier: string; zone: string; estimatedDeliveryDays: number } = {
+    const transformedResponse: GetQuoteResponse & { carrier: string; zone: string; estimatedDeliveryDays: number; packageSize: string } = {
       costUsd,
       carrier: data.carrier,
       zone: data.zone,
       estimatedDeliveryDays: data.estimated_delivery_days,
+      packageSize: data.package_size,
     };
     
     return transformedResponse;

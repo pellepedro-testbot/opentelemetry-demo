@@ -30,7 +30,7 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
 
   const queryKey = ['shipping', productList, selectedCurrency, address];
   const queryFn = () => ApiGateway.getShippingCost(productList, selectedCurrency, address);
-  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number }, Error> = {
+  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string }, Error> = {
     queryKey,
     queryFn,
   };
@@ -105,6 +105,12 @@ const CartItems = ({ productList, shouldShowPrice = true }: IProps) => {
             <S.DataRow>
               <span>Delivery</span>
               <span>Arrives in {shippingConst.estimatedDeliveryDays} days</span>
+            </S.DataRow>
+          )}
+          {shippingConst.packageSize && (
+            <S.DataRow>
+              <span>Package size</span>
+              <span>{shippingConst.packageSize}</span>
             </S.DataRow>
           )}
           <S.DataRow>
