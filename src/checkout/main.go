@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -398,6 +399,9 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	}
 
 	prep, err := cs.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserId, req.UserCurrency, req.Address)
+	if errors.Is(err, errEmptyCart) {
+		return nil, status.Error(codes.FailedPrecondition, "Cart is empty")
+	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -487,6 +491,8 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 // maxOrderUSDNanos is the largest order total (items plus shipping, in USD nanos) PlaceOrder accepts.
 const maxOrderUSDNanos = 5000 * 1_000_000_000
 
+var errEmptyCart = errors.New("cart is empty")
+
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
 	cartItems             []*pb.CartItem
@@ -502,6 +508,9 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	cartItems, err := cs.getUserCart(ctx, userID)
 	if err != nil {
 		return out, fmt.Errorf("cart failure: %+v", err)
+	}
+	if len(cartItems) == 0 {
+		return out, errEmptyCart
 	}
 	orderItems, itemsUSDNanos, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
 	if err != nil {
