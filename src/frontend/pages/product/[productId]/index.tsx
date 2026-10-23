@@ -33,6 +33,7 @@ const ProductDetail: NextPage = () => {
   } = useCart();
   const { selectedCurrency } = useCurrency();
   const productId = query.productId as string;
+  const fromAd = ([] as string[]).concat(query.utm_source ?? []).includes('ad');
 
   useEffect(() => {
     setQuantity(1);
@@ -109,6 +110,7 @@ const ProductDetail: NextPage = () => {
             <S.Details $fullWidth={!picture}>
               <Link href="/">Back to products</Link>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
+              {fromAd && <S.Text>You came from an ad</S.Text>}
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
               <S.Categories>
                 {categories?.map(category => (

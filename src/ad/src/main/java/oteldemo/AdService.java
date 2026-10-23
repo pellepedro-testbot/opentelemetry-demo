@@ -314,46 +314,51 @@ public final class AdService {
     }
   }
 
+  /** Tags an ad redirect URL with utm_source=ad, keeping any query it already has. */
+  static String adRedirectUrl(String url) {
+    return url + (url.contains("?") ? "&" : "?") + "utm_source=ad";
+  }
+
   private static ImmutableListMultimap<String, Ad> createAdsMap() {
     Ad binoculars =
         Ad.newBuilder()
-            .setRedirectUrl("/product/2ZYFJ3GM2N")
+            .setRedirectUrl(adRedirectUrl("/product/2ZYFJ3GM2N"))
             .setText("Roof Binoculars for sale. 50% off.")
             .build();
     Ad explorerTelescope =
         Ad.newBuilder()
-            .setRedirectUrl("/product/66VCHSJNUP")
+            .setRedirectUrl(adRedirectUrl("/product/66VCHSJNUP"))
             .setText("Starsense Explorer Refractor Telescope for sale. 20% off.")
             .build();
     Ad colorImager =
         Ad.newBuilder()
-            .setRedirectUrl("/product/0PUK6V6EV0")
+            .setRedirectUrl(adRedirectUrl("/product/0PUK6V6EV0"))
             .setText("Solar System Color Imager for sale. 30% off.")
             .build();
     Ad opticalTube =
         Ad.newBuilder()
-            .setRedirectUrl("/product/9SIQT8TOJO")
+            .setRedirectUrl(adRedirectUrl("/product/9SIQT8TOJO"))
             .setText("Optical Tube Assembly for sale. 10% off.")
             .build();
     Ad travelTelescope =
         Ad.newBuilder()
-            .setRedirectUrl("/product/1YMWWN1N4O")
+            .setRedirectUrl(adRedirectUrl("/product/1YMWWN1N4O"))
             .setText(
                 "Eclipsmart Travel Refractor Telescope for sale. Buy one, get second kit for free")
             .build();
     Ad solarFilter =
         Ad.newBuilder()
-            .setRedirectUrl("/product/6E92ZMYYFZ")
+            .setRedirectUrl(adRedirectUrl("/product/6E92ZMYYFZ"))
             .setText("Solar Filter for sale. Buy two, get third one for free")
             .build();
     Ad cleaningKit =
         Ad.newBuilder()
-            .setRedirectUrl("/product/L9ECAV7KIM")
+            .setRedirectUrl(adRedirectUrl("/product/L9ECAV7KIM"))
             .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
             .build();
     Ad freeReturns =
         Ad.newBuilder()
-            .setRedirectUrl("/")
+            .setRedirectUrl(adRedirectUrl("/"))
             .setText("Free returns within 30 days")
             .build();
     return ImmutableListMultimap.<String, Ad>builder()
