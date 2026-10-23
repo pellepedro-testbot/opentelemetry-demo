@@ -70,6 +70,9 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
 # Upper bound for max_results; the frontend API enforces the same limit
 MAX_RESULTS_LIMIT = 100
 
+# Most distinct product_ids a request may send
+MAX_PRODUCT_IDS = 10
+
 # Most expensive product that may be recommended: 1,000 USD in nanos
 MAX_PRICE_NANOS = 1_000 * 1_000_000_000
 
@@ -92,6 +95,9 @@ def get_product_list(request_product_ids, max_results=0):
         else:
             request_product_ids_str = ','.join(request_product_ids)
         request_product_ids = request_product_ids_str.split(',')
+        # Count distinct non-empty ids; repeated ids count once
+        if len({x for x in request_product_ids if x}) > MAX_PRODUCT_IDS:
+            raise ValueError(f"at most {MAX_PRODUCT_IDS} product_ids may be sent")
 
         cat_response = None
         # Feature flag scenario - Cache Leak
