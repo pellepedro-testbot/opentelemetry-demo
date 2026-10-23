@@ -18,6 +18,7 @@ const INVALID_ZIP_CODE = 'Invalid zip code';
 const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
 const INVALID_CVV = 'Invalid CVV';
+const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -43,6 +44,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details.startsWith(UNSUPPORTED_COUNTRY_PREFIX)) {
           return res.status(400).json({ error: details });
+        }
+
+        if (details === ORDER_LIMIT_EXCEEDED) {
+          return res.status(400).json({ error: ORDER_LIMIT_EXCEEDED });
         }
 
         if (details.startsWith(PAYMENT_FAILURE_PREFIX)) {
