@@ -239,8 +239,12 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
       string from_code = from.currency_code();
       // find, not operator[], so an unknown code is not added to the rate table
       auto from_rate = currency_conversion.find(from_code);
-      // an unknown code keeps the rate 0 that operator[] used to insert
-      double rate = from_rate == currency_conversion.end() ? 0.0 : from_rate->second;
+      if (from_rate == currency_conversion.end()) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported from.currency_code: " + from_code);
+      }
+      double rate = from_rate->second;
       double one_euro = getDouble(from) / rate ;
 
       double to_rate = currency_conversion[to_code];
