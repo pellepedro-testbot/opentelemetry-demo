@@ -113,6 +113,13 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    // compare digits only, so separators cannot hide the well-known test card
+    if (number.replace(/\D/g, '') === '4111111111111111') {
+      const err = new Error('Test cards are not accepted');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     if (number.replaceAll('-', '') === '4000000000000002') {
       throw new Error('Your card was declined.');
     }
