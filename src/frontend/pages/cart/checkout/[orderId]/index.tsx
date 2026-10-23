@@ -100,6 +100,10 @@ const Checkout: NextPage = () => {
 
               <S.OrderSummary>
                 <S.SummaryRow>
+                  <span>Total items:</span>
+                  <span>{items.reduce((acc, { item }) => acc + (item?.quantity || 0), 0)}</span>
+                </S.SummaryRow>
+                <S.SummaryRow>
                   <span>Shipping:</span>
                   <ProductPrice price={shippingCost} />
                 </S.SummaryRow>
