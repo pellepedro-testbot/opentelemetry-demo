@@ -209,10 +209,11 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          // Look up each distinct context key once, ignoring case, so repeated keys do not duplicate ads
+          // Look up each distinct context key once, ignoring case and surrounding whitespace,
+          // so repeated keys do not duplicate ads
           LinkedHashSet<String> contextKeys = new LinkedHashSet<>();
           for (String contextKey : req.getContextKeysList()) {
-            contextKeys.add(contextKey.toLowerCase(Locale.ROOT));
+            contextKeys.add(contextKey.strip().toLowerCase(Locale.ROOT));
           }
           for (String contextKey : contextKeys) {
             Collection<Ad> ads = service.getAdsByCategory(contextKey);
