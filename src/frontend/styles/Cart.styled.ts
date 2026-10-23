@@ -88,6 +88,11 @@ export const EmptyCartButton = styled(Button)`
   }
 `;
 
+export const LastUpdated = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.textLightGray};
+`;
+
 export const ErrorMessage = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.colors.otelRed};

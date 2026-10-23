@@ -42,6 +42,8 @@ export interface GetCartRequest {
 export interface Cart {
   userId: string;
   items: CartItem[];
+  /** Time of the last AddItem or EmptyCart, in Unix milliseconds (UTC). 0 when never set. */
+  updatedAt: number;
 }
 
 export interface Empty {
@@ -581,7 +583,7 @@ export const GetCartRequest: MessageFns<GetCartRequest> = {
 };
 
 function createBaseCart(): Cart {
-  return { userId: "", items: [] };
+  return { userId: "", items: [], updatedAt: 0 };
 }
 
 export const Cart: MessageFns<Cart> = {
@@ -591,6 +593,9 @@ export const Cart: MessageFns<Cart> = {
     }
     for (const v of message.items) {
       CartItem.encode(v!, writer.uint32(18).fork()).join();
+    }
+    if (message.updatedAt !== 0) {
+      writer.uint32(24).int64(message.updatedAt);
     }
     return writer;
   },
@@ -624,6 +629,14 @@ export const Cart: MessageFns<Cart> = {
             message.items.push(CartItem.decode(reader, reader.uint32()));
             continue;
           }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
+
+            message.updatedAt = longToNumber(reader.int64());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -644,6 +657,11 @@ export const Cart: MessageFns<Cart> = {
         ? globalThis.String(object.user_id)
         : "",
       items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => CartItem.fromJSON(e)) : [],
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.Number(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.Number(object.updated_at)
+        : 0,
     };
   },
 
@@ -655,6 +673,9 @@ export const Cart: MessageFns<Cart> = {
     if (message.items?.length) {
       obj.items = message.items.map((e) => CartItem.toJSON(e));
     }
+    if (message.updatedAt !== 0) {
+      obj.updatedAt = Math.round(message.updatedAt);
+    }
     return obj;
   },
 
@@ -665,6 +686,7 @@ export const Cart: MessageFns<Cart> = {
     const message = createBaseCart();
     message.userId = object.userId ?? "";
     message.items = object.items?.map((e) => CartItem.fromPartial(e)) || [];
+    message.updatedAt = object.updatedAt ?? 0;
     return message;
   },
 };

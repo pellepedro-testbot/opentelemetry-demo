@@ -20,7 +20,7 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
       if (!sessionId) {
         return res.status(400).json({ error: 'sessionId is required' });
       }
-      const { userId, items } = await CartGateway.getCart(sessionId as string);
+      const { userId, items, updatedAt } = await CartGateway.getCart(sessionId as string);
 
       const productList: IProductCartItem[] = await Promise.all(
         items.map(async ({ productId, quantity }) => {
@@ -34,7 +34,7 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
         })
       );
 
-      return res.status(200).json({ userId, items: productList });
+      return res.status(200).json({ userId, items: productList, updatedAt });
     }
 
     case 'POST': {
