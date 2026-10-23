@@ -23,7 +23,6 @@ public class ValkeyCartStore : ICartStore
     private volatile bool _isRedisConnectionOpened;
 
     private readonly Lock _locker = new();
-    private readonly byte[] _emptyCartBytes;
     private readonly string _connectionString;
 
     private static readonly ActivitySource CartActivitySource = new("OpenTelemetry.Demo.Cart");
@@ -47,9 +46,6 @@ public class ValkeyCartStore : ICartStore
     public ValkeyCartStore(ILogger<ValkeyCartStore> logger, string valkeyAddress)
     {
         _logger = logger;
-        // Serialize empty cart into byte array.
-        var cart = new Oteldemo.Cart();
-        _emptyCartBytes = cart.ToByteArray();
         _connectionString = $"{valkeyAddress},ssl=false,allowAdmin=true,abortConnect=false";
 
         _redisConnectionOptions = ConfigurationOptions.Parse(_connectionString);
@@ -176,6 +172,7 @@ public class ValkeyCartStore : ICartStore
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Maximum 10 per product"));
             }
 
+            cart.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
@@ -198,7 +195,8 @@ public class ValkeyCartStore : ICartStore
             var db = _redis.GetDatabase();
 
             // Update the cache with empty cart for given user
-            await db.HashSetAsync(userId, new[] { new HashEntry(CartFieldName, _emptyCartBytes) });
+            var emptyCart = new Oteldemo.Cart { UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
+            await db.HashSetAsync(userId, new[] { new HashEntry(CartFieldName, emptyCart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
         catch (Exception ex)

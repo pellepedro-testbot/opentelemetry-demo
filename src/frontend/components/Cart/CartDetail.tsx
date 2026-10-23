@@ -13,9 +13,15 @@ import * as S from '../../styles/Cart.styled';
 
 const { userId } = SessionGateway.getSession();
 
+// HH:MM in the browser's local time.
+const formatTime = (millis: number) => {
+  const date = new Date(millis);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
 const CartDetail = () => {
   const {
-    cart: { items },
+    cart: { items, updatedAt },
     emptyCart,
     placeOrder,
   } = useCart();
@@ -82,6 +88,7 @@ const CartDetail = () => {
             Empty Cart
           </S.EmptyCartButton>
         </S.Header>
+        {updatedAt > 0 && <S.LastUpdated>Last updated {formatTime(updatedAt)}</S.LastUpdated>}
         <CartItems productList={items} />
       </div>
       {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
