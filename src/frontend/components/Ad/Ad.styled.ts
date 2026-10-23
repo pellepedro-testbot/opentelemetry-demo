@@ -18,6 +18,11 @@ export const Ad = styled.section`
   }
 `;
 
+export const Label = styled.p`
+  font-size: ${({ theme }) => theme.sizes.mSmall};
+  padding-bottom: 12px;
+`;
+
 export const Link = styled(RouterLink)`
   color: black;
   text-decoration: none;

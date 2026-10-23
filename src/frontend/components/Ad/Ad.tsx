@@ -11,6 +11,7 @@ const Ad = () => {
 
   return (
     <S.Ad data-cy={CypressFields.Ad}>
+      <S.Label>Advertisement</S.Label>
       <S.Link href={redirectUrl}>
         <p>{text}</p>
       </S.Link>
