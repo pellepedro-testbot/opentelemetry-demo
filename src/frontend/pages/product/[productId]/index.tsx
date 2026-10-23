@@ -54,6 +54,13 @@ const ProductDetail: NextPage = () => {
     }
   ) as { data: Product };
 
+  const lineTotalNanos = Number(priceUsd.nanos) * quantity;
+  const lineTotal = {
+    units: Number(priceUsd.units) * quantity + Math.floor(lineTotalNanos / 1_000_000_000),
+    nanos: lineTotalNanos % 1_000_000_000,
+    currencyCode: priceUsd.currencyCode,
+  };
+
   const onAddItem = useCallback(async () => {
     setError('');
     try {
@@ -98,17 +105,22 @@ const ProductDetail: NextPage = () => {
                 <ProductPrice price={priceUsd} />
               </S.ProductPrice>
               <S.Text>Quantity</S.Text>
-              <Select
-                data-cy={CypressFields.ProductQuantity}
-                onChange={event => setQuantity(+event.target.value)}
-                value={quantity}
-              >
-                {quantityOptions.map(option => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
+              <S.QuantityRow>
+                <Select
+                  data-cy={CypressFields.ProductQuantity}
+                  onChange={event => setQuantity(+event.target.value)}
+                  value={quantity}
+                >
+                  {quantityOptions.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+                <S.Text>
+                  Line total: <ProductPrice price={lineTotal} />
+                </S.Text>
+              </S.QuantityRow>
               <S.AddToCart data-cy={CypressFields.ProductAddToCart} onClick={onAddItem}>
                 <Image src="/icons/Cart.svg" height="15" width="15" alt="cart" /> Add To Cart
               </S.AddToCart>

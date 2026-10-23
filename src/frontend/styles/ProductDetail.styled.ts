@@ -100,6 +100,12 @@ export const ProductPrice = styled(Text)`
   }
 `;
 
+export const QuantityRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
 export const ErrorMessage = styled(Text)`
   color: ${({ theme }) => theme.colors.otelRed};
 `;
