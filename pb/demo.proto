@@ -91,6 +91,9 @@ message Product {
 
     // Badge shown on product cards, e.g. "Bestseller". Empty means no badge.
     string badge = 7;
+
+    // Most units of this product the product page lets a shopper select at once.
+    int32 max_quantity = 8;
 }
 
 message ListProductsResponse {

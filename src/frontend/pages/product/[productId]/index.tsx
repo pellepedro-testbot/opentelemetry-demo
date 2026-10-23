@@ -21,7 +21,7 @@ import { useCart } from '../../../providers/Cart.provider';
 import * as S from '../../../styles/ProductDetail.styled';
 import { useCurrency } from '../../../providers/Currency.provider';
 
-const quantityOptions = new Array(10).fill(0).map((_, i) => i + 1);
+const MAX_QUANTITY = 10;
 
 const ProductDetail: NextPage = () => {
   const { push, query } = useRouter();
@@ -46,6 +46,7 @@ const ProductDetail: NextPage = () => {
       description,
       priceUsd = { units: 0, currencyCode: 'USD', nanos: 0 },
       categories,
+      maxQuantity,
     } = {} as Product,
   } = useQuery({
       queryKey: ['product', productId, 'selectedCurrency', selectedCurrency],
@@ -53,6 +54,14 @@ const ProductDetail: NextPage = () => {
       enabled: !!productId,
     }
   ) as { data: Product };
+
+  const selectableMax =
+    Number.isInteger(maxQuantity) && maxQuantity > 0 ? Math.min(maxQuantity, MAX_QUANTITY) : MAX_QUANTITY;
+  const quantityOptions = Array.from({ length: selectableMax }, (_, i) => i + 1);
+
+  useEffect(() => {
+    setQuantity(q => Math.min(q, selectableMax));
+  }, [selectableMax]);
 
   // Units of this product already in the cart, from the cart the provider already loads
   const inCartQuantity = items

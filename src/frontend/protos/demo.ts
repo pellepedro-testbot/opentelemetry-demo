@@ -75,6 +75,8 @@ export interface Product {
   categories: string[];
   /** Badge shown on product cards, e.g. "Bestseller". Empty means no badge. */
   badge: string;
+  /** Most units of this product the product page lets a shopper select at once. */
+  maxQuantity: number;
 }
 
 export interface ListProductsResponse {
@@ -932,7 +934,16 @@ export const ListRecommendationsResponse: MessageFns<ListRecommendationsResponse
 };
 
 function createBaseProduct(): Product {
-  return { id: "", name: "", description: "", picture: "", priceUsd: undefined, categories: [], badge: "" };
+  return {
+    id: "",
+    name: "",
+    description: "",
+    picture: "",
+    priceUsd: undefined,
+    categories: [],
+    badge: "",
+    maxQuantity: 0,
+  };
 }
 
 export const Product: MessageFns<Product> = {
@@ -957,6 +968,9 @@ export const Product: MessageFns<Product> = {
     }
     if (message.badge !== "") {
       writer.uint32(58).string(message.badge);
+    }
+    if (message.maxQuantity !== 0) {
+      writer.uint32(64).int32(message.maxQuantity);
     }
     return writer;
   },
@@ -1030,6 +1044,14 @@ export const Product: MessageFns<Product> = {
             message.badge = reader.string();
             continue;
           }
+          case 8: {
+            if (tag !== 64) {
+              break;
+            }
+
+            message.maxQuantity = reader.int32();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -1057,6 +1079,11 @@ export const Product: MessageFns<Product> = {
         ? object.categories.map((e: any) => globalThis.String(e))
         : [],
       badge: isSet(object.badge) ? globalThis.String(object.badge) : "",
+      maxQuantity: isSet(object.maxQuantity)
+        ? globalThis.Number(object.maxQuantity)
+        : isSet(object.max_quantity)
+        ? globalThis.Number(object.max_quantity)
+        : 0,
     };
   },
 
@@ -1083,6 +1110,9 @@ export const Product: MessageFns<Product> = {
     if (message.badge !== "") {
       obj.badge = message.badge;
     }
+    if (message.maxQuantity !== 0) {
+      obj.maxQuantity = Math.round(message.maxQuantity);
+    }
     return obj;
   },
 
@@ -1100,6 +1130,7 @@ export const Product: MessageFns<Product> = {
       : undefined;
     message.categories = object.categories?.map((e) => e) || [];
     message.badge = object.badge ?? "";
+    message.maxQuantity = object.maxQuantity ?? 0;
     return message;
   },
 };
