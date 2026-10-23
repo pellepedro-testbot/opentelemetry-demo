@@ -253,20 +253,29 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 		return nil, fmt.Errorf("database connection not initialized")
 	}
 
-	// Query products matching search query in name, description or category,
-	// ranking name matches first, then description matches, then category-only matches
-	searchPattern := "%" + strings.ToLower(query) + "%"
+	// Query products matching every word of the search query, each word in the
+	// name, description or category. Rank products whose name contains every
+	// word first, then those whose description does, then the rest.
+	var matchAll, nameAll, descAll []string
+	var args []any
+	for i, word := range strings.Fields(strings.ToLower(query)) {
+		args = append(args, "%"+word+"%")
+		n := i + 1
+		matchAll = append(matchAll, fmt.Sprintf("(LOWER(p.name) LIKE $%d OR LOWER(p.description) LIKE $%d OR LOWER(p.categories) LIKE $%d)", n, n, n))
+		nameAll = append(nameAll, fmt.Sprintf("LOWER(p.name) LIKE $%d", n))
+		descAll = append(descAll, fmt.Sprintf("LOWER(p.description) LIKE $%d", n))
+	}
 	rows, err := db.QueryContext(ctx, `
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		WHERE LOWER(p.name) LIKE $1 OR LOWER(p.description) LIKE $1 OR LOWER(p.categories) LIKE $1
+		WHERE `+strings.Join(matchAll, " AND ")+`
 		ORDER BY CASE
-		           WHEN LOWER(p.name) LIKE $1 THEN 0
-		           WHEN LOWER(p.description) LIKE $1 THEN 1
+		           WHEN `+strings.Join(nameAll, " AND ")+` THEN 0
+		           WHEN `+strings.Join(descAll, " AND ")+` THEN 1
 		           ELSE 2
 		         END, p.id
-	`, searchPattern)
+	`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)
 	}
