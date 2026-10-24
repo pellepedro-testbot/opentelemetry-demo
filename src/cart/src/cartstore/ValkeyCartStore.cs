@@ -139,6 +139,8 @@ public class ValkeyCartStore : ICartStore
             // Access the cart from the cache
             var value = await db.HashGetAsync(userId, CartFieldName);
 
+            // The resulting quantity is summed in long so a huge delta cannot wrap around
+            long newQuantity = quantity;
             Oteldemo.Cart cart;
             if (value.IsNull)
             {
@@ -158,14 +160,26 @@ public class ValkeyCartStore : ICartStore
                 }
                 else
                 {
-                    existingItem.Quantity += quantity;
+                    newQuantity += existingItem.Quantity;
+                    existingItem.Quantity = (int)Math.Clamp(newQuantity, int.MinValue, int.MaxValue);
                 }
+            }
+
+            // Remove the product once its quantity drops to 0 or below
+            var item = cart.Items.Single(i => i.ProductId == productId);
+            if (newQuantity <= 0)
+            {
+                cart.Items.Remove(item);
+            }
+            else if (newQuantity > 10)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Maximum 10 per product"));
             }
 
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not RpcException)
         {
             throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
         }

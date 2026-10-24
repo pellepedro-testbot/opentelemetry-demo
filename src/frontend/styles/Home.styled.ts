@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import styled from 'styled-components';
+import Button from '../components/Button';
 
 export const Container = styled.div`
   width: 100%;
@@ -40,6 +41,20 @@ export const HotProductsTitle = styled.h1`
   ${({ theme }) => theme.breakpoints.desktop} {
     font-size: ${({ theme }) => theme.sizes.dxLarge};
   }
+`;
+
+export const CategoryFilters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+`;
+
+export const CategoryButton = styled(Button)`
+  height: auto;
+  padding: 6px 16px;
+  font-size: ${({ theme }) => theme.sizes.dMedium};
+  text-transform: capitalize;
 `;
 
 export const Home = styled.div`

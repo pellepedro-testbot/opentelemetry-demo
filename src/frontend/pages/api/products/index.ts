@@ -11,8 +11,8 @@ type TResponse = Product[] | Empty;
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
-      const { currencyCode = '' } = query;
-      const productList = await ProductCatalogService.listProducts(currencyCode as string);
+      const { currencyCode = '', category = '' } = query;
+      const productList = await ProductCatalogService.listProducts(currencyCode as string, category as string);
 
       return res.status(200).json(productList);
     }

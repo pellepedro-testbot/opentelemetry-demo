@@ -34,3 +34,13 @@ export const ProductPrice = styled.p`
   font-size: ${({ theme }) => theme.sizes.dMedium};
   font-weight: ${({ theme }) => theme.fonts.bold};
 `;
+
+export const Badge = styled.span`
+  display: inline-block;
+  margin-top: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.otelBlue};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.dSmall};
+`;

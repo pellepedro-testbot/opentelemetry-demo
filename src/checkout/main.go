@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -303,6 +304,18 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
+func isValidUSZipCode(zip string) bool {
+	if len(zip) != 5 {
+		return false
+	}
+	for _, c := range zip {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
@@ -335,6 +348,28 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 			span.RecordError(err)
 		}
 	}()
+
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if !strings.Contains(req.Email, "@") {
+		return nil, status.Error(codes.InvalidArgument, "email is invalid")
+	}
+
+	switch country := req.GetAddress().GetCountry(); country {
+	case "United States", "USA", "Canada":
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "We do not ship to %s", country)
+	}
+
+	if req.GetAddress().GetCountry() == "United States" && !isValidUSZipCode(req.GetAddress().GetZipCode()) {
+		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
+	}
+
+	if req.CreditCard == nil {
+		return nil, status.Error(codes.InvalidArgument, "credit_card is required")
+	}
 
 	orderID, err := uuid.NewUUID()
 	if err != nil {
