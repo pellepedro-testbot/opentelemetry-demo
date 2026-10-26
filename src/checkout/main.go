@@ -390,6 +390,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
 
+	if utf8.RuneCountInString(req.Email) > 254 {
+		return nil, status.Error(codes.InvalidArgument, "email must be at most 254 characters")
+	}
+
 	if !strings.Contains(req.Email, "@") {
 		return nil, status.Error(codes.InvalidArgument, "email is invalid")
 	}
