@@ -3,7 +3,7 @@
 
 use uuid::Uuid;
 
-/// returns a tracking ID
+/// returns a tracking ID: `TRK-` and 10 digits
 pub fn create_tracking_id() -> String {
-    Uuid::new_v4().to_string()
+    format!("TRK-{:010}", Uuid::new_v4().as_u128() % 10_000_000_000)
 }
