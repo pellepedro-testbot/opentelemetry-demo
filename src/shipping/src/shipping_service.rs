@@ -40,6 +40,10 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         .iter()
         .fold(0u32, |acc, item| acc.saturating_add(item.quantity));
 
+    if itemct > 50 {
+        return HttpResponse::BadRequest().body("too many items to ship: at most 50 units");
+    }
+
     let mut quote = match create_quote_from_count(itemct).await {
         Ok(q) => q,
         Err(e) => {

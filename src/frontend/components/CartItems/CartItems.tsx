@@ -36,8 +36,11 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
     queryFn,
     // An empty cart has nothing to ship; shipping refuses an empty item list
     enabled: productList.length > 0,
+    // A refused quote (e.g. too many items) does not succeed on a retry
+    retry: false,
   };
-  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess, isLoading } = useQuery(queryOptions);
+  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess, isLoading, isError } = useQuery(queryOptions);
+  const totalUnits = productList.reduce((acc, { quantity }) => acc + quantity, 0);
 
   const subtotal = useMemo<Money>(() => {
     const nanoSum = productList.reduce(
@@ -92,6 +95,8 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
             <span>Shipping</span>
             {isLoading ? (
               <span>Calculating...</span>
+            ) : isError && totalUnits > 50 ? (
+              <span>Too many items to ship</span>
             ) : isSuccess && !Number(shippingConst.units) && !shippingConst.nanos ? (
               <span>Free</span>
             ) : (
