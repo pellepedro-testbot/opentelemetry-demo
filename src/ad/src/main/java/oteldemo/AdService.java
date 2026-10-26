@@ -246,11 +246,8 @@ public final class AdService {
           adRequestType = AdRequestType.NOT_TARGETED;
           adResponseType = AdResponseType.RANDOM;
         }
-        boolean productKeysOnly =
-            req.getContextKeysCount() > 0
-                && req.getContextKeysList().stream()
-                    .allMatch(k -> k.strip().toLowerCase(Locale.ROOT).startsWith(PRODUCT_KEY_PREFIX));
-        if (allAds.isEmpty() && !productKeysOnly) {
+        // Targeted requests whose keys match nothing get no ads, not random ones
+        if (allAds.isEmpty() && req.getContextKeysCount() == 0) {
           // Serve random ads.
           allAds = service.getRandomAds();
           adResponseType = AdResponseType.RANDOM;
