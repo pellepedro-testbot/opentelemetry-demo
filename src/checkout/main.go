@@ -448,6 +448,9 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	}
 
 	txID, err := cs.chargeCard(ctx, total, req.CreditCard)
+	if errors.Is(err, errPaymentUnavailable) {
+		return nil, status.Error(codes.Unavailable, "Payment is unavailable, try again")
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to charge card: %+v", err)
 	}
@@ -521,6 +524,8 @@ var errEmptyCart = errors.New("cart is empty")
 const maxCartUnits = 50
 
 var errTooManyUnits = errors.New("cart holds more than 50 units")
+
+var errPaymentUnavailable = errors.New("payment service is unavailable")
 
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
@@ -702,6 +707,9 @@ func (cs *checkout) chargeCard(ctx context.Context, amount *pb.Money, paymentInf
 		Amount:     amount,
 		CreditCard: paymentInfo,
 	})
+	if status.Code(err) == codes.Unavailable {
+		return "", errPaymentUnavailable
+	}
 	if err != nil {
 		return "", fmt.Errorf("could not charge the card: %+v", err)
 	}

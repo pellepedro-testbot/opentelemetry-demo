@@ -25,6 +25,7 @@ const CURRENCY_NOT_SUPPORTED = 'Currency not supported for payment';
 const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 const STREET_ADDRESS_REQUIRED = 'Street address is required';
 const INVALID_STATE = 'Use a 2-letter state code';
+const PAYMENT_UNAVAILABLE = 'Payment is unavailable, try again';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -50,6 +51,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details.startsWith(UNSUPPORTED_COUNTRY_PREFIX)) {
           return res.status(400).json({ error: details });
+        }
+
+        if (details === PAYMENT_UNAVAILABLE) {
+          return res.status(503).json({ error: PAYMENT_UNAVAILABLE, code: 'PAYMENT_UNAVAILABLE' });
         }
 
         if (details === INVALID_STATE) {
