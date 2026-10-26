@@ -189,6 +189,8 @@ export interface OrderResult {
   shippingCost: Money | undefined;
   shippingAddress: Address | undefined;
   items: OrderItem[];
+  /** When PlaceOrder created the order, RFC 3339 in UTC. */
+  createdAt: string;
 }
 
 export interface SendOrderConfirmationRequest {
@@ -2623,7 +2625,14 @@ export const OrderItem: MessageFns<OrderItem> = {
 };
 
 function createBaseOrderResult(): OrderResult {
-  return { orderId: "", shippingTrackingId: "", shippingCost: undefined, shippingAddress: undefined, items: [] };
+  return {
+    orderId: "",
+    shippingTrackingId: "",
+    shippingCost: undefined,
+    shippingAddress: undefined,
+    items: [],
+    createdAt: "",
+  };
 }
 
 export const OrderResult: MessageFns<OrderResult> = {
@@ -2642,6 +2651,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     }
     for (const v of message.items) {
       OrderItem.encode(v!, writer.uint32(42).fork()).join();
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(50).string(message.createdAt);
     }
     return writer;
   },
@@ -2699,6 +2711,14 @@ export const OrderResult: MessageFns<OrderResult> = {
             message.items.push(OrderItem.decode(reader, reader.uint32()));
             continue;
           }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
+
+            message.createdAt = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -2736,6 +2756,11 @@ export const OrderResult: MessageFns<OrderResult> = {
       items: globalThis.Array.isArray(object?.items)
         ? object.items.map((e: any) => OrderItem.fromJSON(e))
         : [],
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
     };
   },
 
@@ -2756,6 +2781,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     if (message.items?.length) {
       obj.items = message.items.map((e) => OrderItem.toJSON(e));
     }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
     return obj;
   },
 
@@ -2773,6 +2801,7 @@ export const OrderResult: MessageFns<OrderResult> = {
       ? Address.fromPartial(object.shippingAddress)
       : undefined;
     message.items = object.items?.map((e) => OrderItem.fromPartial(e)) || [];
+    message.createdAt = object.createdAt ?? "";
     return message;
   },
 };

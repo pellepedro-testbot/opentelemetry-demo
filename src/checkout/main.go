@@ -499,7 +499,8 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 			Country:       strings.ToUpper(req.GetAddress().GetCountry()),
 			ZipCode:       req.GetAddress().GetZipCode(),
 		},
-		Items: prep.orderItems,
+		Items:     prep.orderItems,
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
 	shippingCostFloat, _ := strconv.ParseFloat(fmt.Sprintf("%d.%02d", prep.shippingCostLocalized.GetUnits(), prep.shippingCostLocalized.GetNanos()/10000000), 64)

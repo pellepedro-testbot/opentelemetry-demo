@@ -41,7 +41,7 @@ const Checkout: NextPage = () => {
   const { query } = useRouter();
   const email = query.email as string | undefined;
   const order = parseOrder(query.order);
-  const { orderId, shippingTrackingId, items = [], shippingAddress = {} as Address, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = order || ({} as IProductCheckout);
+  const { orderId, shippingTrackingId, createdAt, items = [], shippingAddress = {} as Address, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = order || ({} as IProductCheckout);
 
   const orderTotal = useMemo<Money>(() => {
     const itemsTotal = items.reduce((acc, { cost = { units: 0, nanos: 0, currencyCode: 'USD' } }) => {
@@ -104,6 +104,14 @@ const Checkout: NextPage = () => {
                 <S.InfoLabel>Order ID:</S.InfoLabel>
                 <S.InfoValue>{orderId}</S.InfoValue>
               </S.OrderInfo>
+              {createdAt && (
+                <S.OrderInfo>
+                  <S.InfoValue>
+                    Placed on{' '}
+                    {new Date(createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </S.InfoValue>
+                </S.OrderInfo>
+              )}
               {shippingTrackingId && (
                 <S.OrderInfo>
                   <S.InfoValue>Tracking: {shippingTrackingId}</S.InfoValue>

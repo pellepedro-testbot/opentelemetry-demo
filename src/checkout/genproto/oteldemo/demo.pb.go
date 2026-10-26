@@ -1404,8 +1404,10 @@ type OrderResult struct {
 	ShippingCost       *Money                 `protobuf:"bytes,3,opt,name=shipping_cost,json=shippingCost,proto3" json:"shipping_cost,omitempty"`
 	ShippingAddress    *Address               `protobuf:"bytes,4,opt,name=shipping_address,json=shippingAddress,proto3" json:"shipping_address,omitempty"`
 	Items              []*OrderItem           `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// When PlaceOrder created the order, RFC 3339 in UTC.
+	CreatedAt     string `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *OrderResult) Reset() {
@@ -1471,6 +1473,13 @@ func (x *OrderResult) GetItems() []*OrderItem {
 		return x.Items
 	}
 	return nil
+}
+
+func (x *OrderResult) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
 }
 
 type SendOrderConfirmationRequest struct {
@@ -2402,13 +2411,15 @@ const file_demo_proto_rawDesc = "" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\"X\n" +
 	"\tOrderItem\x12&\n" +
 	"\x04item\x18\x01 \x01(\v2\x12.oteldemo.CartItemR\x04item\x12#\n" +
-	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\xf9\x01\n" +
+	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\x98\x02\n" +
 	"\vOrderResult\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x120\n" +
 	"\x14shipping_tracking_id\x18\x02 \x01(\tR\x12shippingTrackingId\x124\n" +
 	"\rshipping_cost\x18\x03 \x01(\v2\x0f.oteldemo.MoneyR\fshippingCost\x12<\n" +
 	"\x10shipping_address\x18\x04 \x01(\v2\x11.oteldemo.AddressR\x0fshippingAddress\x12)\n" +
-	"\x05items\x18\x05 \x03(\v2\x13.oteldemo.OrderItemR\x05items\"a\n" +
+	"\x05items\x18\x05 \x03(\v2\x13.oteldemo.OrderItemR\x05items\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\tR\tcreatedAt\"a\n" +
 	"\x1cSendOrderConfirmationRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12+\n" +
 	"\x05order\x18\x02 \x01(\v2\x15.oteldemo.OrderResultR\x05order\"\xee\x01\n" +

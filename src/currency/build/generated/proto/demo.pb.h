@@ -8526,6 +8526,7 @@ class OrderResult final : public ::google::protobuf::Message
     kItemsFieldNumber = 5,
     kOrderIdFieldNumber = 1,
     kShippingTrackingIdFieldNumber = 2,
+    kCreatedAtFieldNumber = 6,
     kShippingCostFieldNumber = 3,
     kShippingAddressFieldNumber = 4,
   };
@@ -8576,6 +8577,21 @@ class OrderResult final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_shipping_tracking_id();
 
   public:
+  // string created_at = 6;
+  void clear_created_at() ;
+  const ::std::string& created_at() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_created_at(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_created_at();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_created_at();
+  void set_allocated_created_at(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_created_at() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_created_at(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_created_at();
+
+  public:
   // .oteldemo.Money shipping_cost = 3;
   bool has_shipping_cost() const;
   void clear_shipping_cost() ;
@@ -8610,8 +8626,8 @@ class OrderResult final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 5,
-                                   3, 57,
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   3, 67,
                                    2>
       _table_;
 
@@ -8635,6 +8651,7 @@ class OrderResult final : public ::google::protobuf::Message
     ::google::protobuf::RepeatedPtrField< ::oteldemo::OrderItem > items_;
     ::google::protobuf::internal::ArenaStringPtr order_id_;
     ::google::protobuf::internal::ArenaStringPtr shipping_tracking_id_;
+    ::google::protobuf::internal::ArenaStringPtr created_at_;
     ::oteldemo::Money* PROTOBUF_NULLABLE shipping_cost_;
     ::oteldemo::Address* PROTOBUF_NULLABLE shipping_address_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -12907,14 +12924,14 @@ inline void OrderResult::set_allocated_shipping_tracking_id(::std::string* PROTO
 
 // .oteldemo.Money shipping_cost = 3;
 inline bool OrderResult::has_shipping_cost() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.shipping_cost_ != nullptr);
   return value;
 }
 inline void OrderResult::clear_shipping_cost() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.shipping_cost_ != nullptr) _impl_.shipping_cost_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline const ::oteldemo::Money& OrderResult::_internal_shipping_cost() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -12933,16 +12950,16 @@ inline void OrderResult::unsafe_arena_set_allocated_shipping_cost(
   }
   _impl_.shipping_cost_ = reinterpret_cast<::oteldemo::Money*>(value);
   if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000004u;
+    _impl_._has_bits_[0] |= 0x00000008u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000004u;
+    _impl_._has_bits_[0] &= ~0x00000008u;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.OrderResult.shipping_cost)
 }
 inline ::oteldemo::Money* PROTOBUF_NULLABLE OrderResult::release_shipping_cost() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
   ::oteldemo::Money* released = _impl_.shipping_cost_;
   _impl_.shipping_cost_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -12962,7 +12979,7 @@ inline ::oteldemo::Money* PROTOBUF_NULLABLE OrderResult::unsafe_arena_release_sh
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:oteldemo.OrderResult.shipping_cost)
 
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
   ::oteldemo::Money* temp = _impl_.shipping_cost_;
   _impl_.shipping_cost_ = nullptr;
   return temp;
@@ -12977,7 +12994,7 @@ inline ::oteldemo::Money* PROTOBUF_NONNULL OrderResult::_internal_mutable_shippi
 }
 inline ::oteldemo::Money* PROTOBUF_NONNULL OrderResult::mutable_shipping_cost()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   ::oteldemo::Money* _msg = _internal_mutable_shipping_cost();
   // @@protoc_insertion_point(field_mutable:oteldemo.OrderResult.shipping_cost)
   return _msg;
@@ -12994,9 +13011,9 @@ inline void OrderResult::set_allocated_shipping_cost(::oteldemo::Money* PROTOBUF
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    _impl_._has_bits_[0] |= 0x00000004u;
+    _impl_._has_bits_[0] |= 0x00000008u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000004u;
+    _impl_._has_bits_[0] &= ~0x00000008u;
   }
 
   _impl_.shipping_cost_ = reinterpret_cast<::oteldemo::Money*>(value);
@@ -13005,14 +13022,14 @@ inline void OrderResult::set_allocated_shipping_cost(::oteldemo::Money* PROTOBUF
 
 // .oteldemo.Address shipping_address = 4;
 inline bool OrderResult::has_shipping_address() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.shipping_address_ != nullptr);
   return value;
 }
 inline void OrderResult::clear_shipping_address() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.shipping_address_ != nullptr) _impl_.shipping_address_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline const ::oteldemo::Address& OrderResult::_internal_shipping_address() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -13031,16 +13048,16 @@ inline void OrderResult::unsafe_arena_set_allocated_shipping_address(
   }
   _impl_.shipping_address_ = reinterpret_cast<::oteldemo::Address*>(value);
   if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000008u;
+    _impl_._has_bits_[0] |= 0x00000010u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000008u;
+    _impl_._has_bits_[0] &= ~0x00000010u;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.OrderResult.shipping_address)
 }
 inline ::oteldemo::Address* PROTOBUF_NULLABLE OrderResult::release_shipping_address() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
   ::oteldemo::Address* released = _impl_.shipping_address_;
   _impl_.shipping_address_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -13060,7 +13077,7 @@ inline ::oteldemo::Address* PROTOBUF_NULLABLE OrderResult::unsafe_arena_release_
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:oteldemo.OrderResult.shipping_address)
 
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
   ::oteldemo::Address* temp = _impl_.shipping_address_;
   _impl_.shipping_address_ = nullptr;
   return temp;
@@ -13075,7 +13092,7 @@ inline ::oteldemo::Address* PROTOBUF_NONNULL OrderResult::_internal_mutable_ship
 }
 inline ::oteldemo::Address* PROTOBUF_NONNULL OrderResult::mutable_shipping_address()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   ::oteldemo::Address* _msg = _internal_mutable_shipping_address();
   // @@protoc_insertion_point(field_mutable:oteldemo.OrderResult.shipping_address)
   return _msg;
@@ -13092,9 +13109,9 @@ inline void OrderResult::set_allocated_shipping_address(::oteldemo::Address* PRO
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    _impl_._has_bits_[0] |= 0x00000008u;
+    _impl_._has_bits_[0] |= 0x00000010u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000008u;
+    _impl_._has_bits_[0] &= ~0x00000010u;
   }
 
   _impl_.shipping_address_ = reinterpret_cast<::oteldemo::Address*>(value);
@@ -13149,6 +13166,71 @@ inline ::google::protobuf::RepeatedPtrField<::oteldemo::OrderItem>* PROTOBUF_NON
 OrderResult::_internal_mutable_items() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.items_;
+}
+
+// string created_at = 6;
+inline void OrderResult::clear_created_at() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.created_at_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline const ::std::string& OrderResult::created_at() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:oteldemo.OrderResult.created_at)
+  return _internal_created_at();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void OrderResult::set_created_at(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.created_at_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:oteldemo.OrderResult.created_at)
+}
+inline ::std::string* PROTOBUF_NONNULL OrderResult::mutable_created_at()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::std::string* _s = _internal_mutable_created_at();
+  // @@protoc_insertion_point(field_mutable:oteldemo.OrderResult.created_at)
+  return _s;
+}
+inline const ::std::string& OrderResult::_internal_created_at() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.created_at_.Get();
+}
+inline void OrderResult::_internal_set_created_at(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.created_at_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL OrderResult::_internal_mutable_created_at() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  return _impl_.created_at_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE OrderResult::release_created_at() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:oteldemo.OrderResult.created_at)
+  if ((_impl_._has_bits_[0] & 0x00000004u) == 0) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  auto* released = _impl_.created_at_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.created_at_.Set("", GetArena());
+  }
+  return released;
+}
+inline void OrderResult::set_allocated_created_at(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000004u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004u;
+  }
+  _impl_.created_at_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.created_at_.IsDefault()) {
+    _impl_.created_at_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:oteldemo.OrderResult.created_at)
 }
 
 // -------------------------------------------------------------------
