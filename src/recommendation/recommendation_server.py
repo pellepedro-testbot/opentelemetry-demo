@@ -133,6 +133,9 @@ def get_product_list(request_product_ids, max_results=0):
         prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
         # Never recommend a product priced above 1,000 USD
         filtered_products = [x for x in filtered_products if x in prices and prices[x] <= MAX_PRICE_NANOS]
+        # Never recommend books
+        book_ids = {x.id for x in cat_response.products if 'books' in x.categories}
+        filtered_products = [x for x in filtered_products if x not in book_ids]
         # With no input products, recommend only accessories
         if not request_product_ids_str:
             accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
