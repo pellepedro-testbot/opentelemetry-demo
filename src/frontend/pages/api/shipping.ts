@@ -16,6 +16,9 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
       if (!itemList) {
         return res.status(400).json({ error: 'itemList is required' });
       }
+      if (!/^[A-Z]{3}$/.test(currencyCode as string)) {
+        return res.status(400).json({ error: 'currencyCode must be a 3-letter code' });
+      }
       let items: CartItem[];
       let shippingAddress: Address;
       try {
