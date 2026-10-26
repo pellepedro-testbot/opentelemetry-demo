@@ -29,6 +29,7 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -236,6 +237,7 @@ public final class AdService {
             }
             allAds.add(ad);
           }
+          allAds.sort(Comparator.comparing(Ad::getText));
           adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
         } else {
