@@ -155,7 +155,8 @@ def get_product_list(request_product_ids, max_results=0):
             filtered_products.sort(key=lambda x: x not in related_ids)
         num_products = len(filtered_products)
         span.set_attribute("demo.product.filtered.count", num_products)
-        num_return = min(max_responses, num_products)
+        # Never more than 3 recommendations, whatever max_results asks for
+        num_return = min(max_responses, num_products, 3)
 
         # Take the first products from the ordered list, sorted ascending
         prod_list = sorted(filtered_products[:num_return])
