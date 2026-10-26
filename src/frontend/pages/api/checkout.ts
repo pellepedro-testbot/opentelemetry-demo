@@ -23,6 +23,7 @@ const TEST_CARD_REJECTED = 'Test cards are not accepted';
 const CURRENCY_NOT_SUPPORTED = 'Currency not supported for payment';
 const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 const STREET_ADDRESS_REQUIRED = 'Street address is required';
+const INVALID_STATE = 'Use a 2-letter state code';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -48,6 +49,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details.startsWith(UNSUPPORTED_COUNTRY_PREFIX)) {
           return res.status(400).json({ error: details });
+        }
+
+        if (details === INVALID_STATE) {
+          return res.status(400).json({ error: INVALID_STATE });
         }
 
         if (details === STREET_ADDRESS_REQUIRED) {

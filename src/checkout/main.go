@@ -305,6 +305,18 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
+func isTwoLetterState(state string) bool {
+	if len(state) != 2 {
+		return false
+	}
+	for _, r := range state {
+		if (r < 'A' || r > 'Z') && (r < 'a' || r > 'z') {
+			return false
+		}
+	}
+	return true
+}
+
 func isValidUSZipCode(zip string) bool {
 	if len(zip) != 5 {
 		return false
@@ -388,6 +400,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	// Shipping refuses a blank zip after the card is charged; refuse it before, for every country.
 	if strings.TrimSpace(req.GetAddress().GetZipCode()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "Zip code is required")
+	}
+
+	if req.GetAddress().GetCountry() == "United States" && !isTwoLetterState(req.GetAddress().GetState()) {
+		return nil, status.Error(codes.InvalidArgument, "Use a 2-letter state code")
 	}
 
 	if strings.TrimSpace(req.GetAddress().GetStreetAddress()) == "" {
