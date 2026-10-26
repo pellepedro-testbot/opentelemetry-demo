@@ -20,21 +20,22 @@ const Home: NextPage = () => {
   const [category, setCategory] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const { data: allProducts = [] } = useQuery({
+  const { data: allProducts = [], isLoading: allLoading } = useQuery({
     queryKey: ['products', selectedCurrency],
     queryFn: () => ApiGateway.listProducts(selectedCurrency),
   });
-  const { data: categoryProducts = [] } = useQuery({
+  const { data: categoryProducts = [], isLoading: categoryLoading } = useQuery({
     queryKey: ['products', selectedCurrency, category],
     queryFn: () => ApiGateway.listProducts(selectedCurrency, category),
     enabled: !!category,
   });
-  const { data: searchProducts = [] } = useQuery({
+  const { data: searchProducts = [], isLoading: searchLoading } = useQuery({
     queryKey: ['products', selectedCurrency, 'search', search],
     queryFn: () => ApiGateway.searchProducts(search, selectedCurrency),
     enabled: !!search,
   });
   const productList = search ? searchProducts : category ? categoryProducts : allProducts;
+  const productsLoading = search ? searchLoading : category ? categoryLoading : allLoading;
   const categories = [...new Set(allProducts.flatMap(product => product.categories))].sort();
   const { data: adList = [] } = useQuery({
     queryKey: ['ads', ['home']],
@@ -90,7 +91,7 @@ const Home: NextPage = () => {
                     </S.CategoryButton>
                   ))}
                 </S.CategoryFilters>
-                <ProductList productList={productList} />
+                {productsLoading ? <p>Loading products...</p> : <ProductList productList={productList} />}
               </S.HotProducts>
             </S.Content>
           </S.Row>
