@@ -236,6 +236,8 @@ message OrderResult {
     string   created_at = 6;
     // What PlaceOrder charged: item costs plus shipping, in the order's currency.
     Money    total = 7;
+    // created_at's date plus 5 days, YYYY-MM-DD in UTC.
+    string   estimated_delivery_date = 8;
 }
 
 message SendOrderConfirmationRequest {

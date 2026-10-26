@@ -192,7 +192,11 @@ export interface OrderResult {
   /** When PlaceOrder created the order, RFC 3339 in UTC. */
   createdAt: string;
   /** What PlaceOrder charged: item costs plus shipping, in the order's currency. */
-  total: Money | undefined;
+  total:
+    | Money
+    | undefined;
+  /** created_at's date plus 5 days, YYYY-MM-DD in UTC. */
+  estimatedDeliveryDate: string;
 }
 
 export interface SendOrderConfirmationRequest {
@@ -2635,6 +2639,7 @@ function createBaseOrderResult(): OrderResult {
     items: [],
     createdAt: "",
     total: undefined,
+    estimatedDeliveryDate: "",
   };
 }
 
@@ -2660,6 +2665,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     }
     if (message.total !== undefined) {
       Money.encode(message.total, writer.uint32(58).fork()).join();
+    }
+    if (message.estimatedDeliveryDate !== "") {
+      writer.uint32(66).string(message.estimatedDeliveryDate);
     }
     return writer;
   },
@@ -2733,6 +2741,14 @@ export const OrderResult: MessageFns<OrderResult> = {
             message.total = Money.decode(reader, reader.uint32());
             continue;
           }
+          case 8: {
+            if (tag !== 66) {
+              break;
+            }
+
+            message.estimatedDeliveryDate = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -2776,6 +2792,11 @@ export const OrderResult: MessageFns<OrderResult> = {
         ? globalThis.String(object.created_at)
         : "",
       total: isSet(object.total) ? Money.fromJSON(object.total) : undefined,
+      estimatedDeliveryDate: isSet(object.estimatedDeliveryDate)
+        ? globalThis.String(object.estimatedDeliveryDate)
+        : isSet(object.estimated_delivery_date)
+        ? globalThis.String(object.estimated_delivery_date)
+        : "",
     };
   },
 
@@ -2802,6 +2823,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     if (message.total !== undefined) {
       obj.total = Money.toJSON(message.total);
     }
+    if (message.estimatedDeliveryDate !== "") {
+      obj.estimatedDeliveryDate = message.estimatedDeliveryDate;
+    }
     return obj;
   },
 
@@ -2821,6 +2845,7 @@ export const OrderResult: MessageFns<OrderResult> = {
     message.items = object.items?.map((e) => OrderItem.fromPartial(e)) || [];
     message.createdAt = object.createdAt ?? "";
     message.total = (object.total !== undefined && object.total !== null) ? Money.fromPartial(object.total) : undefined;
+    message.estimatedDeliveryDate = object.estimatedDeliveryDate ?? "";
     return message;
   },
 };

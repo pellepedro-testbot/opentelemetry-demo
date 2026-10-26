@@ -508,6 +508,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 
 	_ = cs.emptyUserCart(ctx, req.UserId)
 
+	createdAt := time.Now().UTC()
 	orderResult := &pb.OrderResult{
 		OrderId:            orderRef,
 		ShippingTrackingId: shippingTrackingID,
@@ -520,8 +521,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 			ZipCode:       req.GetAddress().GetZipCode(),
 		},
 		Items:     prep.orderItems,
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		CreatedAt: createdAt.Format(time.RFC3339),
 		Total:     total,
+
+		EstimatedDeliveryDate: createdAt.AddDate(0, 0, 5).Format(time.DateOnly),
 	}
 
 	shippingCostFloat, _ := strconv.ParseFloat(fmt.Sprintf("%d.%02d", prep.shippingCostLocalized.GetUnits(), prep.shippingCostLocalized.GetNanos()/10000000), 64)
