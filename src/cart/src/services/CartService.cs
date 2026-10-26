@@ -32,7 +32,7 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, "user_id is required"));
         }
 
-        var productId = request.Item?.ProductId?.Trim();
+        var productId = request.Item?.ProductId?.Trim().ToUpperInvariant();
         if (string.IsNullOrEmpty(productId))
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "item.product_id is required"));
