@@ -398,6 +398,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "user_currency must be a 3-letter uppercase code")
 	}
 
+	if req.GetAddress() == nil {
+		return nil, status.Error(codes.InvalidArgument, "address is required")
+	}
+
 	switch country := req.GetAddress().GetCountry(); country {
 	case "United States", "USA", "Canada":
 	default:
