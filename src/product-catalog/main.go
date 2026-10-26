@@ -363,6 +363,8 @@ func getProductsFromRows(ctx context.Context, rows *sql.Rows) ([]*pb.Product, er
 }
 
 func parseProductRow(id, name, description, picture, currencyCode, categoriesStr string, units int64, nanos int32) *pb.Product {
+	description = strings.Join(strings.Fields(description), " ")
+
 	// Parse comma-delimited categories string into slice
 	var categories []string
 	if categoriesStr != "" {
