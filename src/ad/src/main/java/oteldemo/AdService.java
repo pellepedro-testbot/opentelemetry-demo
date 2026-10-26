@@ -414,6 +414,7 @@ public final class AdService {
         .putAll("cart", cleaningKit)
         .putAll("empty-cart", colorImager)
         .putAll("flashlights", redFlashlight)
+        .putAll("deals", binoculars, explorerTelescope, colorImager, opticalTube)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }
