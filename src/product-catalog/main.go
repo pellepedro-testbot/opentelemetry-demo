@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	_ "github.com/lib/pq"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -472,6 +473,9 @@ func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProdu
 
 	if strings.TrimSpace(req.Query) == "" {
 		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
+	if utf8.RuneCountInString(req.Query) > 100 {
+		return nil, status.Error(codes.InvalidArgument, "query must be at most 100 characters")
 	}
 
 	var result []*pb.Product
