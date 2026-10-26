@@ -41,6 +41,8 @@ first_run = True
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
+        if not request.user_id.strip():
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "user_id is required")
         try:
             prod_list = get_product_list(request.product_ids, request.max_results)
         except ValueError as e:
