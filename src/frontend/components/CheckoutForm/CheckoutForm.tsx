@@ -65,6 +65,8 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
     if (e.target.name === 'country') onCountryChange?.(e.target.value);
   }, [onCountryChange]);
 
+  const cardBrand = ({ '4': 'Visa', '5': 'Mastercard' } as Record<string, string>)[creditCardNumber.charAt(0)];
+
   const handleCardNumberChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     // Keep at most 16 digits and join them in groups of four with dashes.
     const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
@@ -150,6 +152,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
         required
         pattern="\d{4}-\d{4}-\d{4}-\d{4}"
       />
+      {cardBrand && <span data-cy="card-brand">{cardBrand}</span>}
 
       <S.CardRow>
         <Input
