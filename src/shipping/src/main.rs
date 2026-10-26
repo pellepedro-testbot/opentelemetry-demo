@@ -65,7 +65,11 @@ async fn main() -> std::io::Result<()> {
             .service(ship_order)
             .route(
                 "/health",
-                web::get().to(|| async { HttpResponse::Ok().finish() }),
+                web::get().to(|| async {
+                    HttpResponse::Ok()
+                        .content_type("application/json")
+                        .body(r#"{"status":"ok"}"#)
+                }),
             )
     })
     .bind(&addr)?
