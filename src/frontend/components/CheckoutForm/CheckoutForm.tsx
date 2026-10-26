@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CypressFields } from '../../utils/enums/CypressFields';
 import Input from '../Input';
 import * as S from './CheckoutForm.styled';
 
 const currentYear = new Date().getFullYear();
 const yearList = Array.from(new Array(20), (v, i) => i + currentYear);
+
+export const LAST_ORDER_EMAIL_KEY = 'lastOrderEmail';
 
 export interface IFormData {
   email: string;
@@ -56,6 +58,15 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
     creditCardExpirationYear: 2030,
     creditCardExpirationMonth: 1,
   });
+
+  useEffect(() => {
+    try {
+      const lastEmail = localStorage.getItem(LAST_ORDER_EMAIL_KEY);
+      if (lastEmail) setFormData(formData => ({ ...formData, email: lastEmail }));
+    } catch {
+      // storage unavailable; keep the default email
+    }
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(formData => ({

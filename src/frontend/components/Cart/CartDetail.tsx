@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useState } from 'react';
 import CartItems from '../CartItems';
 import CheckoutForm from '../CheckoutForm';
-import { IFormData } from '../CheckoutForm/CheckoutForm';
+import { IFormData, LAST_ORDER_EMAIL_KEY } from '../CheckoutForm/CheckoutForm';
 import SessionGateway from '../../gateways/Session.gateway';
 import { useCart } from '../../providers/Cart.provider';
 import { useCurrency } from '../../providers/Currency.provider';
@@ -70,6 +70,12 @@ const CartDetail = () => {
         setError((e as Error).message);
         setIsPlacingOrder(false);
         return;
+      }
+
+      try {
+        localStorage.setItem(LAST_ORDER_EMAIL_KEY, email);
+      } catch {
+        // storage unavailable; the next checkout starts from the default email
       }
 
       push({
