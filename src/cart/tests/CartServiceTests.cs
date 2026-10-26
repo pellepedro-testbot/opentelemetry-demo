@@ -70,7 +70,7 @@ public class CartServiceTests
         Assert.NotNull(cart);
 
         // All grpc objects implement IEquitable, so we can compare equality with by-value semantics
-        Assert.Equal(new Cart(), cart);
+        Assert.Equal(new Cart { UserId = userId }, cart);
     }
 
     [Fact]

@@ -86,6 +86,7 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             cart.Items.Clear();
             cart.Items.AddRange(sorted);
             cart.ExpiresAt = cart.UpdatedAt > 0 ? cart.UpdatedAt + 60 * 60 * 1000 : 0;
+            cart.UserId = request.UserId;
             return cart;
         }
         catch (RpcException ex)
