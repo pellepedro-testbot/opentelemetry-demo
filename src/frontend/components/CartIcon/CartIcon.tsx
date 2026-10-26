@@ -16,7 +16,7 @@ const CartIcon = () => {
 
   return (
     <>
-      <S.CartIcon data-cy={CypressFields.CartIcon} onClick={() => setIsOpen(true)}>
+      <S.CartIcon data-cy={CypressFields.CartIcon} aria-label="Open cart" onClick={() => setIsOpen(true)}>
         <S.Icon src="/icons/CartIcon.svg" alt="Cart icon" title="Cart" />
         {!!items.length && <S.ItemsCount data-cy={CypressFields.CartItemCount}>{totalQuantity}</S.ItemsCount>}
       </S.CartIcon>
