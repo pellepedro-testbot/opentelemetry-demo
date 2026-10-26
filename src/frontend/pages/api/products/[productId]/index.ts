@@ -20,6 +20,10 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
         if ((error as ServiceError)?.code === status.NOT_FOUND) {
           return res.status(404).json({ error: 'Product not found' });
         }
+        // An id the catalog refuses (e.g. blank) is the client's error, not the server's
+        if ((error as ServiceError)?.code === status.INVALID_ARGUMENT) {
+          return res.status(400).json({ error: (error as ServiceError).details });
+        }
         throw error;
       }
 

@@ -435,6 +435,9 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 	span.SetAttributes(
 		attribute.String("demo.product.id", id),
 	)
+	if id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
 
 	// GetProduct will fail on a specific product when feature flag is enabled
 	if p.checkProductFailure(ctx, id) {
