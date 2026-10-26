@@ -46,6 +46,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         const details = (error as ServiceError)?.details || (error as Error)?.message || '';
 
+        if ((error as ServiceError)?.code === status.NOT_FOUND) {
+          return res.status(409).json({ error: details });
+        }
+
         if (details === INVALID_ZIP_CODE) {
           return res.status(400).json({ error: INVALID_ZIP_CODE });
         }

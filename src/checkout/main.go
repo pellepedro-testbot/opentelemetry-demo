@@ -425,6 +425,9 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	if errors.Is(err, errEmptyCart) {
 		return nil, status.Error(codes.FailedPrecondition, "Cart is empty")
 	}
+	if errors.Is(err, errProductNotFound) {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
 	if errors.Is(err, errTooManyUnits) {
 		return nil, status.Error(codes.ResourceExhausted, "Cart holds more than 50 units")
 	}
@@ -528,6 +531,8 @@ var errTooManyUnits = errors.New("cart holds more than 50 units")
 
 var errPaymentUnavailable = errors.New("payment service is unavailable")
 
+var errProductNotFound = errors.New("product not found in the catalog")
+
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
 	cartItems             []*pb.CartItem
@@ -556,7 +561,7 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	}
 	orderItems, itemsUSDNanos, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
 	if err != nil {
-		return out, fmt.Errorf("failed to prepare order: %+v", err)
+		return out, fmt.Errorf("failed to prepare order: %w", err)
 	}
 	shippingUSD, err := cs.quoteShipping(ctx, address, cartItems)
 	if err != nil {
@@ -665,6 +670,9 @@ func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, us
 
 	for i, item := range items {
 		product, err := cs.productCatalogSvcClient.GetProduct(ctx, &pb.GetProductRequest{Id: item.GetProductId()})
+		if status.Code(err) == codes.NotFound {
+			return nil, 0, fmt.Errorf("%w: %s", errProductNotFound, item.GetProductId())
+		}
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get product #%q", item.GetProductId())
 		}
