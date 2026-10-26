@@ -44,6 +44,7 @@ pub struct GetQuoteResponse {
     pub item_count: u32,
     pub weight_kg: f64,
     pub ships_from: String,
+    pub signature_required: bool,
     pub estimated_delivery_days: u32,
     pub package_size: String,
 }

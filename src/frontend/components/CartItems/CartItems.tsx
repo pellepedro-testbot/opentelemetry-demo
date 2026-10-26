@@ -31,7 +31,7 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
 
   const queryKey = ['shipping', productList, selectedCurrency, address];
   const queryFn = () => ApiGateway.getShippingCost(productList, selectedCurrency, address);
-  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string; boxes?: number; quoteExpiresAt?: string; weightKg?: number; shipsFrom?: string }, Error> = {
+  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string; boxes?: number; quoteExpiresAt?: string; weightKg?: number; shipsFrom?: string; signatureRequired?: boolean }, Error> = {
     queryKey,
     queryFn,
     // An empty cart has nothing to ship; shipping refuses an empty item list
@@ -118,6 +118,11 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
           {shippingConst.shipsFrom && (
             <S.DataRow>
               <span>Ships from {shippingConst.shipsFrom}</span>
+            </S.DataRow>
+          )}
+          {shippingConst.signatureRequired && (
+            <S.DataRow>
+              <span>Signature required</span>
             </S.DataRow>
           )}
           {shippingConst.quoteExpiresAt && (
