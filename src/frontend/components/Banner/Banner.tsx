@@ -12,7 +12,17 @@ const Banner = () => {
       </S.ImageContainer>
       <S.TextContainer>
         <S.Title>The best telescopes to see the world closer</S.Title>
-        <Link href="#hot-products"><S.GoShoppingButton>Go Shopping</S.GoShoppingButton></Link>
+        <Link
+          href="#hot-products"
+          onClick={event => {
+            const target = document.getElementById('hot-products');
+            if (!target) return;
+            event.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
+          <S.GoShoppingButton>Go Shopping</S.GoShoppingButton>
+        </Link>
       </S.TextContainer>
     </S.Banner>
   );
