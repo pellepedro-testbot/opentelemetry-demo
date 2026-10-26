@@ -62,6 +62,12 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    if (!request.creditCard) {
+      const err = new Error('credit_card is required');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     await OpenFeature.setProviderAndWait(flagProvider);
 
     const numberVariant = await OpenFeature.getClient().getNumberValue("paymentFailure", 0);
