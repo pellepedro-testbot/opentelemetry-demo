@@ -419,6 +419,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate order uuid")
 	}
+	orderRef := "ORD-" + orderID.String()
 
 	prep, err := cs.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserId, req.UserCurrency, req.Address)
 	if errors.Is(err, errEmptyCart) {
@@ -473,7 +474,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	_ = cs.emptyUserCart(ctx, req.UserId)
 
 	orderResult := &pb.OrderResult{
-		OrderId:            orderID.String(),
+		OrderId:            orderRef,
 		ShippingTrackingId: shippingTrackingID,
 		ShippingCost:       prep.shippingCostLocalized,
 		ShippingAddress:    req.Address,
@@ -484,7 +485,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	totalPriceFloat, _ := strconv.ParseFloat(fmt.Sprintf("%d.%02d", total.GetUnits(), total.GetNanos()/10000000), 64)
 
 	span.SetAttributes(
-		attribute.String("demo.order.id", orderID.String()),
+		attribute.String("demo.order.id", orderRef),
 		attribute.Float64("demo.shipping.amount", shippingCostFloat),
 		attribute.Float64("demo.order.amount", totalPriceFloat),
 		attribute.Int("demo.order.items.count", len(prep.orderItems)),
@@ -493,7 +494,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	logger.LogAttrs(
 		ctx,
 		slog.LevelInfo, "order placed",
-		slog.String("demo.order.id", orderID.String()),
+		slog.String("demo.order.id", orderRef),
 		slog.Float64("demo.shipping.amount", shippingCostFloat),
 		slog.Float64("demo.order.amount", totalPriceFloat),
 		slog.Int("demo.order.items.count", len(prep.orderItems)),
