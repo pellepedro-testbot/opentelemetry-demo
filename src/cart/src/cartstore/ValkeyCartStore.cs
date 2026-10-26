@@ -120,6 +120,8 @@ public class ValkeyCartStore : ICartStore
         }
     }
 
+    private const int MaxDistinctProducts = 8;
+
     public async Task AddItemAsync(string userId, string productId, int quantity)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -170,6 +172,10 @@ public class ValkeyCartStore : ICartStore
             else if (newQuantity > 10)
             {
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Maximum 10 per product"));
+            }
+            else if (cart.Items.Count > MaxDistinctProducts)
+            {
+                throw new RpcException(new Status(StatusCode.ResourceExhausted, $"A cart holds at most {MaxDistinctProducts} distinct products"));
             }
 
             cart.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

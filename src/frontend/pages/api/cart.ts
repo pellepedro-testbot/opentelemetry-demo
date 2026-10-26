@@ -48,7 +48,8 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
           return res.status(400).json({ error: MAX_PER_PRODUCT });
         }
         // The cart service's input rejections are the client's error, not the server's
-        if ((error as ServiceError)?.code === status.INVALID_ARGUMENT) {
+        const code = (error as ServiceError)?.code;
+        if (code === status.INVALID_ARGUMENT || code === status.RESOURCE_EXHAUSTED) {
           return res.status(400).json({ error: (error as ServiceError).details });
         }
         throw error;
