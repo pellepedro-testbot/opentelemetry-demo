@@ -449,7 +449,7 @@ func (p *productCatalog) ListProducts(ctx context.Context, req *pb.Empty) (*pb.L
 
 func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductRequest) (*pb.Product, error) {
 	span := trace.SpanFromContext(ctx)
-	id := strings.TrimSpace(req.Id)
+	id := strings.ToUpper(strings.TrimSpace(req.Id))
 	span.SetAttributes(
 		attribute.String("demo.product.id", id),
 	)
