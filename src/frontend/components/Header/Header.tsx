@@ -10,7 +10,7 @@ const Header = () => {
     <S.Header>
       <S.NavBar>
         <S.Container>
-          <S.NavBarBrand href="/">
+          <S.NavBarBrand href="/" aria-label="Home">
             <S.BrandImg />
           </S.NavBarBrand>
           <S.Controls>
