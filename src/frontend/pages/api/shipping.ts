@@ -7,7 +7,7 @@ import ShippingGateway from '../../gateways/http/Shipping.gateway';
 import { Address, CartItem, Empty, Money } from '../../protos/demo';
 import CurrencyGateway from '../../gateways/rpc/Currency.gateway';
 
-type TResponse = (Money & { carrier: string; zone: string; estimatedDeliveryDays: number; packageSize: string }) | Empty | { error: string };
+type TResponse = (Money & { carrier: string; zone: string; estimatedDeliveryDays: number; packageSize: string; boxes: number }) | Empty | { error: string };
 
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
@@ -35,10 +35,10 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
         }
         throw error;
       }
-      const { costUsd, carrier, zone, estimatedDeliveryDays, packageSize } = quote;
+      const { costUsd, carrier, zone, estimatedDeliveryDays, packageSize, boxes } = quote;
       const cost = await CurrencyGateway.convert(costUsd!, currencyCode as string);
 
-      return res.status(200).json({ ...cost!, carrier, zone, estimatedDeliveryDays, packageSize });
+      return res.status(200).json({ ...cost!, carrier, zone, estimatedDeliveryDays, packageSize, boxes });
     }
 
     default: {

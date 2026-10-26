@@ -39,6 +39,7 @@ pub struct GetQuoteResponse {
     pub cost_usd: Option<Money>,
     pub carrier: String,
     pub zone: String,
+    pub boxes: u32,
     pub estimated_delivery_days: u32,
     pub package_size: String,
 }
