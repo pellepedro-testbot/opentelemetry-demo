@@ -7,9 +7,11 @@ import ProductPrice from '../ProductPrice';
 import * as S from './ProductCard.styled';
 import { useState, useEffect } from 'react';
 import { useNumberFlagValue } from '@openfeature/react-sdk';
+import { useCart } from '../../providers/Cart.provider';
 
 interface IProps {
   product: Product;
+  showAddToCart?: boolean;
 }
 
 async function getImageWithHeaders(requestInfo: Request) {
@@ -31,7 +33,9 @@ const ProductCard = ({
       nanos: 0,
     },
   },
+  showAddToCart = false,
 }: IProps) => {
+  const { addItem } = useCart();
   const imageSlowLoad = useNumberFlagValue('imageSlowLoad', 0);
   const [imageSrc, setImageSrc] = useState<string>('');
 
@@ -83,6 +87,19 @@ const ProductCard = ({
             <ProductPrice price={priceUsd} />
           </S.ProductPrice>
           {categories[0] && <p data-cy="product-card-category">{categories[0]}</p>}
+          {showAddToCart && (
+            <button
+              type="button"
+              data-cy="product-card-add-to-cart"
+              onClick={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                addItem({ productId: id, quantity: 1 });
+              }}
+            >
+              Add to cart
+            </button>
+          )}
         </div>
       </S.ProductCard>
     </S.Link>

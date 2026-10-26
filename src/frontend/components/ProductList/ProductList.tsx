@@ -14,7 +14,7 @@ const ProductList = ({ productList }: IProps) => {
   return (
     <S.ProductList data-cy={CypressFields.ProductList}>
       {productList.map(product => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} showAddToCart />
       ))}
     </S.ProductList>
   );
