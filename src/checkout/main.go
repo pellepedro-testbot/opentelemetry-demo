@@ -394,6 +394,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		return nil, status.Error(codes.InvalidArgument, "email is invalid")
 	}
 
+	if strings.HasSuffix(strings.ToLower(strings.TrimSpace(req.GetEmail())), "@mailinator.com") {
+		return nil, status.Error(codes.InvalidArgument, "Disposable email addresses are not allowed")
+	}
+
 	if !isValidCurrencyCode(req.UserCurrency) {
 		return nil, status.Error(codes.InvalidArgument, "user_currency must be a 3-letter uppercase code")
 	}
