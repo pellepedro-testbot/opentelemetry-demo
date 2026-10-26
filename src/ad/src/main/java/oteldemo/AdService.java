@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -218,7 +219,10 @@ public final class AdService {
           // Keys may share ads, so de-duplicate them before serving at most MAX_ADS_TO_SERVE
           LinkedHashSet<Ad> targetedAds = new LinkedHashSet<>();
           for (String contextKey : contextKeys) {
-            Collection<Ad> ads = service.getAdsByCategory(contextKey);
+            Collection<Ad> ads =
+                contextKey.startsWith(PRODUCT_KEY_PREFIX)
+                    ? service.getAdsForProduct(contextKey.substring(PRODUCT_KEY_PREFIX.length()))
+                    : service.getAdsByCategory(contextKey);
             targetedAds.addAll(ads);
           }
           for (Ad ad : targetedAds) {
@@ -235,7 +239,11 @@ public final class AdService {
           adRequestType = AdRequestType.NOT_TARGETED;
           adResponseType = AdResponseType.RANDOM;
         }
-        if (allAds.isEmpty()) {
+        boolean productKeysOnly =
+            req.getContextKeysCount() > 0
+                && req.getContextKeysList().stream()
+                    .allMatch(k -> k.strip().toLowerCase(Locale.ROOT).startsWith(PRODUCT_KEY_PREFIX));
+        if (allAds.isEmpty() && !productKeysOnly) {
           // Serve random ads.
           allAds = service.getRandomAds();
           adResponseType = AdResponseType.RANDOM;
@@ -274,6 +282,16 @@ public final class AdService {
   }
 
   private static final ImmutableListMultimap<String, Ad> adsMap = createAdsMap();
+
+  private static final String PRODUCT_KEY_PREFIX = "product:";
+
+  private Collection<Ad> getAdsForProduct(String productId) {
+    String path = "/product/" + productId + "?";
+    return adsMap.values().stream()
+        .filter(ad -> ad.getRedirectUrl().toLowerCase(Locale.ROOT).startsWith(path))
+        .distinct()
+        .collect(Collectors.toList());
+  }
 
   @WithSpan("getAdsByCategory")
   private Collection<Ad> getAdsByCategory(@SpanAttribute("demo.ad.category") String category) {

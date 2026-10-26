@@ -109,7 +109,7 @@ const ProductDetail: NextPage = () => {
   return (
     <AdProvider
       productIds={[productId, ...items.map(({ productId }) => productId)]}
-      contextKeys={[...new Set(categories)]}
+      contextKeys={[`product:${productId}`]}
     >
       <Head>
         <title>{name ? `${name} - Otel Demo` : 'Otel Demo - Product'}</title>
