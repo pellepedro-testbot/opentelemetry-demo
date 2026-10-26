@@ -86,6 +86,7 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         weight_kg: f64::from(itemct) * 8.0 / 10.0,
         ships_from: "Seattle, WA".into(),
         signature_required: (10..=50).contains(&itemct),
+        carbon_kg: f64::from(itemct) * 5.0 / 10.0,
         estimated_delivery_days: match &req.address {
             Some(addr) if addr.country == "United States" => 3,
             _ => 10,
