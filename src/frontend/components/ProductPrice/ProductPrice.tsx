@@ -23,7 +23,7 @@ const ProductPrice = ({ price: { units, currencyCode, nanos } }: IProps) => {
 
   return (
     <span data-cy={CypressFields.ProductPrice}>
-      {currencySymbol} {total.toFixed(2)}
+      {currencySymbol} {total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
     </span>
   );
 };
