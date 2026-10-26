@@ -65,6 +65,13 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
     if (e.target.name === 'country') onCountryChange?.(e.target.value);
   }, [onCountryChange]);
 
+  const handleCardNumberChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Keep at most 16 digits and join them in groups of four with dashes.
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+    const creditCardNumber = digits.match(/.{1,4}/g)?.join('-') ?? '';
+    setFormData(formData => ({ ...formData, creditCardNumber }));
+  }, []);
+
   return (
     <S.CheckoutForm
       onSubmit={(event: { preventDefault: () => void; }) => {
@@ -139,7 +146,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
         name="creditCardNumber"
         placeholder="0000-0000-0000-0000"
         value={creditCardNumber}
-        onChange={handleChange}
+        onChange={handleCardNumberChange}
         required
         pattern="\d{4}-\d{4}-\d{4}-\d{4}"
       />
