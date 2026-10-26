@@ -173,6 +173,9 @@ const Checkout: NextPage = () => {
               <Link href="/">
                 <Button type="submit">Continue Shopping</Button>
               </Link>
+              <Button type="button" $type="secondary" onClick={() => window.print()}>
+                Print receipt
+              </Button>
             </S.ButtonContainer>
           </S.Container>
           <Recommendations />
