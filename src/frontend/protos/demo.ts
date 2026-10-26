@@ -191,6 +191,8 @@ export interface OrderResult {
   items: OrderItem[];
   /** When PlaceOrder created the order, RFC 3339 in UTC. */
   createdAt: string;
+  /** What PlaceOrder charged: item costs plus shipping, in the order's currency. */
+  total: Money | undefined;
 }
 
 export interface SendOrderConfirmationRequest {
@@ -2632,6 +2634,7 @@ function createBaseOrderResult(): OrderResult {
     shippingAddress: undefined,
     items: [],
     createdAt: "",
+    total: undefined,
   };
 }
 
@@ -2654,6 +2657,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     }
     if (message.createdAt !== "") {
       writer.uint32(50).string(message.createdAt);
+    }
+    if (message.total !== undefined) {
+      Money.encode(message.total, writer.uint32(58).fork()).join();
     }
     return writer;
   },
@@ -2719,6 +2725,14 @@ export const OrderResult: MessageFns<OrderResult> = {
             message.createdAt = reader.string();
             continue;
           }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
+
+            message.total = Money.decode(reader, reader.uint32());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -2761,6 +2775,7 @@ export const OrderResult: MessageFns<OrderResult> = {
         : isSet(object.created_at)
         ? globalThis.String(object.created_at)
         : "",
+      total: isSet(object.total) ? Money.fromJSON(object.total) : undefined,
     };
   },
 
@@ -2784,6 +2799,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     if (message.createdAt !== "") {
       obj.createdAt = message.createdAt;
     }
+    if (message.total !== undefined) {
+      obj.total = Money.toJSON(message.total);
+    }
     return obj;
   },
 
@@ -2802,6 +2820,7 @@ export const OrderResult: MessageFns<OrderResult> = {
       : undefined;
     message.items = object.items?.map((e) => OrderItem.fromPartial(e)) || [];
     message.createdAt = object.createdAt ?? "";
+    message.total = (object.total !== undefined && object.total !== null) ? Money.fromPartial(object.total) : undefined;
     return message;
   },
 };

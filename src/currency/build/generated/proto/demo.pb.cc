@@ -1104,7 +1104,8 @@ inline constexpr OrderResult::Impl_::Impl_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         shipping_cost_{nullptr},
-        shipping_address_{nullptr} {}
+        shipping_address_{nullptr},
+        total_{nullptr} {}
 
 template <typename>
 PROTOBUF_CONSTEXPR OrderResult::OrderResult(::_pbi::ConstantInitialized)
@@ -1384,19 +1385,21 @@ const ::uint32_t
         1,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_._has_bits_),
-        9, // hasbit index offset
+        10, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.order_id_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.shipping_tracking_id_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.shipping_cost_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.shipping_address_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.items_),
         PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.created_at_),
+        PROTOBUF_FIELD_OFFSET(::oteldemo::OrderResult, _impl_.total_),
         0,
         1,
         3,
         4,
         ~0u,
         2,
+        5,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::oteldemo::SendOrderConfirmationRequest, _impl_._has_bits_),
         5, // hasbit index offset
@@ -1517,23 +1520,23 @@ static const ::_pbi::MigrationSchema
         {159, sizeof(::oteldemo::ChargeResponse)},
         {164, sizeof(::oteldemo::OrderItem)},
         {171, sizeof(::oteldemo::OrderResult)},
-        {186, sizeof(::oteldemo::SendOrderConfirmationRequest)},
-        {193, sizeof(::oteldemo::PlaceOrderRequest)},
-        {208, sizeof(::oteldemo::PlaceOrderResponse)},
-        {213, sizeof(::oteldemo::AdRequest)},
-        {215, sizeof(::oteldemo::AdResponse)},
-        {217, sizeof(::oteldemo::Ad)},
-        {226, sizeof(::oteldemo::Flag)},
-        {235, sizeof(::oteldemo::GetFlagRequest)},
-        {240, sizeof(::oteldemo::GetFlagResponse)},
-        {245, sizeof(::oteldemo::CreateFlagRequest)},
-        {254, sizeof(::oteldemo::CreateFlagResponse)},
-        {259, sizeof(::oteldemo::UpdateFlagRequest)},
-        {266, sizeof(::oteldemo::UpdateFlagResponse)},
-        {267, sizeof(::oteldemo::ListFlagsRequest)},
-        {268, sizeof(::oteldemo::ListFlagsResponse)},
-        {270, sizeof(::oteldemo::DeleteFlagRequest)},
-        {275, sizeof(::oteldemo::DeleteFlagResponse)},
+        {188, sizeof(::oteldemo::SendOrderConfirmationRequest)},
+        {195, sizeof(::oteldemo::PlaceOrderRequest)},
+        {210, sizeof(::oteldemo::PlaceOrderResponse)},
+        {215, sizeof(::oteldemo::AdRequest)},
+        {217, sizeof(::oteldemo::AdResponse)},
+        {219, sizeof(::oteldemo::Ad)},
+        {228, sizeof(::oteldemo::Flag)},
+        {237, sizeof(::oteldemo::GetFlagRequest)},
+        {242, sizeof(::oteldemo::GetFlagResponse)},
+        {247, sizeof(::oteldemo::CreateFlagRequest)},
+        {256, sizeof(::oteldemo::CreateFlagResponse)},
+        {261, sizeof(::oteldemo::UpdateFlagRequest)},
+        {268, sizeof(::oteldemo::UpdateFlagResponse)},
+        {269, sizeof(::oteldemo::ListFlagsRequest)},
+        {270, sizeof(::oteldemo::ListFlagsResponse)},
+        {272, sizeof(::oteldemo::DeleteFlagRequest)},
+        {277, sizeof(::oteldemo::DeleteFlagResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::oteldemo::_CartItem_default_instance_._instance,
@@ -1628,83 +1631,84 @@ const char descriptor_table_protodef_demo_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "o.CreditCardInfo\"(\n\016ChargeResponse\022\026\n\016tr"
     "ansaction_id\030\001 \001(\t\"L\n\tOrderItem\022 \n\004item\030"
     "\001 \001(\0132\022.oteldemo.CartItem\022\035\n\004cost\030\002 \001(\0132"
-    "\017.oteldemo.Money\"\312\001\n\013OrderResult\022\020\n\010orde"
+    "\017.oteldemo.Money\"\352\001\n\013OrderResult\022\020\n\010orde"
     "r_id\030\001 \001(\t\022\034\n\024shipping_tracking_id\030\002 \001(\t"
     "\022&\n\rshipping_cost\030\003 \001(\0132\017.oteldemo.Money"
     "\022+\n\020shipping_address\030\004 \001(\0132\021.oteldemo.Ad"
     "dress\022\"\n\005items\030\005 \003(\0132\023.oteldemo.OrderIte"
-    "m\022\022\n\ncreated_at\030\006 \001(\t\"S\n\034SendOrderConfir"
-    "mationRequest\022\r\n\005email\030\001 \001(\t\022$\n\005order\030\002 "
-    "\001(\0132\025.oteldemo.OrderResult\"\261\001\n\021PlaceOrde"
-    "rRequest\022\017\n\007user_id\030\001 \001(\t\022\025\n\ruser_curren"
-    "cy\030\002 \001(\t\022\"\n\007address\030\003 \001(\0132\021.oteldemo.Add"
-    "ress\022\r\n\005email\030\005 \001(\t\022-\n\013credit_card\030\006 \001(\013"
-    "2\030.oteldemo.CreditCardInfo\022\022\n\npromo_code"
-    "\030\007 \001(\t\":\n\022PlaceOrderResponse\022$\n\005order\030\001 "
-    "\001(\0132\025.oteldemo.OrderResult\"!\n\tAdRequest\022"
-    "\024\n\014context_keys\030\001 \003(\t\"\'\n\nAdResponse\022\031\n\003a"
-    "ds\030\001 \003(\0132\014.oteldemo.Ad\"B\n\002Ad\022\024\n\014redirect"
-    "_url\030\001 \001(\t\022\014\n\004text\030\002 \001(\t\022\030\n\020discount_per"
-    "cent\030\003 \001(\005\":\n\004Flag\022\014\n\004name\030\001 \001(\t\022\023\n\013desc"
-    "ription\030\002 \001(\t\022\017\n\007enabled\030\003 \001(\010\"\036\n\016GetFla"
-    "gRequest\022\014\n\004name\030\001 \001(\t\"/\n\017GetFlagRespons"
-    "e\022\034\n\004flag\030\001 \001(\0132\016.oteldemo.Flag\"G\n\021Creat"
-    "eFlagRequest\022\014\n\004name\030\001 \001(\t\022\023\n\013descriptio"
-    "n\030\002 \001(\t\022\017\n\007enabled\030\003 \001(\010\"2\n\022CreateFlagRe"
-    "sponse\022\034\n\004flag\030\001 \001(\0132\016.oteldemo.Flag\"2\n\021"
-    "UpdateFlagRequest\022\014\n\004name\030\001 \001(\t\022\017\n\007enabl"
-    "ed\030\002 \001(\010\"\024\n\022UpdateFlagResponse\"\022\n\020ListFl"
-    "agsRequest\"1\n\021ListFlagsResponse\022\034\n\004flag\030"
-    "\001 \003(\0132\016.oteldemo.Flag\"!\n\021DeleteFlagReque"
-    "st\022\014\n\004name\030\001 \001(\t\"\024\n\022DeleteFlagResponse2\270"
-    "\001\n\013CartService\0226\n\007AddItem\022\030.oteldemo.Add"
-    "ItemRequest\032\017.oteldemo.Empty\"\000\0225\n\007GetCar"
-    "t\022\030.oteldemo.GetCartRequest\032\016.oteldemo.C"
-    "art\"\000\022:\n\tEmptyCart\022\032.oteldemo.EmptyCartR"
-    "equest\032\017.oteldemo.Empty\"\0002}\n\025Recommendat"
-    "ionService\022d\n\023ListRecommendations\022$.otel"
-    "demo.ListRecommendationsRequest\032%.otelde"
-    "mo.ListRecommendationsResponse\"\0002\361\001\n\025Pro"
-    "ductCatalogService\022A\n\014ListProducts\022\017.ote"
-    "ldemo.Empty\032\036.oteldemo.ListProductsRespo"
-    "nse\"\000\022>\n\nGetProduct\022\033.oteldemo.GetProduc"
-    "tRequest\032\021.oteldemo.Product\"\000\022U\n\016SearchP"
-    "roducts\022\037.oteldemo.SearchProductsRequest"
-    "\032 .oteldemo.SearchProductsResponse\"\0002\236\001\n"
-    "\017ShippingService\022C\n\010GetQuote\022\031.oteldemo."
-    "GetQuoteRequest\032\032.oteldemo.GetQuoteRespo"
-    "nse\"\000\022F\n\tShipOrder\022\032.oteldemo.ShipOrderR"
-    "equest\032\033.oteldemo.ShipOrderResponse\"\0002\253\001"
-    "\n\017CurrencyService\022U\n\026GetSupportedCurrenc"
-    "ies\022\017.oteldemo.Empty\032(.oteldemo.GetSuppo"
-    "rtedCurrenciesResponse\"\000\022A\n\007Convert\022#.ot"
-    "eldemo.CurrencyConversionRequest\032\017.oteld"
-    "emo.Money\"\0002O\n\016PaymentService\022=\n\006Charge\022"
-    "\027.oteldemo.ChargeRequest\032\030.oteldemo.Char"
-    "geResponse\"\0002b\n\014EmailService\022R\n\025SendOrde"
-    "rConfirmation\022&.oteldemo.SendOrderConfir"
-    "mationRequest\032\017.oteldemo.Empty\"\0002\\\n\017Chec"
-    "koutService\022I\n\nPlaceOrder\022\033.oteldemo.Pla"
-    "ceOrderRequest\032\034.oteldemo.PlaceOrderResp"
-    "onse\"\0002B\n\tAdService\0225\n\006GetAds\022\023.oteldemo"
-    ".AdRequest\032\024.oteldemo.AdResponse\"\0002\377\002\n\022F"
-    "eatureFlagService\022@\n\007GetFlag\022\030.oteldemo."
-    "GetFlagRequest\032\031.oteldemo.GetFlagRespons"
-    "e\"\000\022I\n\nCreateFlag\022\033.oteldemo.CreateFlagR"
-    "equest\032\034.oteldemo.CreateFlagResponse\"\000\022I"
-    "\n\nUpdateFlag\022\033.oteldemo.UpdateFlagReques"
-    "t\032\034.oteldemo.UpdateFlagResponse\"\000\022F\n\tLis"
-    "tFlags\022\032.oteldemo.ListFlagsRequest\032\033.ote"
-    "ldemo.ListFlagsResponse\"\000\022I\n\nDeleteFlag\022"
-    "\033.oteldemo.DeleteFlagRequest\032\034.oteldemo."
-    "DeleteFlagResponse\"\000B\023Z\021genproto/oteldem"
-    "ob\006proto3"
+    "m\022\022\n\ncreated_at\030\006 \001(\t\022\036\n\005total\030\007 \001(\0132\017.o"
+    "teldemo.Money\"S\n\034SendOrderConfirmationRe"
+    "quest\022\r\n\005email\030\001 \001(\t\022$\n\005order\030\002 \001(\0132\025.ot"
+    "eldemo.OrderResult\"\261\001\n\021PlaceOrderRequest"
+    "\022\017\n\007user_id\030\001 \001(\t\022\025\n\ruser_currency\030\002 \001(\t"
+    "\022\"\n\007address\030\003 \001(\0132\021.oteldemo.Address\022\r\n\005"
+    "email\030\005 \001(\t\022-\n\013credit_card\030\006 \001(\0132\030.oteld"
+    "emo.CreditCardInfo\022\022\n\npromo_code\030\007 \001(\t\":"
+    "\n\022PlaceOrderResponse\022$\n\005order\030\001 \001(\0132\025.ot"
+    "eldemo.OrderResult\"!\n\tAdRequest\022\024\n\014conte"
+    "xt_keys\030\001 \003(\t\"\'\n\nAdResponse\022\031\n\003ads\030\001 \003(\013"
+    "2\014.oteldemo.Ad\"B\n\002Ad\022\024\n\014redirect_url\030\001 \001"
+    "(\t\022\014\n\004text\030\002 \001(\t\022\030\n\020discount_percent\030\003 \001"
+    "(\005\":\n\004Flag\022\014\n\004name\030\001 \001(\t\022\023\n\013description\030"
+    "\002 \001(\t\022\017\n\007enabled\030\003 \001(\010\"\036\n\016GetFlagRequest"
+    "\022\014\n\004name\030\001 \001(\t\"/\n\017GetFlagResponse\022\034\n\004fla"
+    "g\030\001 \001(\0132\016.oteldemo.Flag\"G\n\021CreateFlagReq"
+    "uest\022\014\n\004name\030\001 \001(\t\022\023\n\013description\030\002 \001(\t\022"
+    "\017\n\007enabled\030\003 \001(\010\"2\n\022CreateFlagResponse\022\034"
+    "\n\004flag\030\001 \001(\0132\016.oteldemo.Flag\"2\n\021UpdateFl"
+    "agRequest\022\014\n\004name\030\001 \001(\t\022\017\n\007enabled\030\002 \001(\010"
+    "\"\024\n\022UpdateFlagResponse\"\022\n\020ListFlagsReque"
+    "st\"1\n\021ListFlagsResponse\022\034\n\004flag\030\001 \003(\0132\016."
+    "oteldemo.Flag\"!\n\021DeleteFlagRequest\022\014\n\004na"
+    "me\030\001 \001(\t\"\024\n\022DeleteFlagResponse2\270\001\n\013CartS"
+    "ervice\0226\n\007AddItem\022\030.oteldemo.AddItemRequ"
+    "est\032\017.oteldemo.Empty\"\000\0225\n\007GetCart\022\030.otel"
+    "demo.GetCartRequest\032\016.oteldemo.Cart\"\000\022:\n"
+    "\tEmptyCart\022\032.oteldemo.EmptyCartRequest\032\017"
+    ".oteldemo.Empty\"\0002}\n\025RecommendationServi"
+    "ce\022d\n\023ListRecommendations\022$.oteldemo.Lis"
+    "tRecommendationsRequest\032%.oteldemo.ListR"
+    "ecommendationsResponse\"\0002\361\001\n\025ProductCata"
+    "logService\022A\n\014ListProducts\022\017.oteldemo.Em"
+    "pty\032\036.oteldemo.ListProductsResponse\"\000\022>\n"
+    "\nGetProduct\022\033.oteldemo.GetProductRequest"
+    "\032\021.oteldemo.Product\"\000\022U\n\016SearchProducts\022"
+    "\037.oteldemo.SearchProductsRequest\032 .oteld"
+    "emo.SearchProductsResponse\"\0002\236\001\n\017Shippin"
+    "gService\022C\n\010GetQuote\022\031.oteldemo.GetQuote"
+    "Request\032\032.oteldemo.GetQuoteResponse\"\000\022F\n"
+    "\tShipOrder\022\032.oteldemo.ShipOrderRequest\032\033"
+    ".oteldemo.ShipOrderResponse\"\0002\253\001\n\017Curren"
+    "cyService\022U\n\026GetSupportedCurrencies\022\017.ot"
+    "eldemo.Empty\032(.oteldemo.GetSupportedCurr"
+    "enciesResponse\"\000\022A\n\007Convert\022#.oteldemo.C"
+    "urrencyConversionRequest\032\017.oteldemo.Mone"
+    "y\"\0002O\n\016PaymentService\022=\n\006Charge\022\027.otelde"
+    "mo.ChargeRequest\032\030.oteldemo.ChargeRespon"
+    "se\"\0002b\n\014EmailService\022R\n\025SendOrderConfirm"
+    "ation\022&.oteldemo.SendOrderConfirmationRe"
+    "quest\032\017.oteldemo.Empty\"\0002\\\n\017CheckoutServ"
+    "ice\022I\n\nPlaceOrder\022\033.oteldemo.PlaceOrderR"
+    "equest\032\034.oteldemo.PlaceOrderResponse\"\0002B"
+    "\n\tAdService\0225\n\006GetAds\022\023.oteldemo.AdReque"
+    "st\032\024.oteldemo.AdResponse\"\0002\377\002\n\022FeatureFl"
+    "agService\022@\n\007GetFlag\022\030.oteldemo.GetFlagR"
+    "equest\032\031.oteldemo.GetFlagResponse\"\000\022I\n\nC"
+    "reateFlag\022\033.oteldemo.CreateFlagRequest\032\034"
+    ".oteldemo.CreateFlagResponse\"\000\022I\n\nUpdate"
+    "Flag\022\033.oteldemo.UpdateFlagRequest\032\034.otel"
+    "demo.UpdateFlagResponse\"\000\022F\n\tListFlags\022\032"
+    ".oteldemo.ListFlagsRequest\032\033.oteldemo.Li"
+    "stFlagsResponse\"\000\022I\n\nDeleteFlag\022\033.otelde"
+    "mo.DeleteFlagRequest\032\034.oteldemo.DeleteFl"
+    "agResponse\"\000B\023Z\021genproto/oteldemob\006proto"
+    "3"
 };
 static ::absl::once_flag descriptor_table_demo_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_demo_2eproto = {
     false,
     false,
-    4649,
+    4681,
     descriptor_table_protodef_demo_2eproto,
     "demo.proto",
     &descriptor_table_demo_2eproto_once,
@@ -9397,6 +9401,9 @@ OrderResult::OrderResult(
   _impl_.shipping_address_ = ((cached_has_bits & 0x00000010u) != 0)
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.shipping_address_)
                 : nullptr;
+  _impl_.total_ = ((cached_has_bits & 0x00000020u) != 0)
+                ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.total_)
+                : nullptr;
 
   // @@protoc_insertion_point(copy_constructor:oteldemo.OrderResult)
 }
@@ -9414,9 +9421,9 @@ inline void OrderResult::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   ::memset(reinterpret_cast<char *>(&_impl_) +
                offsetof(Impl_, shipping_cost_),
            0,
-           offsetof(Impl_, shipping_address_) -
+           offsetof(Impl_, total_) -
                offsetof(Impl_, shipping_cost_) +
-               sizeof(Impl_::shipping_address_));
+               sizeof(Impl_::total_));
 }
 OrderResult::~OrderResult() {
   // @@protoc_insertion_point(destructor:oteldemo.OrderResult)
@@ -9431,6 +9438,7 @@ inline void OrderResult::SharedDtor(MessageLite& self) {
   this_._impl_.created_at_.Destroy();
   delete this_._impl_.shipping_cost_;
   delete this_._impl_.shipping_address_;
+  delete this_._impl_.total_;
   this_._impl_.~Impl_();
 }
 
@@ -9489,17 +9497,17 @@ OrderResult::GetClassData() const {
   return OrderResult_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 3, 67, 2>
+const ::_pbi::TcParseTable<3, 7, 4, 67, 2>
 OrderResult::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(OrderResult, _impl_._has_bits_),
     0, // no _extensions_
-    6, 56,  // max_field_number, fast_idx_mask
+    7, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967232,  // skipmap
+    4294967168,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    6,  // num_field_entries
-    3,  // num_aux_entries
+    7,  // num_field_entries
+    4,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     OrderResult_class_data_.base(),
     nullptr,  // post_loop_handler
@@ -9527,7 +9535,9 @@ OrderResult::_table_ = {
     // string created_at = 6;
     {::_pbi::TcParser::FastUS1,
      {50, 2, 0, PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.created_at_)}},
-    {::_pbi::TcParser::MiniParse, {}},
+    // .oteldemo.Money total = 7;
+    {::_pbi::TcParser::FastMtS1,
+     {58, 5, 3, PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.total_)}},
   }}, {{
     65535, 65535
   }}, {{
@@ -9549,11 +9559,15 @@ OrderResult::_table_ = {
     // string created_at = 6;
     {PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.created_at_), _Internal::kHasBitsOffset + 2, 0,
     (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // .oteldemo.Money total = 7;
+    {PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.total_), _Internal::kHasBitsOffset + 5, 3,
+    (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::oteldemo::Money>()},
       {::_pbi::TcParser::GetTable<::oteldemo::Address>()},
       {::_pbi::TcParser::GetTable<::oteldemo::OrderItem>()},
+      {::_pbi::TcParser::GetTable<::oteldemo::Money>()},
   }},
   {{
     "\24\10\24\0\0\0\12\0"
@@ -9572,7 +9586,7 @@ PROTOBUF_NOINLINE void OrderResult::Clear() {
 
   _impl_.items_.Clear();
   cached_has_bits = _impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     if ((cached_has_bits & 0x00000001u) != 0) {
       _impl_.order_id_.ClearNonDefaultToEmpty();
     }
@@ -9589,6 +9603,10 @@ PROTOBUF_NOINLINE void OrderResult::Clear() {
     if ((cached_has_bits & 0x00000010u) != 0) {
       ABSL_DCHECK(_impl_.shipping_address_ != nullptr);
       _impl_.shipping_address_->Clear();
+    }
+    if ((cached_has_bits & 0x00000020u) != 0) {
+      ABSL_DCHECK(_impl_.total_ != nullptr);
+      _impl_.total_->Clear();
     }
   }
   _impl_._has_bits_.Clear();
@@ -9666,6 +9684,13 @@ PROTOBUF_NOINLINE void OrderResult::Clear() {
     }
   }
 
+  // .oteldemo.Money total = 7;
+  if ((cached_has_bits & 0x00000020u) != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+        7, *this_._impl_.total_, this_._impl_.total_->GetCachedSize(), target,
+        stream);
+  }
+
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
     target =
         ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -9700,7 +9725,7 @@ PROTOBUF_NOINLINE void OrderResult::Clear() {
     }
   }
   cached_has_bits = this_._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     // string order_id = 1;
     if ((cached_has_bits & 0x00000001u) != 0) {
       if (!this_._internal_order_id().empty()) {
@@ -9732,6 +9757,11 @@ PROTOBUF_NOINLINE void OrderResult::Clear() {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.shipping_address_);
     }
+    // .oteldemo.Money total = 7;
+    if ((cached_has_bits & 0x00000020u) != 0) {
+      total_size += 1 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.total_);
+    }
   }
   return this_.MaybeComputeUnknownFieldsSize(total_size,
                                              &this_._impl_._cached_size_);
@@ -9749,7 +9779,7 @@ void OrderResult::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goo
   _this->_internal_mutable_items()->MergeFrom(
       from._internal_items());
   cached_has_bits = from._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000001fu) != 0) {
+  if ((cached_has_bits & 0x0000003fu) != 0) {
     if ((cached_has_bits & 0x00000001u) != 0) {
       if (!from._internal_order_id().empty()) {
         _this->_internal_set_order_id(from._internal_order_id());
@@ -9793,6 +9823,14 @@ void OrderResult::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goo
         _this->_impl_.shipping_address_->MergeFrom(*from._impl_.shipping_address_);
       }
     }
+    if ((cached_has_bits & 0x00000020u) != 0) {
+      ABSL_DCHECK(from._impl_.total_ != nullptr);
+      if (_this->_impl_.total_ == nullptr) {
+        _this->_impl_.total_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.total_);
+      } else {
+        _this->_impl_.total_->MergeFrom(*from._impl_.total_);
+      }
+    }
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
@@ -9817,8 +9855,8 @@ void OrderResult::InternalSwap(OrderResult* PROTOBUF_RESTRICT PROTOBUF_NONNULL o
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.shipping_tracking_id_, &other->_impl_.shipping_tracking_id_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.created_at_, &other->_impl_.created_at_, arena);
   ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.shipping_address_)
-      + sizeof(OrderResult::_impl_.shipping_address_)
+      PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.total_)
+      + sizeof(OrderResult::_impl_.total_)
       - PROTOBUF_FIELD_OFFSET(OrderResult, _impl_.shipping_cost_)>(
           reinterpret_cast<char*>(&_impl_.shipping_cost_),
           reinterpret_cast<char*>(&other->_impl_.shipping_cost_));

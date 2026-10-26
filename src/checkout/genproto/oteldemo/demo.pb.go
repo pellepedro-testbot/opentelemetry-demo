@@ -1405,7 +1405,9 @@ type OrderResult struct {
 	ShippingAddress    *Address               `protobuf:"bytes,4,opt,name=shipping_address,json=shippingAddress,proto3" json:"shipping_address,omitempty"`
 	Items              []*OrderItem           `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
 	// When PlaceOrder created the order, RFC 3339 in UTC.
-	CreatedAt     string `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt string `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// What PlaceOrder charged: item costs plus shipping, in the order's currency.
+	Total         *Money `protobuf:"bytes,7,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1480,6 +1482,13 @@ func (x *OrderResult) GetCreatedAt() string {
 		return x.CreatedAt
 	}
 	return ""
+}
+
+func (x *OrderResult) GetTotal() *Money {
+	if x != nil {
+		return x.Total
+	}
+	return nil
 }
 
 type SendOrderConfirmationRequest struct {
@@ -2411,7 +2420,7 @@ const file_demo_proto_rawDesc = "" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\"X\n" +
 	"\tOrderItem\x12&\n" +
 	"\x04item\x18\x01 \x01(\v2\x12.oteldemo.CartItemR\x04item\x12#\n" +
-	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\x98\x02\n" +
+	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\xbf\x02\n" +
 	"\vOrderResult\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x120\n" +
 	"\x14shipping_tracking_id\x18\x02 \x01(\tR\x12shippingTrackingId\x124\n" +
@@ -2419,7 +2428,8 @@ const file_demo_proto_rawDesc = "" +
 	"\x10shipping_address\x18\x04 \x01(\v2\x11.oteldemo.AddressR\x0fshippingAddress\x12)\n" +
 	"\x05items\x18\x05 \x03(\v2\x13.oteldemo.OrderItemR\x05items\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\tR\tcreatedAt\"a\n" +
+	"created_at\x18\x06 \x01(\tR\tcreatedAt\x12%\n" +
+	"\x05total\x18\a \x01(\v2\x0f.oteldemo.MoneyR\x05total\"a\n" +
 	"\x1cSendOrderConfirmationRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12+\n" +
 	"\x05order\x18\x02 \x01(\v2\x15.oteldemo.OrderResultR\x05order\"\xee\x01\n" +
@@ -2581,59 +2591,60 @@ var file_demo_proto_depIdxs = []int32{
 	18, // 16: oteldemo.OrderResult.shipping_cost:type_name -> oteldemo.Money
 	17, // 17: oteldemo.OrderResult.shipping_address:type_name -> oteldemo.Address
 	24, // 18: oteldemo.OrderResult.items:type_name -> oteldemo.OrderItem
-	25, // 19: oteldemo.SendOrderConfirmationRequest.order:type_name -> oteldemo.OrderResult
-	17, // 20: oteldemo.PlaceOrderRequest.address:type_name -> oteldemo.Address
-	21, // 21: oteldemo.PlaceOrderRequest.credit_card:type_name -> oteldemo.CreditCardInfo
-	25, // 22: oteldemo.PlaceOrderResponse.order:type_name -> oteldemo.OrderResult
-	31, // 23: oteldemo.AdResponse.ads:type_name -> oteldemo.Ad
-	32, // 24: oteldemo.GetFlagResponse.flag:type_name -> oteldemo.Flag
-	32, // 25: oteldemo.CreateFlagResponse.flag:type_name -> oteldemo.Flag
-	32, // 26: oteldemo.ListFlagsResponse.flag:type_name -> oteldemo.Flag
-	1,  // 27: oteldemo.CartService.AddItem:input_type -> oteldemo.AddItemRequest
-	3,  // 28: oteldemo.CartService.GetCart:input_type -> oteldemo.GetCartRequest
-	2,  // 29: oteldemo.CartService.EmptyCart:input_type -> oteldemo.EmptyCartRequest
-	6,  // 30: oteldemo.RecommendationService.ListRecommendations:input_type -> oteldemo.ListRecommendationsRequest
-	5,  // 31: oteldemo.ProductCatalogService.ListProducts:input_type -> oteldemo.Empty
-	10, // 32: oteldemo.ProductCatalogService.GetProduct:input_type -> oteldemo.GetProductRequest
-	11, // 33: oteldemo.ProductCatalogService.SearchProducts:input_type -> oteldemo.SearchProductsRequest
-	13, // 34: oteldemo.ShippingService.GetQuote:input_type -> oteldemo.GetQuoteRequest
-	15, // 35: oteldemo.ShippingService.ShipOrder:input_type -> oteldemo.ShipOrderRequest
-	5,  // 36: oteldemo.CurrencyService.GetSupportedCurrencies:input_type -> oteldemo.Empty
-	20, // 37: oteldemo.CurrencyService.Convert:input_type -> oteldemo.CurrencyConversionRequest
-	22, // 38: oteldemo.PaymentService.Charge:input_type -> oteldemo.ChargeRequest
-	26, // 39: oteldemo.EmailService.SendOrderConfirmation:input_type -> oteldemo.SendOrderConfirmationRequest
-	27, // 40: oteldemo.CheckoutService.PlaceOrder:input_type -> oteldemo.PlaceOrderRequest
-	29, // 41: oteldemo.AdService.GetAds:input_type -> oteldemo.AdRequest
-	33, // 42: oteldemo.FeatureFlagService.GetFlag:input_type -> oteldemo.GetFlagRequest
-	35, // 43: oteldemo.FeatureFlagService.CreateFlag:input_type -> oteldemo.CreateFlagRequest
-	37, // 44: oteldemo.FeatureFlagService.UpdateFlag:input_type -> oteldemo.UpdateFlagRequest
-	39, // 45: oteldemo.FeatureFlagService.ListFlags:input_type -> oteldemo.ListFlagsRequest
-	41, // 46: oteldemo.FeatureFlagService.DeleteFlag:input_type -> oteldemo.DeleteFlagRequest
-	5,  // 47: oteldemo.CartService.AddItem:output_type -> oteldemo.Empty
-	4,  // 48: oteldemo.CartService.GetCart:output_type -> oteldemo.Cart
-	5,  // 49: oteldemo.CartService.EmptyCart:output_type -> oteldemo.Empty
-	7,  // 50: oteldemo.RecommendationService.ListRecommendations:output_type -> oteldemo.ListRecommendationsResponse
-	9,  // 51: oteldemo.ProductCatalogService.ListProducts:output_type -> oteldemo.ListProductsResponse
-	8,  // 52: oteldemo.ProductCatalogService.GetProduct:output_type -> oteldemo.Product
-	12, // 53: oteldemo.ProductCatalogService.SearchProducts:output_type -> oteldemo.SearchProductsResponse
-	14, // 54: oteldemo.ShippingService.GetQuote:output_type -> oteldemo.GetQuoteResponse
-	16, // 55: oteldemo.ShippingService.ShipOrder:output_type -> oteldemo.ShipOrderResponse
-	19, // 56: oteldemo.CurrencyService.GetSupportedCurrencies:output_type -> oteldemo.GetSupportedCurrenciesResponse
-	18, // 57: oteldemo.CurrencyService.Convert:output_type -> oteldemo.Money
-	23, // 58: oteldemo.PaymentService.Charge:output_type -> oteldemo.ChargeResponse
-	5,  // 59: oteldemo.EmailService.SendOrderConfirmation:output_type -> oteldemo.Empty
-	28, // 60: oteldemo.CheckoutService.PlaceOrder:output_type -> oteldemo.PlaceOrderResponse
-	30, // 61: oteldemo.AdService.GetAds:output_type -> oteldemo.AdResponse
-	34, // 62: oteldemo.FeatureFlagService.GetFlag:output_type -> oteldemo.GetFlagResponse
-	36, // 63: oteldemo.FeatureFlagService.CreateFlag:output_type -> oteldemo.CreateFlagResponse
-	38, // 64: oteldemo.FeatureFlagService.UpdateFlag:output_type -> oteldemo.UpdateFlagResponse
-	40, // 65: oteldemo.FeatureFlagService.ListFlags:output_type -> oteldemo.ListFlagsResponse
-	42, // 66: oteldemo.FeatureFlagService.DeleteFlag:output_type -> oteldemo.DeleteFlagResponse
-	47, // [47:67] is the sub-list for method output_type
-	27, // [27:47] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	18, // 19: oteldemo.OrderResult.total:type_name -> oteldemo.Money
+	25, // 20: oteldemo.SendOrderConfirmationRequest.order:type_name -> oteldemo.OrderResult
+	17, // 21: oteldemo.PlaceOrderRequest.address:type_name -> oteldemo.Address
+	21, // 22: oteldemo.PlaceOrderRequest.credit_card:type_name -> oteldemo.CreditCardInfo
+	25, // 23: oteldemo.PlaceOrderResponse.order:type_name -> oteldemo.OrderResult
+	31, // 24: oteldemo.AdResponse.ads:type_name -> oteldemo.Ad
+	32, // 25: oteldemo.GetFlagResponse.flag:type_name -> oteldemo.Flag
+	32, // 26: oteldemo.CreateFlagResponse.flag:type_name -> oteldemo.Flag
+	32, // 27: oteldemo.ListFlagsResponse.flag:type_name -> oteldemo.Flag
+	1,  // 28: oteldemo.CartService.AddItem:input_type -> oteldemo.AddItemRequest
+	3,  // 29: oteldemo.CartService.GetCart:input_type -> oteldemo.GetCartRequest
+	2,  // 30: oteldemo.CartService.EmptyCart:input_type -> oteldemo.EmptyCartRequest
+	6,  // 31: oteldemo.RecommendationService.ListRecommendations:input_type -> oteldemo.ListRecommendationsRequest
+	5,  // 32: oteldemo.ProductCatalogService.ListProducts:input_type -> oteldemo.Empty
+	10, // 33: oteldemo.ProductCatalogService.GetProduct:input_type -> oteldemo.GetProductRequest
+	11, // 34: oteldemo.ProductCatalogService.SearchProducts:input_type -> oteldemo.SearchProductsRequest
+	13, // 35: oteldemo.ShippingService.GetQuote:input_type -> oteldemo.GetQuoteRequest
+	15, // 36: oteldemo.ShippingService.ShipOrder:input_type -> oteldemo.ShipOrderRequest
+	5,  // 37: oteldemo.CurrencyService.GetSupportedCurrencies:input_type -> oteldemo.Empty
+	20, // 38: oteldemo.CurrencyService.Convert:input_type -> oteldemo.CurrencyConversionRequest
+	22, // 39: oteldemo.PaymentService.Charge:input_type -> oteldemo.ChargeRequest
+	26, // 40: oteldemo.EmailService.SendOrderConfirmation:input_type -> oteldemo.SendOrderConfirmationRequest
+	27, // 41: oteldemo.CheckoutService.PlaceOrder:input_type -> oteldemo.PlaceOrderRequest
+	29, // 42: oteldemo.AdService.GetAds:input_type -> oteldemo.AdRequest
+	33, // 43: oteldemo.FeatureFlagService.GetFlag:input_type -> oteldemo.GetFlagRequest
+	35, // 44: oteldemo.FeatureFlagService.CreateFlag:input_type -> oteldemo.CreateFlagRequest
+	37, // 45: oteldemo.FeatureFlagService.UpdateFlag:input_type -> oteldemo.UpdateFlagRequest
+	39, // 46: oteldemo.FeatureFlagService.ListFlags:input_type -> oteldemo.ListFlagsRequest
+	41, // 47: oteldemo.FeatureFlagService.DeleteFlag:input_type -> oteldemo.DeleteFlagRequest
+	5,  // 48: oteldemo.CartService.AddItem:output_type -> oteldemo.Empty
+	4,  // 49: oteldemo.CartService.GetCart:output_type -> oteldemo.Cart
+	5,  // 50: oteldemo.CartService.EmptyCart:output_type -> oteldemo.Empty
+	7,  // 51: oteldemo.RecommendationService.ListRecommendations:output_type -> oteldemo.ListRecommendationsResponse
+	9,  // 52: oteldemo.ProductCatalogService.ListProducts:output_type -> oteldemo.ListProductsResponse
+	8,  // 53: oteldemo.ProductCatalogService.GetProduct:output_type -> oteldemo.Product
+	12, // 54: oteldemo.ProductCatalogService.SearchProducts:output_type -> oteldemo.SearchProductsResponse
+	14, // 55: oteldemo.ShippingService.GetQuote:output_type -> oteldemo.GetQuoteResponse
+	16, // 56: oteldemo.ShippingService.ShipOrder:output_type -> oteldemo.ShipOrderResponse
+	19, // 57: oteldemo.CurrencyService.GetSupportedCurrencies:output_type -> oteldemo.GetSupportedCurrenciesResponse
+	18, // 58: oteldemo.CurrencyService.Convert:output_type -> oteldemo.Money
+	23, // 59: oteldemo.PaymentService.Charge:output_type -> oteldemo.ChargeResponse
+	5,  // 60: oteldemo.EmailService.SendOrderConfirmation:output_type -> oteldemo.Empty
+	28, // 61: oteldemo.CheckoutService.PlaceOrder:output_type -> oteldemo.PlaceOrderResponse
+	30, // 62: oteldemo.AdService.GetAds:output_type -> oteldemo.AdResponse
+	34, // 63: oteldemo.FeatureFlagService.GetFlag:output_type -> oteldemo.GetFlagResponse
+	36, // 64: oteldemo.FeatureFlagService.CreateFlag:output_type -> oteldemo.CreateFlagResponse
+	38, // 65: oteldemo.FeatureFlagService.UpdateFlag:output_type -> oteldemo.UpdateFlagResponse
+	40, // 66: oteldemo.FeatureFlagService.ListFlags:output_type -> oteldemo.ListFlagsResponse
+	42, // 67: oteldemo.FeatureFlagService.DeleteFlag:output_type -> oteldemo.DeleteFlagResponse
+	48, // [48:68] is the sub-list for method output_type
+	28, // [28:48] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_demo_proto_init() }

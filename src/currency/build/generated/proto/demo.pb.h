@@ -8529,6 +8529,7 @@ class OrderResult final : public ::google::protobuf::Message
     kCreatedAtFieldNumber = 6,
     kShippingCostFieldNumber = 3,
     kShippingAddressFieldNumber = 4,
+    kTotalFieldNumber = 7,
   };
   // repeated .oteldemo.OrderItem items = 5;
   int items_size() const;
@@ -8622,12 +8623,27 @@ class OrderResult final : public ::google::protobuf::Message
   ::oteldemo::Address* PROTOBUF_NONNULL _internal_mutable_shipping_address();
 
   public:
+  // .oteldemo.Money total = 7;
+  bool has_total() const;
+  void clear_total() ;
+  const ::oteldemo::Money& total() const;
+  [[nodiscard]] ::oteldemo::Money* PROTOBUF_NULLABLE release_total();
+  ::oteldemo::Money* PROTOBUF_NONNULL mutable_total();
+  void set_allocated_total(::oteldemo::Money* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_total(::oteldemo::Money* PROTOBUF_NULLABLE value);
+  ::oteldemo::Money* PROTOBUF_NULLABLE unsafe_arena_release_total();
+
+  private:
+  const ::oteldemo::Money& _internal_total() const;
+  ::oteldemo::Money* PROTOBUF_NONNULL _internal_mutable_total();
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.OrderResult)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   3, 67,
+  static const ::google::protobuf::internal::TcParseTable<3, 7,
+                                   4, 67,
                                    2>
       _table_;
 
@@ -8654,6 +8670,7 @@ class OrderResult final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr created_at_;
     ::oteldemo::Money* PROTOBUF_NULLABLE shipping_cost_;
     ::oteldemo::Address* PROTOBUF_NULLABLE shipping_address_;
+    ::oteldemo::Money* PROTOBUF_NULLABLE total_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -13231,6 +13248,104 @@ inline void OrderResult::set_allocated_created_at(::std::string* PROTOBUF_NULLAB
     _impl_.created_at_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:oteldemo.OrderResult.created_at)
+}
+
+// .oteldemo.Money total = 7;
+inline bool OrderResult::has_total() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.total_ != nullptr);
+  return value;
+}
+inline void OrderResult::clear_total() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.total_ != nullptr) _impl_.total_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000020u;
+}
+inline const ::oteldemo::Money& OrderResult::_internal_total() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::oteldemo::Money* p = _impl_.total_;
+  return p != nullptr ? *p : reinterpret_cast<const ::oteldemo::Money&>(::oteldemo::_Money_default_instance_);
+}
+inline const ::oteldemo::Money& OrderResult::total() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:oteldemo.OrderResult.total)
+  return _internal_total();
+}
+inline void OrderResult::unsafe_arena_set_allocated_total(
+    ::oteldemo::Money* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.total_);
+  }
+  _impl_.total_ = reinterpret_cast<::oteldemo::Money*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000020u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000020u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.OrderResult.total)
+}
+inline ::oteldemo::Money* PROTOBUF_NULLABLE OrderResult::release_total() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000020u;
+  ::oteldemo::Money* released = _impl_.total_;
+  _impl_.total_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::oteldemo::Money* PROTOBUF_NULLABLE OrderResult::unsafe_arena_release_total() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:oteldemo.OrderResult.total)
+
+  _impl_._has_bits_[0] &= ~0x00000020u;
+  ::oteldemo::Money* temp = _impl_.total_;
+  _impl_.total_ = nullptr;
+  return temp;
+}
+inline ::oteldemo::Money* PROTOBUF_NONNULL OrderResult::_internal_mutable_total() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.total_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::oteldemo::Money>(GetArena());
+    _impl_.total_ = reinterpret_cast<::oteldemo::Money*>(p);
+  }
+  return _impl_.total_;
+}
+inline ::oteldemo::Money* PROTOBUF_NONNULL OrderResult::mutable_total()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000020u;
+  ::oteldemo::Money* _msg = _internal_mutable_total();
+  // @@protoc_insertion_point(field_mutable:oteldemo.OrderResult.total)
+  return _msg;
+}
+inline void OrderResult::set_allocated_total(::oteldemo::Money* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.total_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = value->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000020u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000020u;
+  }
+
+  _impl_.total_ = reinterpret_cast<::oteldemo::Money*>(value);
+  // @@protoc_insertion_point(field_set_allocated:oteldemo.OrderResult.total)
 }
 
 // -------------------------------------------------------------------

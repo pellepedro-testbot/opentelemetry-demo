@@ -234,6 +234,8 @@ message OrderResult {
     repeated OrderItem items = 5;
     // When PlaceOrder created the order, RFC 3339 in UTC.
     string   created_at = 6;
+    // What PlaceOrder charged: item costs plus shipping, in the order's currency.
+    Money    total = 7;
 }
 
 message SendOrderConfirmationRequest {

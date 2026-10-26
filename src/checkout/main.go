@@ -513,6 +513,7 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		},
 		Items:     prep.orderItems,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		Total:     total,
 	}
 
 	shippingCostFloat, _ := strconv.ParseFloat(fmt.Sprintf("%d.%02d", prep.shippingCostLocalized.GetUnits(), prep.shippingCostLocalized.GetNanos()/10000000), 64)
