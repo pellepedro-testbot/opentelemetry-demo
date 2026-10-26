@@ -269,6 +269,9 @@ message Ad {
 
     // short advertisement text to display.
     string text = 2;
+
+    // percentage off for "N% off" ads, 0 otherwise.
+    int32 discount_percent = 3;
 }
 
 // ------------Feature flag service------------------

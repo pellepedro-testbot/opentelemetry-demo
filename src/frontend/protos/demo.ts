@@ -214,6 +214,8 @@ export interface Ad {
   redirectUrl: string;
   /** short advertisement text to display. */
   text: string;
+  /** percentage off for "N% off" ads, 0 otherwise. */
+  discountPercent: number;
 }
 
 export interface Flag {
@@ -3124,7 +3126,7 @@ export const AdResponse: MessageFns<AdResponse> = {
 };
 
 function createBaseAd(): Ad {
-  return { redirectUrl: "", text: "" };
+  return { redirectUrl: "", text: "", discountPercent: 0 };
 }
 
 export const Ad: MessageFns<Ad> = {
@@ -3134,6 +3136,9 @@ export const Ad: MessageFns<Ad> = {
     }
     if (message.text !== "") {
       writer.uint32(18).string(message.text);
+    }
+    if (message.discountPercent !== 0) {
+      writer.uint32(24).int32(message.discountPercent);
     }
     return writer;
   },
@@ -3167,6 +3172,14 @@ export const Ad: MessageFns<Ad> = {
             message.text = reader.string();
             continue;
           }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
+
+            message.discountPercent = reader.int32();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -3187,6 +3200,11 @@ export const Ad: MessageFns<Ad> = {
         ? globalThis.String(object.redirect_url)
         : "",
       text: isSet(object.text) ? globalThis.String(object.text) : "",
+      discountPercent: isSet(object.discountPercent)
+        ? globalThis.Number(object.discountPercent)
+        : isSet(object.discount_percent)
+        ? globalThis.Number(object.discount_percent)
+        : 0,
     };
   },
 
@@ -3198,6 +3216,9 @@ export const Ad: MessageFns<Ad> = {
     if (message.text !== "") {
       obj.text = message.text;
     }
+    if (message.discountPercent !== 0) {
+      obj.discountPercent = Math.round(message.discountPercent);
+    }
     return obj;
   },
 
@@ -3208,6 +3229,7 @@ export const Ad: MessageFns<Ad> = {
     const message = createBaseAd();
     message.redirectUrl = object.redirectUrl ?? "";
     message.text = object.text ?? "";
+    message.discountPercent = object.discountPercent ?? 0;
     return message;
   },
 };

@@ -332,21 +332,25 @@ public final class AdService {
         Ad.newBuilder()
             .setRedirectUrl(adRedirectUrl("/product/2ZYFJ3GM2N"))
             .setText("Roof Binoculars for sale. 50% off.")
+            .setDiscountPercent(50)
             .build();
     Ad explorerTelescope =
         Ad.newBuilder()
             .setRedirectUrl(adRedirectUrl("/product/66VCHSJNUP"))
             .setText("Starsense Explorer Refractor Telescope for sale. 20% off.")
+            .setDiscountPercent(20)
             .build();
     Ad colorImager =
         Ad.newBuilder()
             .setRedirectUrl(adRedirectUrl("/product/0PUK6V6EV0"))
             .setText("Solar System Color Imager for sale. 30% off.")
+            .setDiscountPercent(30)
             .build();
     Ad opticalTube =
         Ad.newBuilder()
             .setRedirectUrl(adRedirectUrl("/product/9SIQT8TOJO"))
             .setText("Optical Tube Assembly for sale. 10% off.")
+            .setDiscountPercent(10)
             .build();
     Ad travelTelescope =
         Ad.newBuilder()

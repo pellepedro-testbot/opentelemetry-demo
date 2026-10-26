@@ -1703,9 +1703,11 @@ type Ad struct {
 	// url to redirect to when an ad is clicked.
 	RedirectUrl string `protobuf:"bytes,1,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
 	// short advertisement text to display.
-	Text          string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Text string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	// percentage off for "N% off" ads, 0 otherwise.
+	DiscountPercent int32 `protobuf:"varint,3,opt,name=discount_percent,json=discountPercent,proto3" json:"discount_percent,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Ad) Reset() {
@@ -1750,6 +1752,13 @@ func (x *Ad) GetText() string {
 		return x.Text
 	}
 	return ""
+}
+
+func (x *Ad) GetDiscountPercent() int32 {
+	if x != nil {
+		return x.DiscountPercent
+	}
+	return 0
 }
 
 type Flag struct {
@@ -2365,10 +2374,11 @@ const file_demo_proto_rawDesc = "" +
 	"\fcontext_keys\x18\x01 \x03(\tR\vcontextKeys\",\n" +
 	"\n" +
 	"AdResponse\x12\x1e\n" +
-	"\x03ads\x18\x01 \x03(\v2\f.oteldemo.AdR\x03ads\";\n" +
+	"\x03ads\x18\x01 \x03(\v2\f.oteldemo.AdR\x03ads\"f\n" +
 	"\x02Ad\x12!\n" +
 	"\fredirect_url\x18\x01 \x01(\tR\vredirectUrl\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"V\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\x12)\n" +
+	"\x10discount_percent\x18\x03 \x01(\x05R\x0fdiscountPercent\"V\n" +
 	"\x04Flag\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x18\n" +

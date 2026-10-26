@@ -4956,6 +4956,7 @@ class Ad final : public ::google::protobuf::Message
   enum : int {
     kRedirectUrlFieldNumber = 1,
     kTextFieldNumber = 2,
+    kDiscountPercentFieldNumber = 3,
   };
   // string redirect_url = 1;
   void clear_redirect_url() ;
@@ -4987,11 +4988,21 @@ class Ad final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_text();
 
   public:
+  // int32 discount_percent = 3;
+  void clear_discount_percent() ;
+  ::int32_t discount_percent() const;
+  void set_discount_percent(::int32_t value);
+
+  private:
+  ::int32_t _internal_discount_percent() const;
+  void _internal_set_discount_percent(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.Ad)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
                                    0, 36,
                                    2>
       _table_;
@@ -5015,6 +5026,7 @@ class Ad final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr redirect_url_;
     ::google::protobuf::internal::ArenaStringPtr text_;
+    ::int32_t discount_percent_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -13771,6 +13783,30 @@ inline void Ad::set_allocated_text(::std::string* PROTOBUF_NULLABLE value) {
     _impl_.text_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:oteldemo.Ad.text)
+}
+
+// int32 discount_percent = 3;
+inline void Ad::clear_discount_percent() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.discount_percent_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline ::int32_t Ad::discount_percent() const {
+  // @@protoc_insertion_point(field_get:oteldemo.Ad.discount_percent)
+  return _internal_discount_percent();
+}
+inline void Ad::set_discount_percent(::int32_t value) {
+  _internal_set_discount_percent(value);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  // @@protoc_insertion_point(field_set:oteldemo.Ad.discount_percent)
+}
+inline ::int32_t Ad::_internal_discount_percent() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.discount_percent_;
+}
+inline void Ad::_internal_set_discount_percent(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.discount_percent_ = value;
 }
 
 // -------------------------------------------------------------------

@@ -9,13 +9,14 @@ const Ad = () => {
   const { adList } = useAd();
   if (!adList.length) return null;
 
-  const { text, redirectUrl } = adList[Math.floor(Math.random() * adList.length)];
+  const { text, redirectUrl, discountPercent } = adList[Math.floor(Math.random() * adList.length)];
 
   return (
     <S.Ad data-cy={CypressFields.Ad}>
       <S.Label>Advertisement</S.Label>
       <S.Link href={redirectUrl}>
         <p>{text}</p>
+        {discountPercent > 0 && <p data-cy="ad-discount">-{discountPercent}%</p>}
       </S.Link>
     </S.Ad>
   );
