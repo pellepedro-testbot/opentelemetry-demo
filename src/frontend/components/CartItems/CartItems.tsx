@@ -105,6 +105,12 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
               <ProductPrice price={shippingConst} />
             )}
           </S.DataRow>
+          {isSuccess && totalUnits >= 5 && totalUnits <= 9 && (
+            <S.DataRow>
+              <span>Bulk discount</span>
+              <span>-1.00 USD on shipping</span>
+            </S.DataRow>
+          )}
           {shippingConst.boxes !== undefined && (
             <S.DataRow>
               <span>Boxes: {shippingConst.boxes}</span>

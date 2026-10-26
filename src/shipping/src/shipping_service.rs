@@ -56,6 +56,14 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         quote.cents = 0;
     }
 
+    if (5..=9).contains(&itemct) {
+        if quote.dollars >= 1 {
+            quote.dollars -= 1;
+        } else {
+            quote.cents = 0;
+        }
+    }
+
     let reply = GetQuoteResponse {
         cost_usd: Some(Money {
             currency_code: "USD".into(),
