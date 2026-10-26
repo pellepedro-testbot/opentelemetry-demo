@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -328,6 +329,9 @@ func isTwoLetterState(state string) bool {
 	return true
 }
 
+// canadianPostalCode matches letter-digit-letter, a space, digit-letter-digit, e.g. "M5V 2T6".
+var canadianPostalCode = regexp.MustCompile(`^[A-Za-z][0-9][A-Za-z] [0-9][A-Za-z][0-9]$`)
+
 func isValidUSZipCode(zip string) bool {
 	if len(zip) != 5 {
 		return false
@@ -423,6 +427,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	// Shipping refuses a blank zip after the card is charged; refuse it before, for every country.
 	if strings.TrimSpace(req.GetAddress().GetZipCode()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "Zip code is required")
+	}
+
+	if req.GetAddress().GetCountry() == "Canada" && !canadianPostalCode.MatchString(req.GetAddress().GetZipCode()) {
+		return nil, status.Error(codes.InvalidArgument, "Invalid postal code")
 	}
 
 	if req.GetAddress().GetCountry() == "United States" && !isTwoLetterState(req.GetAddress().GetState()) {

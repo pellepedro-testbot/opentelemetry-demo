@@ -30,6 +30,7 @@ const PAYMENT_UNAVAILABLE = 'Payment is unavailable, try again';
 const CITY_TOO_LONG = 'City name is too long';
 const TOO_MANY_PRODUCTS = 'Max 5 different products';
 const DISPOSABLE_EMAIL = 'Disposable email addresses are not allowed';
+const INVALID_POSTAL_CODE = 'Invalid postal code';
 
 type TResponse = (IProductCheckout & { itemCount: number }) | IProductCheckout | Empty | { error: string; code?: string };
 
@@ -63,6 +64,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details === PAYMENT_UNAVAILABLE) {
           return res.status(503).json({ error: PAYMENT_UNAVAILABLE, code: 'PAYMENT_UNAVAILABLE' });
+        }
+
+        if (details === INVALID_POSTAL_CODE) {
+          return res.status(400).json({ error: INVALID_POSTAL_CODE });
         }
 
         if (details === DISPOSABLE_EMAIL) {
