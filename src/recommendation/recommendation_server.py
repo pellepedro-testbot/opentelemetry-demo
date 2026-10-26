@@ -124,9 +124,7 @@ def get_product_list(request_product_ids, max_results=0):
         span.set_attribute("demo.product.count", len(product_ids))
 
         # Create a filtered list of products excluding the products received as input
-        filtered_products = list(set(product_ids) - set(request_product_ids))
-
-        random.shuffle(filtered_products)
+        filtered_products = sorted(set(product_ids) - set(request_product_ids))
 
         if cat_response is None:
             cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
@@ -154,7 +152,7 @@ def get_product_list(request_product_ids, max_results=0):
         span.set_attribute("demo.product.filtered.count", num_products)
         num_return = min(max_responses, num_products)
 
-        # Take the first products from the shuffled list, sorted ascending
+        # Take the first products from the ordered list, sorted ascending
         prod_list = sorted(filtered_products[:num_return])
 
         span.set_attribute("demo.product.filtered.list", prod_list)
