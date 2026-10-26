@@ -238,6 +238,8 @@ message OrderResult {
     Money    total = 7;
     // created_at's date plus 5 days, YYYY-MM-DD in UTC.
     string   estimated_delivery_date = 8;
+    // The payment's transaction id, as Charge returned it.
+    string   transaction_id = 9;
 }
 
 message SendOrderConfirmationRequest {

@@ -197,6 +197,8 @@ export interface OrderResult {
     | undefined;
   /** created_at's date plus 5 days, YYYY-MM-DD in UTC. */
   estimatedDeliveryDate: string;
+  /** The payment's transaction id, as Charge returned it. */
+  transactionId: string;
 }
 
 export interface SendOrderConfirmationRequest {
@@ -2640,6 +2642,7 @@ function createBaseOrderResult(): OrderResult {
     createdAt: "",
     total: undefined,
     estimatedDeliveryDate: "",
+    transactionId: "",
   };
 }
 
@@ -2668,6 +2671,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     }
     if (message.estimatedDeliveryDate !== "") {
       writer.uint32(66).string(message.estimatedDeliveryDate);
+    }
+    if (message.transactionId !== "") {
+      writer.uint32(74).string(message.transactionId);
     }
     return writer;
   },
@@ -2749,6 +2755,14 @@ export const OrderResult: MessageFns<OrderResult> = {
             message.estimatedDeliveryDate = reader.string();
             continue;
           }
+          case 9: {
+            if (tag !== 74) {
+              break;
+            }
+
+            message.transactionId = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -2797,6 +2811,11 @@ export const OrderResult: MessageFns<OrderResult> = {
         : isSet(object.estimated_delivery_date)
         ? globalThis.String(object.estimated_delivery_date)
         : "",
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
     };
   },
 
@@ -2826,6 +2845,9 @@ export const OrderResult: MessageFns<OrderResult> = {
     if (message.estimatedDeliveryDate !== "") {
       obj.estimatedDeliveryDate = message.estimatedDeliveryDate;
     }
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
     return obj;
   },
 
@@ -2846,6 +2868,7 @@ export const OrderResult: MessageFns<OrderResult> = {
     message.createdAt = object.createdAt ?? "";
     message.total = (object.total !== undefined && object.total !== null) ? Money.fromPartial(object.total) : undefined;
     message.estimatedDeliveryDate = object.estimatedDeliveryDate ?? "";
+    message.transactionId = object.transactionId ?? "";
     return message;
   },
 };

@@ -1410,8 +1410,10 @@ type OrderResult struct {
 	Total *Money `protobuf:"bytes,7,opt,name=total,proto3" json:"total,omitempty"`
 	// created_at's date plus 5 days, YYYY-MM-DD in UTC.
 	EstimatedDeliveryDate string `protobuf:"bytes,8,opt,name=estimated_delivery_date,json=estimatedDeliveryDate,proto3" json:"estimated_delivery_date,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// The payment's transaction id, as Charge returned it.
+	TransactionId string `protobuf:"bytes,9,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *OrderResult) Reset() {
@@ -1496,6 +1498,13 @@ func (x *OrderResult) GetTotal() *Money {
 func (x *OrderResult) GetEstimatedDeliveryDate() string {
 	if x != nil {
 		return x.EstimatedDeliveryDate
+	}
+	return ""
+}
+
+func (x *OrderResult) GetTransactionId() string {
+	if x != nil {
+		return x.TransactionId
 	}
 	return ""
 }
@@ -2429,7 +2438,7 @@ const file_demo_proto_rawDesc = "" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\"X\n" +
 	"\tOrderItem\x12&\n" +
 	"\x04item\x18\x01 \x01(\v2\x12.oteldemo.CartItemR\x04item\x12#\n" +
-	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\xf7\x02\n" +
+	"\x04cost\x18\x02 \x01(\v2\x0f.oteldemo.MoneyR\x04cost\"\x9e\x03\n" +
 	"\vOrderResult\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x120\n" +
 	"\x14shipping_tracking_id\x18\x02 \x01(\tR\x12shippingTrackingId\x124\n" +
@@ -2439,7 +2448,8 @@ const file_demo_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\tR\tcreatedAt\x12%\n" +
 	"\x05total\x18\a \x01(\v2\x0f.oteldemo.MoneyR\x05total\x126\n" +
-	"\x17estimated_delivery_date\x18\b \x01(\tR\x15estimatedDeliveryDate\"a\n" +
+	"\x17estimated_delivery_date\x18\b \x01(\tR\x15estimatedDeliveryDate\x12%\n" +
+	"\x0etransaction_id\x18\t \x01(\tR\rtransactionId\"a\n" +
 	"\x1cSendOrderConfirmationRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12+\n" +
 	"\x05order\x18\x02 \x01(\v2\x15.oteldemo.OrderResultR\x05order\"\xee\x01\n" +
