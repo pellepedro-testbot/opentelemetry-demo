@@ -38,6 +38,11 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, "item.product_id is required"));
         }
 
+        if (productId.Length > 32)
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "item.product_id must be at most 32 characters"));
+        }
+
         if (request.Item.Quantity == 0)
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "item.quantity must not be 0"));
