@@ -47,6 +47,15 @@ const CartDropdown = ({ productList, isOpen, onClose }: IProps) => {
     };
   }, [ref, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return isOpen ? (
     <S.CartDropdown ref={ref} data-cy={CypressFields.CartDropdown}>
       <S.ContentWrapper>
