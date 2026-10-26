@@ -383,6 +383,16 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		maxQuantity = 3
 	}
 
+	var originalPrice *pb.Money
+	if slices.Contains(categories, "telescopes") {
+		cents := ((units*1_000_000_000+int64(nanos))*12/10 + 5_000_000) / 10_000_000
+		originalPrice = &pb.Money{
+			CurrencyCode: currencyCode,
+			Units:        cents / 100,
+			Nanos:        int32(cents%100) * 10_000_000,
+		}
+	}
+
 	return &pb.Product{
 		Id:          id,
 		Name:        name,
@@ -399,6 +409,7 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 
 		ShortDescription: firstSentence(description),
 		InStock:          id != "9SIQT8TOJO",
+		OriginalPriceUsd: originalPrice,
 	}
 }
 

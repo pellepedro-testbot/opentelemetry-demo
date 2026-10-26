@@ -5402,6 +5402,7 @@ class Product final : public ::google::protobuf::Message
     kBadgeFieldNumber = 7,
     kShortDescriptionFieldNumber = 9,
     kPriceUsdFieldNumber = 5,
+    kOriginalPriceUsdFieldNumber = 11,
     kMaxQuantityFieldNumber = 8,
     kInStockFieldNumber = 10,
   };
@@ -5532,6 +5533,21 @@ class Product final : public ::google::protobuf::Message
   ::oteldemo::Money* PROTOBUF_NONNULL _internal_mutable_price_usd();
 
   public:
+  // .oteldemo.Money original_price_usd = 11;
+  bool has_original_price_usd() const;
+  void clear_original_price_usd() ;
+  const ::oteldemo::Money& original_price_usd() const;
+  [[nodiscard]] ::oteldemo::Money* PROTOBUF_NULLABLE release_original_price_usd();
+  ::oteldemo::Money* PROTOBUF_NONNULL mutable_original_price_usd();
+  void set_allocated_original_price_usd(::oteldemo::Money* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_original_price_usd(::oteldemo::Money* PROTOBUF_NULLABLE value);
+  ::oteldemo::Money* PROTOBUF_NULLABLE unsafe_arena_release_original_price_usd();
+
+  private:
+  const ::oteldemo::Money& _internal_original_price_usd() const;
+  ::oteldemo::Money* PROTOBUF_NONNULL _internal_mutable_original_price_usd();
+
+  public:
   // int32 max_quantity = 8;
   void clear_max_quantity() ;
   ::int32_t max_quantity() const;
@@ -5556,8 +5572,8 @@ class Product final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 10,
-                                   1, 89,
+  static const ::google::protobuf::internal::TcParseTable<4, 11,
+                                   2, 89,
                                    2>
       _table_;
 
@@ -5586,6 +5602,7 @@ class Product final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr badge_;
     ::google::protobuf::internal::ArenaStringPtr short_description_;
     ::oteldemo::Money* PROTOBUF_NULLABLE price_usd_;
+    ::oteldemo::Money* PROTOBUF_NULLABLE original_price_usd_;
     ::int32_t max_quantity_;
     bool in_stock_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -10535,7 +10552,7 @@ inline void Product::set_allocated_badge(::std::string* PROTOBUF_NULLABLE value)
 inline void Product::clear_max_quantity() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.max_quantity_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000080u;
+  _impl_._has_bits_[0] &= ~0x00000100u;
 }
 inline ::int32_t Product::max_quantity() const {
   // @@protoc_insertion_point(field_get:oteldemo.Product.max_quantity)
@@ -10543,7 +10560,7 @@ inline ::int32_t Product::max_quantity() const {
 }
 inline void Product::set_max_quantity(::int32_t value) {
   _internal_set_max_quantity(value);
-  _impl_._has_bits_[0] |= 0x00000080u;
+  _impl_._has_bits_[0] |= 0x00000100u;
   // @@protoc_insertion_point(field_set:oteldemo.Product.max_quantity)
 }
 inline ::int32_t Product::_internal_max_quantity() const {
@@ -10624,7 +10641,7 @@ inline void Product::set_allocated_short_description(::std::string* PROTOBUF_NUL
 inline void Product::clear_in_stock() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.in_stock_ = false;
-  _impl_._has_bits_[0] &= ~0x00000100u;
+  _impl_._has_bits_[0] &= ~0x00000200u;
 }
 inline bool Product::in_stock() const {
   // @@protoc_insertion_point(field_get:oteldemo.Product.in_stock)
@@ -10632,7 +10649,7 @@ inline bool Product::in_stock() const {
 }
 inline void Product::set_in_stock(bool value) {
   _internal_set_in_stock(value);
-  _impl_._has_bits_[0] |= 0x00000100u;
+  _impl_._has_bits_[0] |= 0x00000200u;
   // @@protoc_insertion_point(field_set:oteldemo.Product.in_stock)
 }
 inline bool Product::_internal_in_stock() const {
@@ -10642,6 +10659,104 @@ inline bool Product::_internal_in_stock() const {
 inline void Product::_internal_set_in_stock(bool value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.in_stock_ = value;
+}
+
+// .oteldemo.Money original_price_usd = 11;
+inline bool Product::has_original_price_usd() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.original_price_usd_ != nullptr);
+  return value;
+}
+inline void Product::clear_original_price_usd() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.original_price_usd_ != nullptr) _impl_.original_price_usd_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000080u;
+}
+inline const ::oteldemo::Money& Product::_internal_original_price_usd() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::oteldemo::Money* p = _impl_.original_price_usd_;
+  return p != nullptr ? *p : reinterpret_cast<const ::oteldemo::Money&>(::oteldemo::_Money_default_instance_);
+}
+inline const ::oteldemo::Money& Product::original_price_usd() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:oteldemo.Product.original_price_usd)
+  return _internal_original_price_usd();
+}
+inline void Product::unsafe_arena_set_allocated_original_price_usd(
+    ::oteldemo::Money* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.original_price_usd_);
+  }
+  _impl_.original_price_usd_ = reinterpret_cast<::oteldemo::Money*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000080u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000080u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.Product.original_price_usd)
+}
+inline ::oteldemo::Money* PROTOBUF_NULLABLE Product::release_original_price_usd() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000080u;
+  ::oteldemo::Money* released = _impl_.original_price_usd_;
+  _impl_.original_price_usd_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::oteldemo::Money* PROTOBUF_NULLABLE Product::unsafe_arena_release_original_price_usd() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:oteldemo.Product.original_price_usd)
+
+  _impl_._has_bits_[0] &= ~0x00000080u;
+  ::oteldemo::Money* temp = _impl_.original_price_usd_;
+  _impl_.original_price_usd_ = nullptr;
+  return temp;
+}
+inline ::oteldemo::Money* PROTOBUF_NONNULL Product::_internal_mutable_original_price_usd() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.original_price_usd_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::oteldemo::Money>(GetArena());
+    _impl_.original_price_usd_ = reinterpret_cast<::oteldemo::Money*>(p);
+  }
+  return _impl_.original_price_usd_;
+}
+inline ::oteldemo::Money* PROTOBUF_NONNULL Product::mutable_original_price_usd()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000080u;
+  ::oteldemo::Money* _msg = _internal_mutable_original_price_usd();
+  // @@protoc_insertion_point(field_mutable:oteldemo.Product.original_price_usd)
+  return _msg;
+}
+inline void Product::set_allocated_original_price_usd(::oteldemo::Money* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.original_price_usd_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = value->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000080u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000080u;
+  }
+
+  _impl_.original_price_usd_ = reinterpret_cast<::oteldemo::Money*>(value);
+  // @@protoc_insertion_point(field_set_allocated:oteldemo.Product.original_price_usd)
 }
 
 // -------------------------------------------------------------------

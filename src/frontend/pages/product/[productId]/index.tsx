@@ -49,6 +49,7 @@ const ProductDetail: NextPage = () => {
       categories,
       maxQuantity,
       inStock = true,
+      originalPriceUsd,
     } = {} as Product,
     isError,
   } = useQuery({
@@ -138,6 +139,11 @@ const ProductDetail: NextPage = () => {
                 ))}
               </S.Categories>
               <S.ProductPrice>
+                {originalPriceUsd && (
+                  <s data-cy="product-original-price">
+                    <ProductPrice price={originalPriceUsd} />
+                  </s>
+                )}{' '}
                 <ProductPrice price={priceUsd} />
               </S.ProductPrice>
               {inCartQuantity > 0 && <S.Text>In your cart: {inCartQuantity}</S.Text>}

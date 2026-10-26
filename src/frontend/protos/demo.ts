@@ -83,6 +83,8 @@ export interface Product {
   shortDescription: string;
   /** Whether the product can be ordered; the product page offers no Add To Cart otherwise. */
   inStock: boolean;
+  /** Price before the telescope discount: 20% above price_usd, rounded to cents. Unset otherwise. */
+  originalPriceUsd: Money | undefined;
 }
 
 export interface ListProductsResponse {
@@ -977,6 +979,7 @@ function createBaseProduct(): Product {
     maxQuantity: 0,
     shortDescription: "",
     inStock: false,
+    originalPriceUsd: undefined,
   };
 }
 
@@ -1011,6 +1014,9 @@ export const Product: MessageFns<Product> = {
     }
     if (message.inStock !== false) {
       writer.uint32(80).bool(message.inStock);
+    }
+    if (message.originalPriceUsd !== undefined) {
+      Money.encode(message.originalPriceUsd, writer.uint32(90).fork()).join();
     }
     return writer;
   },
@@ -1108,6 +1114,14 @@ export const Product: MessageFns<Product> = {
             message.inStock = reader.bool();
             continue;
           }
+          case 11: {
+            if (tag !== 90) {
+              break;
+            }
+
+            message.originalPriceUsd = Money.decode(reader, reader.uint32());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -1150,6 +1164,11 @@ export const Product: MessageFns<Product> = {
         : isSet(object.in_stock)
         ? globalThis.Boolean(object.in_stock)
         : false,
+      originalPriceUsd: isSet(object.originalPriceUsd)
+        ? Money.fromJSON(object.originalPriceUsd)
+        : isSet(object.original_price_usd)
+        ? Money.fromJSON(object.original_price_usd)
+        : undefined,
     };
   },
 
@@ -1185,6 +1204,9 @@ export const Product: MessageFns<Product> = {
     if (message.inStock !== false) {
       obj.inStock = message.inStock;
     }
+    if (message.originalPriceUsd !== undefined) {
+      obj.originalPriceUsd = Money.toJSON(message.originalPriceUsd);
+    }
     return obj;
   },
 
@@ -1205,6 +1227,9 @@ export const Product: MessageFns<Product> = {
     message.maxQuantity = object.maxQuantity ?? 0;
     message.shortDescription = object.shortDescription ?? "";
     message.inStock = object.inStock ?? false;
+    message.originalPriceUsd = (object.originalPriceUsd !== undefined && object.originalPriceUsd !== null)
+      ? Money.fromPartial(object.originalPriceUsd)
+      : undefined;
     return message;
   },
 };
