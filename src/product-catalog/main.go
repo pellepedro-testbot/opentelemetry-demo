@@ -371,6 +371,7 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		for i, cat := range categories {
 			categories[i] = strings.TrimSpace(cat)
 		}
+		slices.Sort(categories)
 	}
 
 	var badge string
