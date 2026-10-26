@@ -25,7 +25,10 @@ const Footer = () => {
       <div>
         <p>This website is hosted for demo purpose only. It is not an actual shop.</p>
         <p>
-          <span data-cy={CypressFields.SessionId}>session-id: {sessionId}</span>
+          <span data-cy={CypressFields.SessionId}>session-id: {sessionId}</span>{' '}
+          <button type="button" onClick={() => navigator.clipboard?.writeText(sessionId)}>
+            Copy
+          </button>
         </p>
         {selectedCurrency && <p>currency: {selectedCurrency}</p>}
       </div>
