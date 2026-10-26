@@ -131,6 +131,12 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    if (year > currentYear + 20) {
+      const err = new Error('Credit card expiration year must be at most 20 years ahead.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     // proto3 does not send a zero CVV, so 000 arrives unset
     if (!cvv) {
       const err = new Error('Invalid CVV');
