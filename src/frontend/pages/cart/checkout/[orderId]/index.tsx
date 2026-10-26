@@ -90,7 +90,7 @@ const Checkout: NextPage = () => {
       contextKeys={['checkout']}
     >
       <Head>
-        <title>Otel Demo - Checkout</title>
+        <title>{`Order ${orderId} - Otel Demo`}</title>
       </Head>
       <Layout>
         <S.Checkout>
