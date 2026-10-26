@@ -37,7 +37,7 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
     // An empty cart has nothing to ship; shipping refuses an empty item list
     enabled: productList.length > 0,
   };
-  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess } = useQuery(queryOptions);
+  const { data: shippingConst = { units: 0, currencyCode: 'USD', nanos: 0 }, isSuccess, isLoading } = useQuery(queryOptions);
 
   const subtotal = useMemo<Money>(() => {
     const nanoSum = productList.reduce(
@@ -90,7 +90,9 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
           </S.DataRow>
           <S.DataRow>
             <span>Shipping</span>
-            {isSuccess && !Number(shippingConst.units) && !shippingConst.nanos ? (
+            {isLoading ? (
+              <span>Calculating...</span>
+            ) : isSuccess && !Number(shippingConst.units) && !shippingConst.nanos ? (
               <span>Free</span>
             ) : (
               <ProductPrice price={shippingConst} />
