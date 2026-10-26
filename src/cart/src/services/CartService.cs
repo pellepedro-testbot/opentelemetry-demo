@@ -32,7 +32,8 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, "user_id is required"));
         }
 
-        if (string.IsNullOrEmpty(request.Item?.ProductId))
+        var productId = request.Item?.ProductId?.Trim();
+        if (string.IsNullOrEmpty(productId))
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "item.product_id is required"));
         }
@@ -44,12 +45,12 @@ public class CartService : Oteldemo.CartService.CartServiceBase
 
         var activity = Activity.Current;
         activity?.SetTag("user.id", request.UserId);
-        activity?.SetTag("demo.product.id", request.Item.ProductId);
+        activity?.SetTag("demo.product.id", productId);
         activity?.SetTag("demo.product.quantity", request.Item.Quantity);
 
         try
         {
-            await _cartStore.AddItemAsync(request.UserId, request.Item.ProductId, request.Item.Quantity);
+            await _cartStore.AddItemAsync(request.UserId, productId, request.Item.Quantity);
 
             return Empty;
         }
