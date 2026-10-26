@@ -50,6 +50,7 @@ const ProductDetail: NextPage = () => {
       maxQuantity,
       inStock = true,
       originalPriceUsd,
+      id: sku,
     } = {} as Product,
     isError,
   } = useQuery({
@@ -131,6 +132,7 @@ const ProductDetail: NextPage = () => {
               </nav>
               <Link href="/">Back to products</Link>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
+              {sku && <S.Text data-cy="product-sku">SKU: {sku}</S.Text>}
               {fromAd && <S.Text>You came from an ad</S.Text>}
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
               <S.Categories>
