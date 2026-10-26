@@ -406,7 +406,7 @@ public final class AdService {
             .setText("Free returns within 30 days")
             .build();
     return ImmutableListMultimap.<String, Ad>builder()
-        .putAll("binoculars", binoculars)
+        .putAll("binoculars", binoculars, cleaningKit)
         .putAll("telescopes", explorerTelescope)
         .putAll("accessories", colorImager, solarFilter, cleaningKit)
         .putAll("assembly", opticalTube)
