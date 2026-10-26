@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -562,6 +563,9 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 
 	out.shippingCostLocalized = shippingPrice
 	out.cartItems = cartItems
+	slices.SortFunc(orderItems, func(a, b *pb.OrderItem) int {
+		return strings.Compare(a.GetItem().GetProductId(), b.GetItem().GetProductId())
+	})
 	out.orderItems = orderItems
 	out.totalUSDNanos = itemsUSDNanos + usdNanos(shippingUSD)
 
