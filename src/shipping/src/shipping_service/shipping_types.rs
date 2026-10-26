@@ -59,4 +59,5 @@ pub struct ShipOrderRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ShipOrderResponse {
     pub tracking_id: String,
+    pub shipped_at: String,
 }
