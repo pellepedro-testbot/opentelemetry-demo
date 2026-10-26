@@ -7617,6 +7617,7 @@ class Cart final : public ::google::protobuf::Message
     kItemsFieldNumber = 2,
     kUserIdFieldNumber = 1,
     kUpdatedAtFieldNumber = 3,
+    kExpiresAtFieldNumber = 4,
   };
   // repeated .oteldemo.CartItem items = 2;
   int items_size() const;
@@ -7660,11 +7661,21 @@ class Cart final : public ::google::protobuf::Message
   void _internal_set_updated_at(::int64_t value);
 
   public:
+  // int64 expires_at = 4;
+  void clear_expires_at() ;
+  ::int64_t expires_at() const;
+  void set_expires_at(::int64_t value);
+
+  private:
+  ::int64_t _internal_expires_at() const;
+  void _internal_set_expires_at(::int64_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.Cart)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 3,
+  static const ::google::protobuf::internal::TcParseTable<2, 4,
                                    1, 29,
                                    2>
       _table_;
@@ -7689,6 +7700,7 @@ class Cart final : public ::google::protobuf::Message
     ::google::protobuf::RepeatedPtrField< ::oteldemo::CartItem > items_;
     ::google::protobuf::internal::ArenaStringPtr user_id_;
     ::int64_t updated_at_;
+    ::int64_t expires_at_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -9727,6 +9739,30 @@ inline ::int64_t Cart::_internal_updated_at() const {
 inline void Cart::_internal_set_updated_at(::int64_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.updated_at_ = value;
+}
+
+// int64 expires_at = 4;
+inline void Cart::clear_expires_at() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.expires_at_ = ::int64_t{0};
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline ::int64_t Cart::expires_at() const {
+  // @@protoc_insertion_point(field_get:oteldemo.Cart.expires_at)
+  return _internal_expires_at();
+}
+inline void Cart::set_expires_at(::int64_t value) {
+  _internal_set_expires_at(value);
+  _impl_._has_bits_[0] |= 0x00000004u;
+  // @@protoc_insertion_point(field_set:oteldemo.Cart.expires_at)
+}
+inline ::int64_t Cart::_internal_expires_at() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.expires_at_;
+}
+inline void Cart::_internal_set_expires_at(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.expires_at_ = value;
 }
 
 // -------------------------------------------------------------------

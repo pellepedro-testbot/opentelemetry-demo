@@ -21,7 +21,7 @@ const formatTime = (millis: number) => {
 
 const CartDetail = () => {
   const {
-    cart: { items, updatedAt },
+    cart: { items, updatedAt, expiresAt },
     emptyCart,
     placeOrder,
   } = useCart();
@@ -90,6 +90,7 @@ const CartDetail = () => {
           </S.EmptyCartButton>
         </S.Header>
         {updatedAt > 0 && <S.LastUpdated>Last updated {formatTime(updatedAt)}</S.LastUpdated>}
+        {expiresAt > 0 && <S.LastUpdated>Cart saved until {formatTime(expiresAt)}</S.LastUpdated>}
         <CartItems productList={items} country={country} />
       </div>
       {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}

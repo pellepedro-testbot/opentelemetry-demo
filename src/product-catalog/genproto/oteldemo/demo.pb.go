@@ -232,7 +232,9 @@ type Cart struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Items  []*CartItem            `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
 	// Time of the last AddItem or EmptyCart, in Unix milliseconds (UTC). 0 when never set.
-	UpdatedAt     int64 `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	UpdatedAt int64 `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// When the cart expires: 60 minutes after updated_at, in Unix milliseconds (UTC). 0 when never set.
+	ExpiresAt     int64 `protobuf:"varint,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -284,6 +286,13 @@ func (x *Cart) GetItems() []*CartItem {
 func (x *Cart) GetUpdatedAt() int64 {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return 0
+}
+
+func (x *Cart) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
 	}
 	return 0
 }
@@ -2277,12 +2286,14 @@ const file_demo_proto_rawDesc = "" +
 	"\x10EmptyCartRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\")\n" +
 	"\x0eGetCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"h\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x87\x01\n" +
 	"\x04Cart\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12(\n" +
 	"\x05items\x18\x02 \x03(\v2\x12.oteldemo.CartItemR\x05items\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x03 \x01(\x03R\tupdatedAt\"\a\n" +
+	"updated_at\x18\x03 \x01(\x03R\tupdatedAt\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x04 \x01(\x03R\texpiresAt\"\a\n" +
 	"\x05Empty\"w\n" +
 	"\x1aListRecommendationsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +

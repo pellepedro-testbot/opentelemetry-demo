@@ -44,6 +44,8 @@ export interface Cart {
   items: CartItem[];
   /** Time of the last AddItem or EmptyCart, in Unix milliseconds (UTC). 0 when never set. */
   updatedAt: number;
+  /** When the cart expires: 60 minutes after updated_at, in Unix milliseconds (UTC). 0 when never set. */
+  expiresAt: number;
 }
 
 export interface Empty {
@@ -589,7 +591,7 @@ export const GetCartRequest: MessageFns<GetCartRequest> = {
 };
 
 function createBaseCart(): Cart {
-  return { userId: "", items: [], updatedAt: 0 };
+  return { userId: "", items: [], updatedAt: 0, expiresAt: 0 };
 }
 
 export const Cart: MessageFns<Cart> = {
@@ -602,6 +604,9 @@ export const Cart: MessageFns<Cart> = {
     }
     if (message.updatedAt !== 0) {
       writer.uint32(24).int64(message.updatedAt);
+    }
+    if (message.expiresAt !== 0) {
+      writer.uint32(32).int64(message.expiresAt);
     }
     return writer;
   },
@@ -643,6 +648,14 @@ export const Cart: MessageFns<Cart> = {
             message.updatedAt = longToNumber(reader.int64());
             continue;
           }
+          case 4: {
+            if (tag !== 32) {
+              break;
+            }
+
+            message.expiresAt = longToNumber(reader.int64());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -668,6 +681,11 @@ export const Cart: MessageFns<Cart> = {
         : isSet(object.updated_at)
         ? globalThis.Number(object.updated_at)
         : 0,
+      expiresAt: isSet(object.expiresAt)
+        ? globalThis.Number(object.expiresAt)
+        : isSet(object.expires_at)
+        ? globalThis.Number(object.expires_at)
+        : 0,
     };
   },
 
@@ -682,6 +700,9 @@ export const Cart: MessageFns<Cart> = {
     if (message.updatedAt !== 0) {
       obj.updatedAt = Math.round(message.updatedAt);
     }
+    if (message.expiresAt !== 0) {
+      obj.expiresAt = Math.round(message.expiresAt);
+    }
     return obj;
   },
 
@@ -693,6 +714,7 @@ export const Cart: MessageFns<Cart> = {
     message.userId = object.userId ?? "";
     message.items = object.items?.map((e) => CartItem.fromPartial(e)) || [];
     message.updatedAt = object.updatedAt ?? 0;
+    message.expiresAt = object.expiresAt ?? 0;
     return message;
   },
 };

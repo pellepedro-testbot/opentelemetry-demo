@@ -18,7 +18,7 @@ interface IContext {
 }
 
 export const Context = createContext<IContext>({
-  cart: { userId: '', items: [], updatedAt: 0 },
+  cart: { userId: '', items: [], updatedAt: 0, expiresAt: 0 },
   isCartLoaded: false,
   addItem: () => {},
   updateItemQuantity: () => {},
@@ -44,7 +44,7 @@ const CartProvider = ({ children }: IProps) => {
     [queryClient]
   );
 
-  const { data: cart = { userId: '', items: [], updatedAt: 0 }, isSuccess: isCartLoaded } = useQuery({
+  const { data: cart = { userId: '', items: [], updatedAt: 0, expiresAt: 0 }, isSuccess: isCartLoaded } = useQuery({
     queryKey: ['cart', selectedCurrency],
     queryFn: () => ApiGateway.getCart(selectedCurrency),
   });
