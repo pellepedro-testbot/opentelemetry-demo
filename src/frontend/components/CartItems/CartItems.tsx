@@ -31,7 +31,7 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
 
   const queryKey = ['shipping', productList, selectedCurrency, address];
   const queryFn = () => ApiGateway.getShippingCost(productList, selectedCurrency, address);
-  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string; boxes?: number }, Error> = {
+  const queryOptions: UseQueryOptions<Money & { carrier?: string; zone?: string; estimatedDeliveryDays?: number; packageSize?: string; boxes?: number; quoteExpiresAt?: string }, Error> = {
     queryKey,
     queryFn,
     // An empty cart has nothing to ship; shipping refuses an empty item list
@@ -99,6 +99,18 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
           {shippingConst.boxes !== undefined && (
             <S.DataRow>
               <span>Boxes: {shippingConst.boxes}</span>
+            </S.DataRow>
+          )}
+          {shippingConst.quoteExpiresAt && (
+            <S.DataRow>
+              <span>
+                Quote valid until{' '}
+                {new Date(shippingConst.quoteExpiresAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hourCycle: 'h23',
+                })}
+              </span>
             </S.DataRow>
           )}
           <S.DataRow>

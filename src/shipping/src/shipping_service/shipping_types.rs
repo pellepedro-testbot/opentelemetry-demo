@@ -40,6 +40,7 @@ pub struct GetQuoteResponse {
     pub carrier: String,
     pub zone: String,
     pub boxes: u32,
+    pub quote_expires_at: String,
     pub estimated_delivery_days: u32,
     pub package_size: String,
 }

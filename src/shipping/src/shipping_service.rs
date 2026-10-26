@@ -61,6 +61,7 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         }
         .into(),
         boxes: itemct.div_ceil(10),
+        quote_expires_at: rfc3339_utc_in(15 * 60),
         estimated_delivery_days: match &req.address {
             Some(addr) if addr.country == "United States" => 3,
             _ => 10,
@@ -153,15 +154,16 @@ pub async fn ship_order(
     );
     HttpResponse::Ok().json(ShipOrderResponse {
         tracking_id: tid,
-        shipped_at: rfc3339_utc_now(),
+        shipped_at: rfc3339_utc_in(0),
     })
 }
 
-fn rfc3339_utc_now() -> String {
+fn rfc3339_utc_in(offset_secs: i64) -> String {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
+        .unwrap_or(0)
+        + offset_secs;
     let (days, rem) = (secs.div_euclid(86_400), secs.rem_euclid(86_400));
     // Civil date from days since 1970-01-01 (Howard Hinnant's days_from_civil inverse).
     let z = days + 719_468;
