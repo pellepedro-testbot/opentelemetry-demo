@@ -59,6 +59,15 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(flag_provider.clone())
+            .app_data(web::JsonConfig::default().error_handler(|err, _req| {
+                actix_web::error::InternalError::from_response(
+                    err,
+                    HttpResponse::BadRequest()
+                        .content_type("application/json")
+                        .body(r#"{"error":"invalid JSON body"}"#),
+                )
+                .into()
+            }))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
             .service(get_quote)
