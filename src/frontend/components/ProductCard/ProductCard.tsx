@@ -78,7 +78,7 @@ const ProductCard = ({
   return (
     <S.Link href={`/product/${id}`}>
       <S.ProductCard data-cy={CypressFields.ProductCard}>
-        <S.Image $src={imageSrc} />
+        <S.Image src={imageSrc || undefined} alt={name} />
         <div>
           {badge && <S.Badge>{badge}</S.Badge>}
           <S.ProductName>{name}</S.ProductName>

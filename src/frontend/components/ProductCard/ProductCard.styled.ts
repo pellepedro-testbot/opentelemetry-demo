@@ -8,11 +8,11 @@ export const Link = styled(RouterLink)`
   text-decoration: none;
 `;
 
-export const Image = styled.div<{ $src: string }>`
+export const Image = styled.img`
+  display: block;
   width: 100%;
   height: 150px;
-  background: ${({ $src }) => `url("${$src}")`} no-repeat center;
-  background-size: contain;
+  object-fit: contain;
 
   ${({ theme }) => theme.breakpoints.desktop} {
     height: 300px;
