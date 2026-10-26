@@ -6,12 +6,15 @@ import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMidd
 import AdGateway from '../../gateways/rpc/Ad.gateway';
 import { Ad, Empty } from '../../protos/demo';
 
-type TResponse = Ad[] | Empty;
+type TResponse = Ad[] | Empty | { error: string };
 
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
       const { contextKeys = [] } = query;
+      if (contextKeys.length === 0) {
+        return res.status(400).json({ error: 'contextKeys is required' });
+      }
       const { ads: adList } = await AdGateway.listAds(Array.isArray(contextKeys) ? contextKeys : contextKeys.split(','));
 
       return res.status(200).json(adList);
