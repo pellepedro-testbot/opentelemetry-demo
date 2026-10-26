@@ -124,7 +124,9 @@ def get_product_list(request_product_ids, max_results=0):
         span.set_attribute("demo.product.count", len(product_ids))
 
         # Create a filtered list of products excluding the products received as input
-        filtered_products = sorted(set(product_ids) - set(request_product_ids))
+        # Every requested id is excluded, however many separate ids were sent
+        excluded_ids = {x for x in request_product_ids if x}
+        filtered_products = sorted(set(product_ids) - excluded_ids)
 
         if cat_response is None:
             cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
