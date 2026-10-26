@@ -12,7 +12,7 @@ type TResponse = Product[] | Empty | { error: string };
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
-      const { currencyCode = '', category = '', q } = query;
+      const { currencyCode = '', category = '', q, limit } = query;
       // q runs a text search (ranked by product-catalog) and takes precedence over category
       const search = Array.isArray(q) ? q[0] : q;
       let productList: Product[];
@@ -23,6 +23,11 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
           return res.status(400).json({ error: (error as ServiceError).details });
         }
         throw error;
+      }
+
+      const max = Number(Array.isArray(limit) ? limit[0] : limit);
+      if (Number.isInteger(max) && max > 0) {
+        productList = productList.slice(0, max);
       }
 
       return res.status(200).json(productList);
