@@ -11,7 +11,7 @@ import InstrumentationMiddleware from '../../utils/telemetry/InstrumentationMidd
 
 const MAX_PER_PRODUCT = 'Maximum 10 per product';
 
-type TResponse = IProductCart | Empty | { error: string };
+type TResponse = (IProductCart & { totalQuantity: number }) | IProductCart | Empty | { error: string };
 
 const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) => {
   switch (method) {
@@ -34,7 +34,8 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
         })
       );
 
-      return res.status(200).json({ userId, items: productList, updatedAt, expiresAt });
+      const totalQuantity = items.reduce((acc, { quantity }) => acc + quantity, 0);
+      return res.status(200).json({ userId, items: productList, updatedAt, expiresAt, totalQuantity });
     }
 
     case 'POST': {
