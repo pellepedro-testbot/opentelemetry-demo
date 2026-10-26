@@ -42,6 +42,7 @@ pub struct GetQuoteResponse {
     pub boxes: u32,
     pub quote_expires_at: String,
     pub item_count: u32,
+    pub weight_kg: f64,
     pub estimated_delivery_days: u32,
     pub package_size: String,
 }
