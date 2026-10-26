@@ -50,6 +50,12 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    if (Number(request.amount.units) > 100000) {
+      const err = new Error('amount.units must not exceed 100,000');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     await OpenFeature.setProviderAndWait(flagProvider);
 
     const numberVariant = await OpenFeature.getClient().getNumberValue("paymentFailure", 0);
