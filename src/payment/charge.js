@@ -73,7 +73,7 @@ module.exports.charge = async request => {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
     const lastFourDigits = number.substr(-4);
-    const transactionId = uuidv4();
+    const transactionId = `txn_${uuidv4()}`;
 
     // the validator throws a plain string for an empty number, so treat it as invalid here
     const { card_type: cardType, valid } = number ? cardValidator(number).getCardDetails() : { card_type: 'unknown', valid: false };
