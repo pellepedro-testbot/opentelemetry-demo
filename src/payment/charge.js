@@ -127,6 +127,13 @@ module.exports.charge = async request => {
     }
 
     // compare digits only, so separators cannot hide the well-known test card
+    // the first 15 digits all the same digit, e.g. 4444-4444-4444-4448
+    if (/^(\d)\1{14}/.test(number.replace(/\D/g, ''))) {
+      const err = new Error('Invalid card');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     if (number.replace(/\D/g, '') === '4111111111111111') {
       const err = new Error('Test cards are not accepted');
       err.code = grpcStatus.INVALID_ARGUMENT;

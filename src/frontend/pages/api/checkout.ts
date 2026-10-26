@@ -19,6 +19,7 @@ const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
 const INSUFFICIENT_FUNDS = 'Insufficient funds on this card';
 const INVALID_CVV = 'Invalid CVV';
+const INVALID_CARD = 'Invalid card';
 const CARD_EXPIRES_THIS_MONTH = 'Card expires this month';
 const TEST_CARD_REJECTED = 'Test cards are not accepted';
 const CURRENCY_NOT_SUPPORTED = 'Currency not supported for payment';
@@ -79,6 +80,11 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
             if (details.includes(INSUFFICIENT_FUNDS)) {
               logger.info({ details }, 'Checkout insufficient funds');
               return res.status(422).json({ error: INSUFFICIENT_FUNDS, code: 'PAYMENT_FAILED' });
+            }
+
+            if (details.includes(INVALID_CARD)) {
+              logger.info({ details }, 'Checkout invalid card');
+              return res.status(422).json({ error: INVALID_CARD, code: 'PAYMENT_FAILED' });
             }
 
             if (details.includes(INVALID_CVV)) {
