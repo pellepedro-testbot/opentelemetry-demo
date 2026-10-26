@@ -16,7 +16,10 @@ const MAX_RESULTS_LIMIT = 100;
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
-      const { productIds = [], sessionId = '', currencyCode = '', maxResults = '' } = query;
+      const { productIds = [], sessionId = '', currencyCode = '', maxResults = '', limit = '' } = query;
+      if (limit !== '' && !/^[1-4]$/.test(limit as string)) {
+        return res.status(400).json({ error: 'limit must be an integer from 1 to 4' });
+      }
       if (maxResults !== '' && !/^\d+$/.test(maxResults as string)) {
         return res.status(400).json({ error: 'maxResults must be a non-negative integer' });
       }
@@ -42,7 +45,7 @@ const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<T
         productList.slice(0, max || 4).map(id => ProductCatalogService.getProduct(id, currencyCode as string))
       );
 
-      return res.status(200).json(recommendedProductList);
+      return res.status(200).json(limit === '' ? recommendedProductList : recommendedProductList.slice(0, Number(limit)));
     }
 
     default: {
