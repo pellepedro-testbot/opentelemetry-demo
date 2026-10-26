@@ -27,6 +27,14 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         return HttpResponse::BadRequest().body("item quantity must be greater than 0");
     }
 
+    if req
+        .address
+        .as_ref()
+        .is_none_or(|addr| addr.country.trim().is_empty())
+    {
+        return HttpResponse::BadRequest().body("address.country must not be empty");
+    }
+
     let itemct: u32 = req
         .items
         .iter()
