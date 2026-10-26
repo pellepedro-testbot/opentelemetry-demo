@@ -5403,6 +5403,7 @@ class Product final : public ::google::protobuf::Message
     kShortDescriptionFieldNumber = 9,
     kPriceUsdFieldNumber = 5,
     kMaxQuantityFieldNumber = 8,
+    kInStockFieldNumber = 10,
   };
   // repeated string categories = 6;
   int categories_size() const;
@@ -5541,11 +5542,21 @@ class Product final : public ::google::protobuf::Message
   void _internal_set_max_quantity(::int32_t value);
 
   public:
+  // bool in_stock = 10;
+  void clear_in_stock() ;
+  bool in_stock() const;
+  void set_in_stock(bool value);
+
+  private:
+  bool _internal_in_stock() const;
+  void _internal_set_in_stock(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:oteldemo.Product)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 9,
+  static const ::google::protobuf::internal::TcParseTable<4, 10,
                                    1, 89,
                                    2>
       _table_;
@@ -5576,6 +5587,7 @@ class Product final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr short_description_;
     ::oteldemo::Money* PROTOBUF_NULLABLE price_usd_;
     ::int32_t max_quantity_;
+    bool in_stock_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -10589,6 +10601,30 @@ inline void Product::set_allocated_short_description(::std::string* PROTOBUF_NUL
     _impl_.short_description_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:oteldemo.Product.short_description)
+}
+
+// bool in_stock = 10;
+inline void Product::clear_in_stock() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.in_stock_ = false;
+  _impl_._has_bits_[0] &= ~0x00000100u;
+}
+inline bool Product::in_stock() const {
+  // @@protoc_insertion_point(field_get:oteldemo.Product.in_stock)
+  return _internal_in_stock();
+}
+inline void Product::set_in_stock(bool value) {
+  _internal_set_in_stock(value);
+  _impl_._has_bits_[0] |= 0x00000100u;
+  // @@protoc_insertion_point(field_set:oteldemo.Product.in_stock)
+}
+inline bool Product::_internal_in_stock() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.in_stock_;
+}
+inline void Product::_internal_set_in_stock(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.in_stock_ = value;
 }
 
 // -------------------------------------------------------------------

@@ -48,6 +48,7 @@ const ProductDetail: NextPage = () => {
       priceUsd = { units: 0, currencyCode: 'USD', nanos: 0 },
       categories,
       maxQuantity,
+      inStock = true,
     } = {} as Product,
     isError,
   } = useQuery({
@@ -157,9 +158,13 @@ const ProductDetail: NextPage = () => {
                   Line total: <ProductPrice price={lineTotal} />
                 </S.Text>
               </S.QuantityRow>
-              <S.AddToCart data-cy={CypressFields.ProductAddToCart} onClick={onAddItem}>
-                <Image src="/icons/Cart.svg" height="15" width="15" alt="cart" /> Add To Cart
-              </S.AddToCart>
+              {inStock ? (
+                <S.AddToCart data-cy={CypressFields.ProductAddToCart} onClick={onAddItem}>
+                  <Image src="/icons/Cart.svg" height="15" width="15" alt="cart" /> Add To Cart
+                </S.AddToCart>
+              ) : (
+                <S.Text>Out of stock</S.Text>
+              )}
               {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
             </S.Details>
           </S.Container>

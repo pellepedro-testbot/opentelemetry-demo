@@ -81,6 +81,8 @@ export interface Product {
   maxQuantity: number;
   /** The description's first sentence, shown on product cards. */
   shortDescription: string;
+  /** Whether the product can be ordered; the product page offers no Add To Cart otherwise. */
+  inStock: boolean;
 }
 
 export interface ListProductsResponse {
@@ -970,6 +972,7 @@ function createBaseProduct(): Product {
     badge: "",
     maxQuantity: 0,
     shortDescription: "",
+    inStock: false,
   };
 }
 
@@ -1001,6 +1004,9 @@ export const Product: MessageFns<Product> = {
     }
     if (message.shortDescription !== "") {
       writer.uint32(74).string(message.shortDescription);
+    }
+    if (message.inStock !== false) {
+      writer.uint32(80).bool(message.inStock);
     }
     return writer;
   },
@@ -1090,6 +1096,14 @@ export const Product: MessageFns<Product> = {
             message.shortDescription = reader.string();
             continue;
           }
+          case 10: {
+            if (tag !== 80) {
+              break;
+            }
+
+            message.inStock = reader.bool();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -1127,6 +1141,11 @@ export const Product: MessageFns<Product> = {
         : isSet(object.short_description)
         ? globalThis.String(object.short_description)
         : "",
+      inStock: isSet(object.inStock)
+        ? globalThis.Boolean(object.inStock)
+        : isSet(object.in_stock)
+        ? globalThis.Boolean(object.in_stock)
+        : false,
     };
   },
 
@@ -1159,6 +1178,9 @@ export const Product: MessageFns<Product> = {
     if (message.shortDescription !== "") {
       obj.shortDescription = message.shortDescription;
     }
+    if (message.inStock !== false) {
+      obj.inStock = message.inStock;
+    }
     return obj;
   },
 
@@ -1178,6 +1200,7 @@ export const Product: MessageFns<Product> = {
     message.badge = object.badge ?? "";
     message.maxQuantity = object.maxQuantity ?? 0;
     message.shortDescription = object.shortDescription ?? "";
+    message.inStock = object.inStock ?? false;
     return message;
   },
 };

@@ -99,6 +99,9 @@ message Product {
 
     // The description's first sentence, shown on product cards.
     string short_description = 9;
+
+    // Whether the product can be ordered; the product page offers no Add To Cart otherwise.
+    bool in_stock = 10;
 }
 
 message ListProductsResponse {

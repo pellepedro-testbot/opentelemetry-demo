@@ -454,8 +454,10 @@ type Product struct {
 	MaxQuantity int32 `protobuf:"varint,8,opt,name=max_quantity,json=maxQuantity,proto3" json:"max_quantity,omitempty"`
 	// The description's first sentence, shown on product cards.
 	ShortDescription string `protobuf:"bytes,9,opt,name=short_description,json=shortDescription,proto3" json:"short_description,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Whether the product can be ordered; the product page offers no Add To Cart otherwise.
+	InStock       bool `protobuf:"varint,10,opt,name=in_stock,json=inStock,proto3" json:"in_stock,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Product) Reset() {
@@ -549,6 +551,13 @@ func (x *Product) GetShortDescription() string {
 		return x.ShortDescription
 	}
 	return ""
+}
+
+func (x *Product) GetInStock() bool {
+	if x != nil {
+		return x.InStock
+	}
+	return false
 }
 
 type ListProductsResponse struct {
@@ -2312,7 +2321,7 @@ const file_demo_proto_rawDesc = "" +
 	"maxResults\">\n" +
 	"\x1bListRecommendationsResponse\x12\x1f\n" +
 	"\vproduct_ids\x18\x01 \x03(\tR\n" +
-	"productIds\"\x9d\x02\n" +
+	"productIds\"\xb8\x02\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -2324,7 +2333,9 @@ const file_demo_proto_rawDesc = "" +
 	"categories\x12\x14\n" +
 	"\x05badge\x18\a \x01(\tR\x05badge\x12!\n" +
 	"\fmax_quantity\x18\b \x01(\x05R\vmaxQuantity\x12+\n" +
-	"\x11short_description\x18\t \x01(\tR\x10shortDescription\"E\n" +
+	"\x11short_description\x18\t \x01(\tR\x10shortDescription\x12\x19\n" +
+	"\bin_stock\x18\n" +
+	" \x01(\bR\ainStock\"E\n" +
 	"\x14ListProductsResponse\x12-\n" +
 	"\bproducts\x18\x01 \x03(\v2\x11.oteldemo.ProductR\bproducts\"#\n" +
 	"\x11GetProductRequest\x12\x0e\n" +

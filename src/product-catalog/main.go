@@ -398,6 +398,7 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		MaxQuantity: maxQuantity,
 
 		ShortDescription: firstSentence(description),
+		InStock:          id != "9SIQT8TOJO",
 	}
 }
 
