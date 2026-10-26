@@ -250,6 +250,10 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 	return products, nil
 }
 
+// likeEscaper makes %, _ and the escape character itself literal in a LIKE pattern
+// (backslash is PostgreSQL's default LIKE escape).
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
 func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database connection not initialized")
@@ -261,7 +265,7 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 	var matchAll, nameAll, descAll []string
 	var args []any
 	for i, word := range strings.Fields(strings.ToLower(query)) {
-		args = append(args, "%"+word+"%")
+		args = append(args, "%"+likeEscaper.Replace(word)+"%")
 		n := i + 1
 		matchAll = append(matchAll, fmt.Sprintf("(LOWER(p.name) LIKE $%d OR LOWER(p.description) LIKE $%d OR LOWER(p.categories) LIKE $%d)", n, n, n))
 		nameAll = append(nameAll, fmt.Sprintf("LOWER(p.name) LIKE $%d", n))
