@@ -62,6 +62,7 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
         .into(),
         boxes: itemct.div_ceil(10),
         quote_expires_at: rfc3339_utc_in(15 * 60),
+        item_count: itemct,
         estimated_delivery_days: match &req.address {
             Some(addr) if addr.country == "United States" => 3,
             _ => 10,
