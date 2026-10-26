@@ -184,6 +184,11 @@ public final class AdService {
       // get the current span in context
       Span span = Span.current();
       try {
+        if (req.getContextKeysCount() > MAX_CONTEXT_KEYS) {
+          throw new StatusRuntimeException(
+              Status.INVALID_ARGUMENT.withDescription(
+                  "at most " + MAX_CONTEXT_KEYS + " context keys may be sent"));
+        }
         List<Ad> allAds = new ArrayList<>();
         AdRequestType adRequestType;
         AdResponseType adResponseType;
@@ -284,6 +289,8 @@ public final class AdService {
   private static final ImmutableListMultimap<String, Ad> adsMap = createAdsMap();
 
   private static final String PRODUCT_KEY_PREFIX = "product:";
+
+  private static final int MAX_CONTEXT_KEYS = 10;
 
   private Collection<Ad> getAdsForProduct(String productId) {
     String path = "/product/" + productId + "?";
