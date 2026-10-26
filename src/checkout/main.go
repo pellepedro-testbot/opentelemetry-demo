@@ -306,6 +306,15 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
+func tenPercentOff(m *pb.Money) *pb.Money {
+	nanos := (m.GetUnits()*1_000_000_000 + int64(m.GetNanos())) * 9 / 10
+	return &pb.Money{
+		CurrencyCode: m.GetCurrencyCode(),
+		Units:        nanos / 1_000_000_000,
+		Nanos:        int32(nanos % 1_000_000_000),
+	}
+}
+
 func isTwoLetterState(state string) bool {
 	if len(state) != 2 {
 		return false
@@ -448,6 +457,9 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	total = money.Must(money.Sum(total, prep.shippingCostLocalized))
 	for _, it := range prep.orderItems {
 		it.Cost = money.MultiplySlow(it.Cost, uint32(it.GetItem().GetQuantity()))
+		if strings.EqualFold(strings.TrimSpace(req.GetPromoCode()), "SAVE10") {
+			it.Cost = tenPercentOff(it.Cost)
+		}
 		total = money.Must(money.Sum(total, it.Cost))
 	}
 

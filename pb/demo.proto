@@ -250,6 +250,9 @@ message PlaceOrderRequest {
     Address address = 3;
     string email = 5;
     CreditCardInfo credit_card = 6;
+
+    // Optional promo code; SAVE10 takes 10% off item costs.
+    string promo_code = 7;
 }
 
 message PlaceOrderResponse {

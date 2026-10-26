@@ -1517,12 +1517,14 @@ func (x *SendOrderConfirmationRequest) GetOrder() *OrderResult {
 }
 
 type PlaceOrderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	UserCurrency  string                 `protobuf:"bytes,2,opt,name=user_currency,json=userCurrency,proto3" json:"user_currency,omitempty"`
-	Address       *Address               `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
-	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
-	CreditCard    *CreditCardInfo        `protobuf:"bytes,6,opt,name=credit_card,json=creditCard,proto3" json:"credit_card,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	UserId       string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserCurrency string                 `protobuf:"bytes,2,opt,name=user_currency,json=userCurrency,proto3" json:"user_currency,omitempty"`
+	Address      *Address               `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	Email        string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	CreditCard   *CreditCardInfo        `protobuf:"bytes,6,opt,name=credit_card,json=creditCard,proto3" json:"credit_card,omitempty"`
+	// Optional promo code; SAVE10 takes 10% off item costs.
+	PromoCode     string `protobuf:"bytes,7,opt,name=promo_code,json=promoCode,proto3" json:"promo_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1590,6 +1592,13 @@ func (x *PlaceOrderRequest) GetCreditCard() *CreditCardInfo {
 		return x.CreditCard
 	}
 	return nil
+}
+
+func (x *PlaceOrderRequest) GetPromoCode() string {
+	if x != nil {
+		return x.PromoCode
+	}
+	return ""
 }
 
 type PlaceOrderResponse struct {
@@ -2392,14 +2401,16 @@ const file_demo_proto_rawDesc = "" +
 	"\x05items\x18\x05 \x03(\v2\x13.oteldemo.OrderItemR\x05items\"a\n" +
 	"\x1cSendOrderConfirmationRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12+\n" +
-	"\x05order\x18\x02 \x01(\v2\x15.oteldemo.OrderResultR\x05order\"\xcf\x01\n" +
+	"\x05order\x18\x02 \x01(\v2\x15.oteldemo.OrderResultR\x05order\"\xee\x01\n" +
 	"\x11PlaceOrderRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12#\n" +
 	"\ruser_currency\x18\x02 \x01(\tR\fuserCurrency\x12+\n" +
 	"\aaddress\x18\x03 \x01(\v2\x11.oteldemo.AddressR\aaddress\x12\x14\n" +
 	"\x05email\x18\x05 \x01(\tR\x05email\x129\n" +
 	"\vcredit_card\x18\x06 \x01(\v2\x18.oteldemo.CreditCardInfoR\n" +
-	"creditCard\"A\n" +
+	"creditCard\x12\x1d\n" +
+	"\n" +
+	"promo_code\x18\a \x01(\tR\tpromoCode\"A\n" +
 	"\x12PlaceOrderResponse\x12+\n" +
 	"\x05order\x18\x01 \x01(\v2\x15.oteldemo.OrderResultR\x05order\".\n" +
 	"\tAdRequest\x12!\n" +

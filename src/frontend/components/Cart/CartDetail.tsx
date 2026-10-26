@@ -43,6 +43,7 @@ const CartDetail = () => {
       creditCardExpirationMonth,
       creditCardExpirationYear,
       creditCardNumber,
+      promoCode,
     }: IFormData) => {
       setError('');
       setIsPlacingOrder(true);
@@ -65,6 +66,7 @@ const CartDetail = () => {
             creditCardExpirationYear,
             creditCardNumber,
           },
+          promoCode,
         });
       } catch (e) {
         setError((e as Error).message);

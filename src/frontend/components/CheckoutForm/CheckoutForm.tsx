@@ -20,6 +20,7 @@ export interface IFormData {
   country: string;
   zipCode: string;
   creditCardNumber: string;
+  promoCode: string;
   creditCardCvv: number;
   creditCardExpirationYear: number;
   creditCardExpirationMonth: number;
@@ -44,6 +45,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
       creditCardExpirationMonth,
       creditCardExpirationYear,
       creditCardNumber,
+      promoCode,
     },
     setFormData,
   ] = useState<IFormData>({
@@ -54,6 +56,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
     country: 'United States',
     zipCode: "94043",
     creditCardNumber: '4432-8015-6152-0454',
+    promoCode: '',
     creditCardCvv: 672,
     creditCardExpirationYear: 2030,
     creditCardExpirationMonth: 1,
@@ -100,6 +103,7 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
           creditCardExpirationMonth,
           creditCardExpirationYear,
           creditCardNumber,
+          promoCode,
         });
       }}
     >
@@ -213,6 +217,15 @@ const CheckoutForm = ({ onSubmit, isPlacingOrder = false, onCountryChange }: IPr
           onChange={handleChange}
         />
       </S.CardRow>
+
+      <Input
+        type="text"
+        label="Promo Code"
+        id="promo_code"
+        name="promoCode"
+        value={promoCode}
+        onChange={handleChange}
+      />
 
       <S.SubmitContainer>
         <Link href="/">

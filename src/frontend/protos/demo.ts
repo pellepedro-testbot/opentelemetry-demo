@@ -199,7 +199,11 @@ export interface PlaceOrderRequest {
   userCurrency: string;
   address: Address | undefined;
   email: string;
-  creditCard: CreditCardInfo | undefined;
+  creditCard:
+    | CreditCardInfo
+    | undefined;
+  /** Optional promo code; SAVE10 takes 10% off item costs. */
+  promoCode: string;
 }
 
 export interface PlaceOrderResponse {
@@ -2836,7 +2840,7 @@ export const SendOrderConfirmationRequest: MessageFns<SendOrderConfirmationReque
 };
 
 function createBasePlaceOrderRequest(): PlaceOrderRequest {
-  return { userId: "", userCurrency: "", address: undefined, email: "", creditCard: undefined };
+  return { userId: "", userCurrency: "", address: undefined, email: "", creditCard: undefined, promoCode: "" };
 }
 
 export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
@@ -2855,6 +2859,9 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     }
     if (message.creditCard !== undefined) {
       CreditCardInfo.encode(message.creditCard, writer.uint32(50).fork()).join();
+    }
+    if (message.promoCode !== "") {
+      writer.uint32(58).string(message.promoCode);
     }
     return writer;
   },
@@ -2912,6 +2919,14 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
             message.creditCard = CreditCardInfo.decode(reader, reader.uint32());
             continue;
           }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
+
+            message.promoCode = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -2943,6 +2958,11 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
         : isSet(object.credit_card)
         ? CreditCardInfo.fromJSON(object.credit_card)
         : undefined,
+      promoCode: isSet(object.promoCode)
+        ? globalThis.String(object.promoCode)
+        : isSet(object.promo_code)
+        ? globalThis.String(object.promo_code)
+        : "",
     };
   },
 
@@ -2963,6 +2983,9 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     if (message.creditCard !== undefined) {
       obj.creditCard = CreditCardInfo.toJSON(message.creditCard);
     }
+    if (message.promoCode !== "") {
+      obj.promoCode = message.promoCode;
+    }
     return obj;
   },
 
@@ -2980,6 +3003,7 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     message.creditCard = (object.creditCard !== undefined && object.creditCard !== null)
       ? CreditCardInfo.fromPartial(object.creditCard)
       : undefined;
+    message.promoCode = object.promoCode ?? "";
     return message;
   },
 };

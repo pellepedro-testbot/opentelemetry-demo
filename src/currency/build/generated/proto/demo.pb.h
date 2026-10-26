@@ -5743,6 +5743,7 @@ class PlaceOrderRequest final : public ::google::protobuf::Message
     kUserIdFieldNumber = 1,
     kUserCurrencyFieldNumber = 2,
     kEmailFieldNumber = 5,
+    kPromoCodeFieldNumber = 7,
     kAddressFieldNumber = 3,
     kCreditCardFieldNumber = 6,
   };
@@ -5791,6 +5792,21 @@ class PlaceOrderRequest final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_email();
 
   public:
+  // string promo_code = 7;
+  void clear_promo_code() ;
+  const ::std::string& promo_code() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_promo_code(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_promo_code();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_promo_code();
+  void set_allocated_promo_code(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_promo_code() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_promo_code(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_promo_code();
+
+  public:
   // .oteldemo.Address address = 3;
   bool has_address() const;
   void clear_address() ;
@@ -5825,8 +5841,8 @@ class PlaceOrderRequest final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 5,
-                                   2, 60,
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   2, 70,
                                    2>
       _table_;
 
@@ -5850,6 +5866,7 @@ class PlaceOrderRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr user_id_;
     ::google::protobuf::internal::ArenaStringPtr user_currency_;
     ::google::protobuf::internal::ArenaStringPtr email_;
+    ::google::protobuf::internal::ArenaStringPtr promo_code_;
     ::oteldemo::Address* PROTOBUF_NULLABLE address_;
     ::oteldemo::CreditCardInfo* PROTOBUF_NULLABLE credit_card_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -13322,14 +13339,14 @@ inline void PlaceOrderRequest::set_allocated_user_currency(::std::string* PROTOB
 
 // .oteldemo.Address address = 3;
 inline bool PlaceOrderRequest::has_address() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.address_ != nullptr);
   return value;
 }
 inline void PlaceOrderRequest::clear_address() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.address_ != nullptr) _impl_.address_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline const ::oteldemo::Address& PlaceOrderRequest::_internal_address() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -13348,16 +13365,16 @@ inline void PlaceOrderRequest::unsafe_arena_set_allocated_address(
   }
   _impl_.address_ = reinterpret_cast<::oteldemo::Address*>(value);
   if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000008u;
+    _impl_._has_bits_[0] |= 0x00000010u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000008u;
+    _impl_._has_bits_[0] &= ~0x00000010u;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.PlaceOrderRequest.address)
 }
 inline ::oteldemo::Address* PROTOBUF_NULLABLE PlaceOrderRequest::release_address() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
   ::oteldemo::Address* released = _impl_.address_;
   _impl_.address_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -13377,7 +13394,7 @@ inline ::oteldemo::Address* PROTOBUF_NULLABLE PlaceOrderRequest::unsafe_arena_re
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:oteldemo.PlaceOrderRequest.address)
 
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
   ::oteldemo::Address* temp = _impl_.address_;
   _impl_.address_ = nullptr;
   return temp;
@@ -13392,7 +13409,7 @@ inline ::oteldemo::Address* PROTOBUF_NONNULL PlaceOrderRequest::_internal_mutabl
 }
 inline ::oteldemo::Address* PROTOBUF_NONNULL PlaceOrderRequest::mutable_address()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   ::oteldemo::Address* _msg = _internal_mutable_address();
   // @@protoc_insertion_point(field_mutable:oteldemo.PlaceOrderRequest.address)
   return _msg;
@@ -13409,9 +13426,9 @@ inline void PlaceOrderRequest::set_allocated_address(::oteldemo::Address* PROTOB
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    _impl_._has_bits_[0] |= 0x00000008u;
+    _impl_._has_bits_[0] |= 0x00000010u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000008u;
+    _impl_._has_bits_[0] &= ~0x00000010u;
   }
 
   _impl_.address_ = reinterpret_cast<::oteldemo::Address*>(value);
@@ -13485,14 +13502,14 @@ inline void PlaceOrderRequest::set_allocated_email(::std::string* PROTOBUF_NULLA
 
 // .oteldemo.CreditCardInfo credit_card = 6;
 inline bool PlaceOrderRequest::has_credit_card() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.credit_card_ != nullptr);
   return value;
 }
 inline void PlaceOrderRequest::clear_credit_card() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.credit_card_ != nullptr) _impl_.credit_card_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline const ::oteldemo::CreditCardInfo& PlaceOrderRequest::_internal_credit_card() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -13511,16 +13528,16 @@ inline void PlaceOrderRequest::unsafe_arena_set_allocated_credit_card(
   }
   _impl_.credit_card_ = reinterpret_cast<::oteldemo::CreditCardInfo*>(value);
   if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000010u;
+    _impl_._has_bits_[0] |= 0x00000020u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000010u;
+    _impl_._has_bits_[0] &= ~0x00000020u;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.PlaceOrderRequest.credit_card)
 }
 inline ::oteldemo::CreditCardInfo* PROTOBUF_NULLABLE PlaceOrderRequest::release_credit_card() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
   ::oteldemo::CreditCardInfo* released = _impl_.credit_card_;
   _impl_.credit_card_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -13540,7 +13557,7 @@ inline ::oteldemo::CreditCardInfo* PROTOBUF_NULLABLE PlaceOrderRequest::unsafe_a
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:oteldemo.PlaceOrderRequest.credit_card)
 
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
   ::oteldemo::CreditCardInfo* temp = _impl_.credit_card_;
   _impl_.credit_card_ = nullptr;
   return temp;
@@ -13555,7 +13572,7 @@ inline ::oteldemo::CreditCardInfo* PROTOBUF_NONNULL PlaceOrderRequest::_internal
 }
 inline ::oteldemo::CreditCardInfo* PROTOBUF_NONNULL PlaceOrderRequest::mutable_credit_card()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_._has_bits_[0] |= 0x00000020u;
   ::oteldemo::CreditCardInfo* _msg = _internal_mutable_credit_card();
   // @@protoc_insertion_point(field_mutable:oteldemo.PlaceOrderRequest.credit_card)
   return _msg;
@@ -13572,13 +13589,78 @@ inline void PlaceOrderRequest::set_allocated_credit_card(::oteldemo::CreditCardI
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    _impl_._has_bits_[0] |= 0x00000010u;
+    _impl_._has_bits_[0] |= 0x00000020u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000010u;
+    _impl_._has_bits_[0] &= ~0x00000020u;
   }
 
   _impl_.credit_card_ = reinterpret_cast<::oteldemo::CreditCardInfo*>(value);
   // @@protoc_insertion_point(field_set_allocated:oteldemo.PlaceOrderRequest.credit_card)
+}
+
+// string promo_code = 7;
+inline void PlaceOrderRequest::clear_promo_code() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.promo_code_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline const ::std::string& PlaceOrderRequest::promo_code() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:oteldemo.PlaceOrderRequest.promo_code)
+  return _internal_promo_code();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void PlaceOrderRequest::set_promo_code(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.promo_code_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:oteldemo.PlaceOrderRequest.promo_code)
+}
+inline ::std::string* PROTOBUF_NONNULL PlaceOrderRequest::mutable_promo_code()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::std::string* _s = _internal_mutable_promo_code();
+  // @@protoc_insertion_point(field_mutable:oteldemo.PlaceOrderRequest.promo_code)
+  return _s;
+}
+inline const ::std::string& PlaceOrderRequest::_internal_promo_code() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.promo_code_.Get();
+}
+inline void PlaceOrderRequest::_internal_set_promo_code(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.promo_code_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL PlaceOrderRequest::_internal_mutable_promo_code() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000008u;
+  return _impl_.promo_code_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE PlaceOrderRequest::release_promo_code() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:oteldemo.PlaceOrderRequest.promo_code)
+  if ((_impl_._has_bits_[0] & 0x00000008u) == 0) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000008u;
+  auto* released = _impl_.promo_code_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.promo_code_.Set("", GetArena());
+  }
+  return released;
+}
+inline void PlaceOrderRequest::set_allocated_promo_code(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000008u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000008u;
+  }
+  _impl_.promo_code_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.promo_code_.IsDefault()) {
+    _impl_.promo_code_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:oteldemo.PlaceOrderRequest.promo_code)
 }
 
 // -------------------------------------------------------------------
