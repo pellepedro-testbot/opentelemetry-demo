@@ -28,7 +28,7 @@ const STREET_ADDRESS_REQUIRED = 'Street address is required';
 const INVALID_STATE = 'Use a 2-letter state code';
 const PAYMENT_UNAVAILABLE = 'Payment is unavailable, try again';
 
-type TResponse = IProductCheckout | Empty | { error: string; code?: string };
+type TResponse = (IProductCheckout & { itemCount: number }) | IProductCheckout | Empty | { error: string; code?: string };
 
 const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
@@ -147,7 +147,8 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
       );
 
       logger.info({ 'demo.order.id': placeOrderResponse.order?.orderId }, 'Order placed successfully');
-      return res.status(200).json({ ...order, items: productList });
+      const itemCount = items.reduce((acc, { item: { quantity = 0 } = {} }) => acc + quantity, 0);
+      return res.status(200).json({ ...order, items: productList, itemCount });
     }
 
     default: {
