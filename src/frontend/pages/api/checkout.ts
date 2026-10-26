@@ -17,6 +17,7 @@ const PAYMENT_FAILURE_PREFIX = 'failed to charge card:';
 const INVALID_ZIP_CODE = 'Invalid zip code';
 const UNSUPPORTED_COUNTRY_PREFIX = 'We do not ship to ';
 const CARD_DECLINED = 'Your card was declined.';
+const INSUFFICIENT_FUNDS = 'Insufficient funds on this card';
 const INVALID_CVV = 'Invalid CVV';
 const CARD_EXPIRES_THIS_MONTH = 'Card expires this month';
 const TEST_CARD_REJECTED = 'Test cards are not accepted';
@@ -68,6 +69,11 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
             if (details.includes(CARD_DECLINED)) {
               logger.info({ details }, 'Checkout card declined');
               return res.status(422).json({ error: CARD_DECLINED, code: 'PAYMENT_FAILED' });
+            }
+
+            if (details.includes(INSUFFICIENT_FUNDS)) {
+              logger.info({ details }, 'Checkout insufficient funds');
+              return res.status(422).json({ error: INSUFFICIENT_FUNDS, code: 'PAYMENT_FAILED' });
             }
 
             if (details.includes(INVALID_CVV)) {

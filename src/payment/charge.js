@@ -137,6 +137,10 @@ module.exports.charge = async request => {
       throw new Error('Your card was declined.');
     }
 
+    if (number.replace(/\D/g, '') === '4000000000009995') {
+      throw new Error('Insufficient funds on this card');
+    }
+
     // Do not charge synthetic requests.
     if (syntheticRequest) {
       span.setAttribute('demo.payment.charged', false);
