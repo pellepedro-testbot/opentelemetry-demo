@@ -129,6 +129,14 @@ pub async fn ship_order(
         return HttpResponse::BadRequest().body("items must not be empty");
     }
 
+    if req
+        .items
+        .iter()
+        .any(|item| item.product_id.trim().is_empty())
+    {
+        return HttpResponse::BadRequest().body("item product_id must not be empty");
+    }
+
     let is_outside_us = req
         .address
         .as_ref()
