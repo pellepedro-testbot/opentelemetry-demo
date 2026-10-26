@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System;
+using System.Linq;
 using Grpc.Core;
 using cart.cartstore;
 using OpenFeature;
@@ -81,6 +82,9 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             }
             activity?.SetTag("demo.cart.items.count", totalCart);
 
+            var sorted = cart.Items.OrderBy(i => i.ProductId, StringComparer.Ordinal).ToList();
+            cart.Items.Clear();
+            cart.Items.AddRange(sorted);
             return cart;
         }
         catch (RpcException ex)
