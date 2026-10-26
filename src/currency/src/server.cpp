@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <cmath>
 #include <math.h>
 #include <pthread.h>
 #include <demo.grpc.pb.h>
@@ -194,14 +195,6 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     return double(units) + decimal;
   }
 
-  void getUnitsAndNanos(Money& money, double value) {
-    long unit = (long)value;
-    double rem = value - unit;
-    long nano = rem * pow(10, 9);
-    money.set_units(unit);
-    money.set_nanos(nano);
-  }
-
   Status Convert(ServerContext* context,
   	const CurrencyConversionRequest* request,
   	Money* response) override
@@ -260,7 +253,9 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
       double to_rate = currency_conversion[to_code];
 
       double final = one_euro * to_rate;
-      getUnitsAndNanos(*response, final);
+      long long cents = std::llround(final * 100.0);
+      response->set_units(cents / 100);
+      response->set_nanos(static_cast<int32_t>(cents % 100) * 10000000);
       response->set_currency_code(to_code);
 
       span->SetAttribute("demo.exchange.from", from_code);
