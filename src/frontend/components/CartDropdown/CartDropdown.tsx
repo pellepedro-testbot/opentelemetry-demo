@@ -75,7 +75,15 @@ const CartDropdown = ({ productList, isOpen, onClose }: IProps) => {
                       {name}
                     </Link>
                   </S.ItemName>
-                  <ProductPrice price={priceUsd} />
+                  <ProductPrice
+                    price={{
+                      currencyCode: priceUsd.currencyCode,
+                      units:
+                        Number(priceUsd.units) * quantity +
+                        Math.floor((Number(priceUsd.nanos) * quantity) / 1_000_000_000),
+                      nanos: (Number(priceUsd.nanos) * quantity) % 1_000_000_000,
+                    }}
+                  />
                   <S.ItemQuantity>Quantity: {quantity}</S.ItemQuantity>
                 </S.ItemDetails>
               </S.Item>
