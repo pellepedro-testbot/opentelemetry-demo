@@ -44,6 +44,12 @@ module.exports.charge = async request => {
       throw err;
     }
 
+    if (!request.amount?.currencyCode) {
+      const err = new Error('amount.currency_code is required');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
     if (!['USD', 'EUR', 'GBP'].includes(request.amount.currencyCode)) {
       const err = new Error('Currency not supported for payment');
       err.code = grpcStatus.INVALID_ARGUMENT;
