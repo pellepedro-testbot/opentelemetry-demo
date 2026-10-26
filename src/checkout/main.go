@@ -20,6 +20,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
@@ -414,6 +415,10 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 
 	if req.GetAddress().GetCountry() == "United States" && !isTwoLetterState(req.GetAddress().GetState()) {
 		return nil, status.Error(codes.InvalidArgument, "Use a 2-letter state code")
+	}
+
+	if utf8.RuneCountInString(req.GetAddress().GetCity()) > 50 {
+		return nil, status.Error(codes.InvalidArgument, "City name is too long")
 	}
 
 	if strings.TrimSpace(req.GetAddress().GetStreetAddress()) == "" {

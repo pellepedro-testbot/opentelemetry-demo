@@ -27,6 +27,7 @@ const ORDER_LIMIT_EXCEEDED = 'Order exceeds the 5,000 USD limit';
 const STREET_ADDRESS_REQUIRED = 'Street address is required';
 const INVALID_STATE = 'Use a 2-letter state code';
 const PAYMENT_UNAVAILABLE = 'Payment is unavailable, try again';
+const CITY_TOO_LONG = 'City name is too long';
 
 type TResponse = (IProductCheckout & { itemCount: number }) | IProductCheckout | Empty | { error: string; code?: string };
 
@@ -60,6 +61,10 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         if (details === PAYMENT_UNAVAILABLE) {
           return res.status(503).json({ error: PAYMENT_UNAVAILABLE, code: 'PAYMENT_UNAVAILABLE' });
+        }
+
+        if (details === CITY_TOO_LONG) {
+          return res.status(400).json({ error: CITY_TOO_LONG });
         }
 
         if (details === INVALID_STATE) {
