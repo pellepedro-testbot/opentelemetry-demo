@@ -79,6 +79,8 @@ export interface Product {
   badge: string;
   /** Most units of this product the product page lets a shopper select at once. */
   maxQuantity: number;
+  /** The description's first sentence, shown on product cards. */
+  shortDescription: string;
 }
 
 export interface ListProductsResponse {
@@ -967,6 +969,7 @@ function createBaseProduct(): Product {
     categories: [],
     badge: "",
     maxQuantity: 0,
+    shortDescription: "",
   };
 }
 
@@ -995,6 +998,9 @@ export const Product: MessageFns<Product> = {
     }
     if (message.maxQuantity !== 0) {
       writer.uint32(64).int32(message.maxQuantity);
+    }
+    if (message.shortDescription !== "") {
+      writer.uint32(74).string(message.shortDescription);
     }
     return writer;
   },
@@ -1076,6 +1082,14 @@ export const Product: MessageFns<Product> = {
             message.maxQuantity = reader.int32();
             continue;
           }
+          case 9: {
+            if (tag !== 74) {
+              break;
+            }
+
+            message.shortDescription = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -1108,6 +1122,11 @@ export const Product: MessageFns<Product> = {
         : isSet(object.max_quantity)
         ? globalThis.Number(object.max_quantity)
         : 0,
+      shortDescription: isSet(object.shortDescription)
+        ? globalThis.String(object.shortDescription)
+        : isSet(object.short_description)
+        ? globalThis.String(object.short_description)
+        : "",
     };
   },
 
@@ -1137,6 +1156,9 @@ export const Product: MessageFns<Product> = {
     if (message.maxQuantity !== 0) {
       obj.maxQuantity = Math.round(message.maxQuantity);
     }
+    if (message.shortDescription !== "") {
+      obj.shortDescription = message.shortDescription;
+    }
     return obj;
   },
 
@@ -1155,6 +1177,7 @@ export const Product: MessageFns<Product> = {
     message.categories = object.categories?.map((e) => e) || [];
     message.badge = object.badge ?? "";
     message.maxQuantity = object.maxQuantity ?? 0;
+    message.shortDescription = object.shortDescription ?? "";
     return message;
   },
 };

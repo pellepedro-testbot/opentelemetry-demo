@@ -23,6 +23,7 @@ const ProductCard = ({
     picture,
     name,
     badge,
+    shortDescription,
     priceUsd = {
       currencyCode: 'USD',
       units: 0,
@@ -76,6 +77,7 @@ const ProductCard = ({
         <div>
           {badge && <S.Badge>{badge}</S.Badge>}
           <S.ProductName>{name}</S.ProductName>
+          {shortDescription && <p data-cy="product-short-description">{shortDescription}</p>}
           <S.ProductPrice>
             <ProductPrice price={priceUsd} />
           </S.ProductPrice>

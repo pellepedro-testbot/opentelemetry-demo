@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	_ "github.com/lib/pq"
@@ -395,7 +396,24 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		Categories:  categories,
 		Badge:       badge,
 		MaxQuantity: maxQuantity,
+
+		ShortDescription: firstSentence(description),
 	}
+}
+
+// firstSentence returns description up to and including the first '.', '!' or '?'
+// that is followed by whitespace or ends the text; the whole text when there is none.
+func firstSentence(description string) string {
+	text := strings.TrimSpace(description)
+	for i, r := range text {
+		if r != '.' && r != '!' && r != '?' {
+			continue
+		}
+		if i+1 == len(text) || unicode.IsSpace(rune(text[i+1])) {
+			return text[:i+1]
+		}
+	}
+	return text
 }
 
 func mustMapEnv(target *string, key string) {

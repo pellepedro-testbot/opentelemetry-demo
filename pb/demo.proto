@@ -96,6 +96,9 @@ message Product {
 
     // Most units of this product the product page lets a shopper select at once.
     int32 max_quantity = 8;
+
+    // The description's first sentence, shown on product cards.
+    string short_description = 9;
 }
 
 message ListProductsResponse {

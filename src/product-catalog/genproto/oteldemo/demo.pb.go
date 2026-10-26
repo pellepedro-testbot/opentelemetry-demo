@@ -451,9 +451,11 @@ type Product struct {
 	// Badge shown on product cards, e.g. "Bestseller". Empty means no badge.
 	Badge string `protobuf:"bytes,7,opt,name=badge,proto3" json:"badge,omitempty"`
 	// Most units of this product the product page lets a shopper select at once.
-	MaxQuantity   int32 `protobuf:"varint,8,opt,name=max_quantity,json=maxQuantity,proto3" json:"max_quantity,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	MaxQuantity int32 `protobuf:"varint,8,opt,name=max_quantity,json=maxQuantity,proto3" json:"max_quantity,omitempty"`
+	// The description's first sentence, shown on product cards.
+	ShortDescription string `protobuf:"bytes,9,opt,name=short_description,json=shortDescription,proto3" json:"short_description,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Product) Reset() {
@@ -540,6 +542,13 @@ func (x *Product) GetMaxQuantity() int32 {
 		return x.MaxQuantity
 	}
 	return 0
+}
+
+func (x *Product) GetShortDescription() string {
+	if x != nil {
+		return x.ShortDescription
+	}
+	return ""
 }
 
 type ListProductsResponse struct {
@@ -2303,7 +2312,7 @@ const file_demo_proto_rawDesc = "" +
 	"maxResults\">\n" +
 	"\x1bListRecommendationsResponse\x12\x1f\n" +
 	"\vproduct_ids\x18\x01 \x03(\tR\n" +
-	"productIds\"\xf0\x01\n" +
+	"productIds\"\x9d\x02\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -2314,7 +2323,8 @@ const file_demo_proto_rawDesc = "" +
 	"categories\x18\x06 \x03(\tR\n" +
 	"categories\x12\x14\n" +
 	"\x05badge\x18\a \x01(\tR\x05badge\x12!\n" +
-	"\fmax_quantity\x18\b \x01(\x05R\vmaxQuantity\"E\n" +
+	"\fmax_quantity\x18\b \x01(\x05R\vmaxQuantity\x12+\n" +
+	"\x11short_description\x18\t \x01(\tR\x10shortDescription\"E\n" +
 	"\x14ListProductsResponse\x12-\n" +
 	"\bproducts\x18\x01 \x03(\v2\x11.oteldemo.ProductR\bproducts\"#\n" +
 	"\x11GetProductRequest\x12\x0e\n" +
