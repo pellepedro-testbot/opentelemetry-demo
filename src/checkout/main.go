@@ -446,6 +446,9 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	if errors.Is(err, errProductNotFound) {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
+	if errors.Is(err, errTooManyProducts) {
+		return nil, status.Error(codes.InvalidArgument, "Max 5 different products")
+	}
 	if errors.Is(err, errTooManyUnits) {
 		return nil, status.Error(codes.ResourceExhausted, "Cart holds more than 50 units")
 	}
@@ -561,6 +564,10 @@ var errPaymentUnavailable = errors.New("payment service is unavailable")
 
 var errProductNotFound = errors.New("product not found in the catalog")
 
+const maxDistinctProducts = 5
+
+var errTooManyProducts = errors.New("cart holds more than 5 different products")
+
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
 	cartItems             []*pb.CartItem
@@ -586,6 +593,9 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	}
 	if units > maxCartUnits {
 		return out, errTooManyUnits
+	}
+	if len(cartItems) > maxDistinctProducts {
+		return out, errTooManyProducts
 	}
 	orderItems, itemsUSDNanos, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
 	if err != nil {
