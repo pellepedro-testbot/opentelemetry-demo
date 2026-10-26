@@ -49,12 +49,13 @@ const ProductDetail: NextPage = () => {
       categories,
       maxQuantity,
     } = {} as Product,
+    isError,
   } = useQuery({
       queryKey: ['product', productId, 'selectedCurrency', selectedCurrency],
       queryFn: () => ApiGateway.getProduct(productId, selectedCurrency),
       enabled: !!productId,
     }
-  ) as { data: Product };
+  ) as { data: Product; isError: boolean };
 
   const selectableMax =
     Number.isInteger(maxQuantity) && maxQuantity > 0 ? Math.min(maxQuantity, MAX_QUANTITY) : MAX_QUANTITY;
@@ -89,6 +90,21 @@ const ProductDetail: NextPage = () => {
     }
     push('/cart');
   }, [addItem, productId, quantity, push]);
+
+  if (isError) {
+    return (
+      <Layout>
+        <S.ProductDetail data-cy={CypressFields.ProductDetail}>
+          <S.Container>
+            <S.Details $fullWidth>
+              <Link href="/">Back to products</Link>
+              <S.Name>Product not found</S.Name>
+            </S.Details>
+          </S.Container>
+        </S.ProductDetail>
+      </Layout>
+    );
+  }
 
   return (
     <AdProvider
