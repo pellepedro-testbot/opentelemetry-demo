@@ -24,6 +24,7 @@ const ProductCard = ({
     name,
     badge,
     shortDescription,
+    categories = [],
     priceUsd = {
       currencyCode: 'USD',
       units: 0,
@@ -81,6 +82,7 @@ const ProductCard = ({
           <S.ProductPrice>
             <ProductPrice price={priceUsd} />
           </S.ProductPrice>
+          {categories[0] && <p data-cy="product-card-category">{categories[0]}</p>}
         </div>
       </S.ProductCard>
     </S.Link>
