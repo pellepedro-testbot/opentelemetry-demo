@@ -124,6 +124,9 @@ const ProductDetail: NextPage = () => {
               />
             ) : null}
             <S.Details $fullWidth={!picture}>
+              <nav aria-label="Breadcrumb">
+                <Link href="/">Home</Link> / <span>{name}</span>
+              </nav>
               <Link href="/">Back to products</Link>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
               {fromAd && <S.Text>You came from an ad</S.Text>}
