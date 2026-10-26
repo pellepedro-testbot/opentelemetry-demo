@@ -82,7 +82,9 @@ const CartItems = ({ productList, shouldShowPrice = true, country = 'United Stat
         <label>Price</label>
         <label>Total</label>
       </S.CardItemsHeader>
-      {productList.map(({ productId, product, quantity }) => (
+      {[...productList]
+        .sort((a, b) => (a.product?.name ?? '').localeCompare(b.product?.name ?? ''))
+        .map(({ productId, product, quantity }) => (
         <CartItem key={productId} product={product} quantity={quantity} onQuantityChange={updateItemQuantity} />
       ))}
       {shouldShowPrice && (
