@@ -368,6 +368,11 @@ public final class AdService {
             .setRedirectUrl(adRedirectUrl("/product/L9ECAV7KIM"))
             .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
             .build();
+    Ad redFlashlight =
+        Ad.newBuilder()
+            .setRedirectUrl(adRedirectUrl("/product/LS4PSXUNUM"))
+            .setText("Red Flashlight for sale. Keep your night vision while you observe.")
+            .build();
     Ad freeReturns =
         Ad.newBuilder()
             .setRedirectUrl(adRedirectUrl("/"))
@@ -383,6 +388,7 @@ public final class AdService {
         .putAll("checkout", freeReturns)
         .putAll("cart", cleaningKit)
         .putAll("empty-cart", colorImager)
+        .putAll("flashlights", redFlashlight)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }
