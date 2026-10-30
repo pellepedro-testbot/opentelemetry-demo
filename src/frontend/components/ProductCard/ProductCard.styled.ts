@@ -4,15 +4,13 @@
 import styled from 'styled-components';
 import RouterLink from 'next/link';
 
-export const Link = styled(RouterLink)`
-  text-decoration: none;
-`;
+export const Link = styled(RouterLink)``;
 
 export const Image = styled.div<{ $src: string }>`
   width: 100%;
   height: 150px;
-  background: ${({ $src }) => `url("${$src}")`} no-repeat center;
-  background-size: contain;
+  background: url(${({ $src }) => $src}) no-repeat center;
+  background-size: 100% auto;
 
   ${({ theme }) => theme.breakpoints.desktop} {
     height: 300px;

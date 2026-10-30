@@ -40,6 +40,10 @@ export const NavBarBrand = styled(Link)`
   display: flex;
   align-items: center;
   padding: 0;
+
+  img {
+    height: 30px;
+  }
 `;
 
 export const BrandImg = styled.img.attrs({

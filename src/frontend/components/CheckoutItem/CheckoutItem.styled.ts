@@ -79,11 +79,10 @@ export const Status = styled.div`
 `;
 
 export const ItemImage = styled(Image).attrs({
-  width: '80',
-  height: '80',
+  width: '80px',
+  height: '80px',
 })`
   border-radius: 5px;
-  object-fit: contain;
 `;
 
 export const SeeMore = styled.a`
