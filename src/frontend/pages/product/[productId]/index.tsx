@@ -70,13 +70,8 @@ const ProductDetail: NextPage = () => {
       <Layout>
         <S.ProductDetail data-cy={CypressFields.ProductDetail}>
           <S.Container>
-            {picture ? (
-              <S.Image
-                $src={`/images/products/${picture}`}
-                data-cy={CypressFields.ProductPicture}
-              />
-            ) : null}
-            <S.Details $fullWidth={!picture}>
+            <S.Image $src={"/images/products/" + picture} data-cy={CypressFields.ProductPicture} />
+            <S.Details>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
               <S.ProductPrice>

@@ -4,7 +4,7 @@
 
 FROM ghcr.io/mlocati/php-extension-installer:2.11.12@sha256:b6d3fa381b9ba5cf051117c1c601d6a523b590e534bf3d56eb4fbe352949c138 AS installer
 
-FROM docker.io/library/composer:2.10.1@sha256:7725eb4545c438629ae8bde3ef0bb9a5038ef566126ad878442a69007242d267 AS vendor
+FROM docker.io/library/composer:2.10.3@sha256:d8f6343d3fae98107426bc49163ccad46ef85aabd4a27d80a74401fab4aba332 AS vendor
 
 WORKDIR /tmp/
 
@@ -18,7 +18,7 @@ RUN composer install \
     --no-dev \
     --prefer-dist
 
-FROM docker.io/library/php:8.5.7-cli-alpine3.23@sha256:752f62f650153d8388cc6196cd83d92d27ee5b0192b9bfe552a4610f0beb8636
+FROM docker.io/library/php:8.5.10-cli-alpine3.24@sha256:aa66ee4275e0472bafcd18e35142499fcbda6ac90e641e751418e052e6a0d812
 
 COPY --from=installer /usr/bin/install-php-extensions /usr/local/bin/
 
@@ -34,6 +34,7 @@ COPY ./src/quote/app/ app/
 COPY ./src/quote/public/ public/
 COPY ./src/quote/src/ src/
 
+ARG QUOTE_PORT=8090
 EXPOSE ${QUOTE_PORT}
 
 CMD ["php", "public/index.php"]
