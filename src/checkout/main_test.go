@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -35,8 +36,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= 0 || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, 3*time.Second)
 			}
 
 			return &http.Response{
@@ -55,6 +56,48 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
 	if err != nil {
 		t.Fatalf("sendOrderConfirmation() error = %v", err)
+	}
+}
+
+func newEmailServer(t *testing.T, delay time.Duration) *httptest.Server {
+	t.Helper()
+	stop := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-time.After(delay):
+			w.WriteHeader(http.StatusOK)
+		case <-stop:
+		}
+	}))
+	t.Cleanup(func() {
+		close(stop)
+		srv.Close()
+	})
+	return srv
+}
+
+func TestSendOrderConfirmationWaitsForSlowMailServer(t *testing.T) {
+	srv := newEmailServer(t, 2*time.Second)
+	cs := &checkout{emailSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	if err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{}); err != nil {
+		t.Fatalf("sendOrderConfirmation() with a 2s mail server error = %v, want nil", err)
+	}
+}
+
+func TestSendOrderConfirmationGivesUpOnUnresponsiveMailServer(t *testing.T) {
+	srv := newEmailServer(t, 10*time.Second)
+	cs := &checkout{emailSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	start := time.Now()
+	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("sendOrderConfirmation() with an unresponsive mail server error = nil, want an error")
+	}
+	if elapsed >= 4*time.Second {
+		t.Fatalf("sendOrderConfirmation() returned after %v, want under 4s", elapsed)
 	}
 }
 

@@ -145,6 +145,47 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+
+        let quote = Quote {
+            dollars: 10,
+            cents: 5,
+        };
+        assert_eq!(format!("{}", quote), "10.05");
+
+        let quote = Quote {
+            dollars: 100,
+            cents: 0,
+        };
+        assert_eq!(format!("{}", quote), "100.00");
+    }
+
+    #[test]
+    fn test_create_quote_from_float_keeps_cents_not_exact_in_binary() {
+        let cases = [
+            (8.99, 8, 99),
+            (0.29, 0, 29),
+            (0.57, 0, 57),
+            (1.15, 1, 15),
+            (260.71, 260, 71),
+            (512.43, 512, 43),
+            (10.0, 10, 0),
+        ];
+        for (value, dollars, cents) in cases {
+            let quote = create_quote_from_float(value);
+            assert_eq!(
+                (quote.dollars, quote.cents),
+                (dollars, cents),
+                "create_quote_from_float({value})"
+            );
+        }
+    }
+
+    #[test]
+    fn test_total_cents_of_quotes_not_exact_in_binary() {
+        assert_eq!(create_quote_from_float(8.99).total_cents(), 899);
+        assert_eq!(create_quote_from_float(26.97).total_cents(), 2697);
+        assert_eq!(create_quote_from_float(1.15).total_cents(), 115);
+        assert_eq!(create_quote_from_float(260.71).total_cents(), 26071);
     }
 }
