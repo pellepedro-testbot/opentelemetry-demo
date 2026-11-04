@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { spawnSync } from 'child_process';
 import { defineConfig } from 'cypress';
 import dotEnv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
@@ -21,8 +22,13 @@ export default defineConfig({
   },
   e2e: {
     baseUrl,
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
+    setupNodeEvents(on) {
+      on('task', {
+        docker(args: string[]) {
+          const { status, stdout, stderr } = spawnSync('docker', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+          return { code: status, stdout, stderr };
+        },
+      });
     },
     supportFile: false,
   },
