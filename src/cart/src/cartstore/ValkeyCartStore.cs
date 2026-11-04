@@ -128,7 +128,7 @@ public class ValkeyCartStore : ICartStore
     {
         var stopwatch = Stopwatch.StartNew();
 
-        Log.AddItemAsync(_logger, userId, productId, quantity);
+        Log.AddItemAsync(_logger, productId, userId, quantity);
 
         try
         {
