@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -35,8 +36,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= 0 || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, 3*time.Second)
 			}
 
 			return &http.Response{
@@ -56,6 +57,68 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sendOrderConfirmation() error = %v", err)
 	}
+}
+
+func TestSendOrderConfirmationGivesUpOnSlowEmailServer(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-time.After(5 * time.Second):
+			w.WriteHeader(http.StatusOK)
+		case <-r.Context().Done():
+		}
+	}))
+	defer srv.Close()
+
+	cs := &checkout{emailSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	start := time.Now()
+	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("sendOrderConfirmation() error = nil, want an error from a server slower than the deadline")
+	}
+	if elapsed >= 4*time.Second {
+		t.Errorf("sendOrderConfirmation() returned after %v, want under 4s", elapsed)
+	}
+}
+
+func shippingServiceAnswering(t *testing.T, path string, status int) *checkout {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != path {
+			t.Errorf("request path = %q, want %q", r.URL.Path, path)
+		}
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	return &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+}
+
+func assertNamesShippingService(t *testing.T, err error, status int) {
+	t.Helper()
+	if err == nil {
+		t.Fatalf("error = nil, want an error for status %d", status)
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "shipping service") || strings.Contains(msg, "email service") {
+		t.Errorf("error = %q, want it to name the shipping service", msg)
+	}
+	if !strings.Contains(msg, fmt.Sprint(status)) {
+		t.Errorf("error = %q, want it to carry status %d", msg, status)
+	}
+}
+
+func TestQuoteShippingErrorNamesShippingService(t *testing.T) {
+	cs := shippingServiceAnswering(t, "/get-quote", http.StatusInternalServerError)
+	_, err := cs.quoteShipping(context.Background(), &pb.Address{}, []*pb.CartItem{{ProductId: "x", Quantity: 1}})
+	assertNamesShippingService(t, err, http.StatusInternalServerError)
+}
+
+func TestShipOrderErrorNamesShippingService(t *testing.T) {
+	cs := shippingServiceAnswering(t, "/ship-order", http.StatusServiceUnavailable)
+	_, err := cs.shipOrder(context.Background(), &pb.Address{}, []*pb.CartItem{{ProductId: "x", Quantity: 1}})
+	assertNamesShippingService(t, err, http.StatusServiceUnavailable)
 }
 
 func TestHealthCheck(t *testing.T) {
