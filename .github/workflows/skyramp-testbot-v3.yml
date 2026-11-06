@@ -43,7 +43,7 @@ jobs:
           engineVersion: next-v3
           pipeline: staged
           skyrampRunId: ${{ inputs.skyramp_run_id }}
-          skyrampAppOrigin: https://testbot-staging.skyramp.dev
+          skyrampAppOrigin: https://testbot.skyramp.dev
           githubToken: ${{ github.token }}
           skyrampMcpVersion: 'next'
 
