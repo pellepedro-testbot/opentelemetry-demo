@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { execFile } from 'child_process';
 import { defineConfig } from 'cypress';
 import dotEnv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
@@ -21,8 +22,18 @@ export default defineConfig({
   },
   e2e: {
     baseUrl,
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
+    setupNodeEvents(on) {
+      on('task', {
+        docker(args: string[]) {
+          return new Promise<string>((resolvePromise, reject) =>
+            execFile('docker', args, { maxBuffer: 256 * 1024 * 1024 }, (error, stdout, stderr) =>
+              error
+                ? reject(new Error(`docker ${args[0]} failed: ${stderr || error.message}`))
+                : resolvePromise(stdout + stderr)
+            )
+          );
+        },
+      });
     },
     supportFile: false,
   },
