@@ -87,3 +87,8 @@ export const EmptyCartButton = styled(Button)`
     width: inherit;
   }
 `;
+
+export const ErrorMessage = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.otelRed};
+`;

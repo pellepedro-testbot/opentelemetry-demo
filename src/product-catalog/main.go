@@ -232,7 +232,7 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		ORDER BY p.id
+		ORDER BY p.name
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)

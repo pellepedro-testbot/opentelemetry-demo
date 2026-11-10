@@ -79,6 +79,11 @@ const ProductDetail: NextPage = () => {
             <S.Details $fullWidth={!picture}>
               <S.Name data-cy={CypressFields.ProductName}>{name}</S.Name>
               <S.Description data-cy={CypressFields.ProductDescription}>{description}</S.Description>
+              <S.Categories>
+                {categories?.map(category => (
+                  <S.Category key={category}>{category}</S.Category>
+                ))}
+              </S.Categories>
               <S.ProductPrice>
                 <ProductPrice price={priceUsd} />
               </S.ProductPrice>
