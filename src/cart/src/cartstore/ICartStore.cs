@@ -13,5 +13,8 @@ public interface ICartStore
 
     Task<Oteldemo.Cart> GetCartAsync(string userId);
 
+    // Number of carts currently held by the store.
+    Task<long> GetCartCountAsync() => Task.FromResult(0L);
+
     bool Ping();
 }
