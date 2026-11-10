@@ -13,8 +13,10 @@ const ProductCatalogService = () => ({
       ? await CurrencyGateway.convert(price, currencyCode)
       : price;
   },
-  async listProducts(currencyCode = 'USD') {
-    const { products: productList } = await ProductCatalogGateway.listProducts();
+  async listProducts(currencyCode = 'USD', category = '') {
+    const { products: productList } = category
+      ? { products: (await ProductCatalogGateway.searchProducts(`category:${category}`)).results }
+      : await ProductCatalogGateway.listProducts();
 
     return Promise.all(
       productList.map(async product => {

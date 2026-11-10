@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import styled from 'styled-components';
+import Button from '../Button';
 
 export const CartItems = styled.section`
   display: flex;
@@ -94,4 +95,10 @@ export const DataRow = styled.div`
 
 export const TotalText = styled.h3`
   margin: 0;
+`;
+
+export const RemoveButton = styled(Button)`
+  padding: 0;
+  font-weight: ${({ theme }) => theme.fonts.regular};
+  font-size: ${({ theme }) => theme.sizes.dSmall};
 `;

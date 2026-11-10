@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <chrono>
 #include <cerrno>
 #include <csignal>
@@ -167,6 +168,7 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     for (auto &code : currency_conversion) {
       response->add_currency_codes(code.first);
     }
+    std::sort(response->mutable_currency_codes()->begin(), response->mutable_currency_codes()->end());
 
     span->AddEvent("Currencies fetched, response sent back");
     span->SetStatus(StatusCode::kOk);
@@ -225,13 +227,22 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     span->AddEvent("Processing currency conversion request");
 
     try {
+      string to_code = request->to_code();
+      if (currency_conversion.find(to_code) == currency_conversion.end()) {
+        span->SetStatus(StatusCode::kError);
+        span->End();
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "unsupported to_code: " + to_code);
+      }
+
       // Do the conversion work
       Money from = request->from();
       string from_code = from.currency_code();
-      double rate = currency_conversion[from_code];
+      // find, not operator[], so an unknown code is not added to the rate table
+      auto from_rate = currency_conversion.find(from_code);
+      // an unknown code keeps the rate 0 that operator[] used to insert
+      double rate = from_rate == currency_conversion.end() ? 0.0 : from_rate->second;
       double one_euro = getDouble(from) / rate ;
 
-      string to_code = request->to_code();
       double to_rate = currency_conversion[to_code];
 
       double final = one_euro * to_rate;
