@@ -120,3 +120,11 @@ export const EmptyCart = styled.h3`
   color: ${({ theme }) => theme.colors.textLightGray};
   text-align: center;
 `;
+
+export const Subtotal = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding-top: 15px;
+  font-size: ${({ theme }) => theme.sizes.mLarge};
+  font-weight: ${({ theme }) => theme.fonts.bold};
+`;

@@ -17,7 +17,8 @@ const handler = async ({ method }: NextApiRequest, res: NextApiResponse<TRespons
     }
 
     default: {
-      return res.status(405);
+      res.setHeader('Allow', ['GET']);
+      return res.status(405).send('');
     }
   }
 };

@@ -420,7 +420,9 @@ type Product struct {
 	PriceUsd    *Money                 `protobuf:"bytes,5,opt,name=price_usd,json=priceUsd,proto3" json:"price_usd,omitempty"`
 	// Categories such as "clothing" or "kitchen" that can be used to look up
 	// other related products.
-	Categories    []string `protobuf:"bytes,6,rep,name=categories,proto3" json:"categories,omitempty"`
+	Categories []string `protobuf:"bytes,6,rep,name=categories,proto3" json:"categories,omitempty"`
+	// Badge shown on product cards, e.g. "Bestseller". Empty means no badge.
+	Badge         string `protobuf:"bytes,7,opt,name=badge,proto3" json:"badge,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -495,6 +497,13 @@ func (x *Product) GetCategories() []string {
 		return x.Categories
 	}
 	return nil
+}
+
+func (x *Product) GetBadge() string {
+	if x != nil {
+		return x.Badge
+	}
+	return ""
 }
 
 type ListProductsResponse struct {
@@ -2243,7 +2252,7 @@ const file_demo_proto_rawDesc = "" +
 	"productIds\">\n" +
 	"\x1bListRecommendationsResponse\x12\x1f\n" +
 	"\vproduct_ids\x18\x01 \x03(\tR\n" +
-	"productIds\"\xb7\x01\n" +
+	"productIds\"\xcd\x01\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -2252,7 +2261,8 @@ const file_demo_proto_rawDesc = "" +
 	"\tprice_usd\x18\x05 \x01(\v2\x0f.oteldemo.MoneyR\bpriceUsd\x12\x1e\n" +
 	"\n" +
 	"categories\x18\x06 \x03(\tR\n" +
-	"categories\"E\n" +
+	"categories\x12\x14\n" +
+	"\x05badge\x18\a \x01(\tR\x05badge\"E\n" +
 	"\x14ListProductsResponse\x12-\n" +
 	"\bproducts\x18\x01 \x03(\v2\x11.oteldemo.ProductR\bproducts\"#\n" +
 	"\x11GetProductRequest\x12\x0e\n" +

@@ -6,7 +6,6 @@
 package oteldemo;
 
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import io.grpc.*;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.*;
@@ -30,6 +29,7 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -208,8 +208,9 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          for (int i = 0; i < req.getContextKeysCount(); i++) {
-            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
+          // Look up each distinct context key once so repeated keys do not duplicate ads
+          for (String contextKey : new LinkedHashSet<>(req.getContextKeysList())) {
+            Collection<Ad> ads = service.getAdsByCategory(contextKey);
             allAds.addAll(ads);
           }
           adRequestType = AdRequestType.TARGETED;
@@ -280,9 +281,11 @@ public final class AdService {
     // put the span into context, so if any child span is started the parent will be set properly
     try (Scope ignored = span.makeCurrent()) {
 
-      Collection<Ad> allAds = adsMap.values();
-      for (int i = 0; i < MAX_ADS_TO_SERVE; i++) {
-        ads.add(Iterables.get(allAds, random.nextInt(allAds.size())));
+      // Pick from the distinct ads without replacement so no ad is served twice
+      List<Ad> allAds = new ArrayList<>(new LinkedHashSet<>(adsMap.values()));
+      allAds.removeAll(adsMap.get("checkout"));
+      for (int i = 0; i < MAX_ADS_TO_SERVE && !allAds.isEmpty(); i++) {
+        ads.add(allAds.remove(random.nextInt(allAds.size())));
       }
       span.setAttribute("demo.ad.count", ads.size());
       adsServedCounter.labelValues("random").inc(ads.size());
@@ -342,12 +345,19 @@ public final class AdService {
             .setRedirectUrl("/product/L9ECAV7KIM")
             .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
             .build();
+    Ad freeReturns =
+        Ad.newBuilder()
+            .setRedirectUrl("/")
+            .setText("Free returns within 30 days")
+            .build();
     return ImmutableListMultimap.<String, Ad>builder()
         .putAll("binoculars", binoculars)
         .putAll("telescopes", explorerTelescope)
         .putAll("accessories", colorImager, solarFilter, cleaningKit)
         .putAll("assembly", opticalTube)
         .putAll("travel", travelTelescope)
+        .putAll("home", explorerTelescope)
+        .putAll("checkout", freeReturns)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }

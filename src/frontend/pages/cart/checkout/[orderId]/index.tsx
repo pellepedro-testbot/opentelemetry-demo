@@ -18,6 +18,7 @@ import { IProductCheckout } from '../../../../types/Cart';
 
 const Checkout: NextPage = () => {
   const { query } = useRouter();
+  const email = query.email as string | undefined;
   const { orderId, items = [], shippingAddress, shippingCost = { units: 0, currencyCode: 'USD', nanos: 0 } } = JSON.parse((query.order || '{}') as string) as IProductCheckout;
 
   const orderTotal = useMemo<Money>(() => {
@@ -42,7 +43,7 @@ const Checkout: NextPage = () => {
   return (
     <AdProvider
       productIds={items.map(({ item }) => item?.productId || '')}
-      contextKeys={[...new Set(items.flatMap(({ item }) => item.product.categories))]}
+      contextKeys={['checkout']}
     >
       <Head>
         <title>Otel Demo - Checkout</title>
@@ -52,7 +53,9 @@ const Checkout: NextPage = () => {
           <S.Container>
             <S.LeftColumn>
               <S.Title>Your order is complete!</S.Title>
-              <S.Subtitle>We&apos;ve sent you a confirmation email.</S.Subtitle>
+              <S.Subtitle>
+                {email ? `Confirmation sent to ${email}` : <>We&apos;ve sent you a confirmation email.</>}
+              </S.Subtitle>
               <S.OrderInfo>
                 <S.InfoLabel>Order ID:</S.InfoLabel>
                 <S.InfoValue>{orderId}</S.InfoValue>
