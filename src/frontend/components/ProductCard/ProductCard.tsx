@@ -22,6 +22,7 @@ const ProductCard = ({
     id,
     picture,
     name,
+    badge,
     priceUsd = {
       currencyCode: 'USD',
       units: 0,
@@ -73,6 +74,7 @@ const ProductCard = ({
       <S.ProductCard data-cy={CypressFields.ProductCard}>
         <S.Image $src={imageSrc} />
         <div>
+          {badge && <S.Badge>{badge}</S.Badge>}
           <S.ProductName>{name}</S.ProductName>
           <S.ProductPrice>
             <ProductPrice price={priceUsd} />

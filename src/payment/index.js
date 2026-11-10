@@ -13,9 +13,9 @@ async function chargeServiceHandler(call, callback) {
   const span = opentelemetry.trace.getActiveSpan();
 
   try {
-    const amount = call.request.amount
+    const amount = call.request.amount || {}
     span?.setAttributes({
-      'demo.payment.amount': (Number(amount.units) + amount.nanos / 1000000000).toFixed(2)
+      'demo.payment.amount': (Number(amount.units || 0) + (amount.nanos || 0) / 1000000000).toFixed(2)
     })
     logger.info("Charge request received.")
 

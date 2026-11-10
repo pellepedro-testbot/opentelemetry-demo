@@ -6,7 +6,6 @@
 package oteldemo;
 
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import io.grpc.*;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.*;
@@ -30,7 +29,9 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import org.apache.logging.log4j.Level;
@@ -208,9 +209,23 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          for (int i = 0; i < req.getContextKeysCount(); i++) {
-            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
-            allAds.addAll(ads);
+          // Look up each distinct context key once, ignoring case and surrounding whitespace,
+          // so repeated keys do not duplicate ads
+          LinkedHashSet<String> contextKeys = new LinkedHashSet<>();
+          for (String contextKey : req.getContextKeysList()) {
+            contextKeys.add(contextKey.strip().toLowerCase(Locale.ROOT));
+          }
+          // Keys may share ads, so de-duplicate them before serving at most MAX_ADS_TO_SERVE
+          LinkedHashSet<Ad> targetedAds = new LinkedHashSet<>();
+          for (String contextKey : contextKeys) {
+            Collection<Ad> ads = service.getAdsByCategory(contextKey);
+            targetedAds.addAll(ads);
+          }
+          for (Ad ad : targetedAds) {
+            if (allAds.size() >= MAX_ADS_TO_SERVE) {
+              break;
+            }
+            allAds.add(ad);
           }
           adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
@@ -280,9 +295,11 @@ public final class AdService {
     // put the span into context, so if any child span is started the parent will be set properly
     try (Scope ignored = span.makeCurrent()) {
 
-      Collection<Ad> allAds = adsMap.values();
-      for (int i = 0; i < MAX_ADS_TO_SERVE; i++) {
-        ads.add(Iterables.get(allAds, random.nextInt(allAds.size())));
+      // Pick from the distinct ads without replacement so no ad is served twice
+      List<Ad> allAds = new ArrayList<>(new LinkedHashSet<>(adsMap.values()));
+      allAds.removeAll(adsMap.get("checkout"));
+      for (int i = 0; i < MAX_ADS_TO_SERVE && !allAds.isEmpty(); i++) {
+        ads.add(allAds.remove(random.nextInt(allAds.size())));
       }
       span.setAttribute("demo.ad.count", ads.size());
       adsServedCounter.labelValues("random").inc(ads.size());
@@ -305,42 +322,52 @@ public final class AdService {
     }
   }
 
+  /** Tags an ad redirect URL with utm_source=ad, keeping any query it already has. */
+  static String adRedirectUrl(String url) {
+    return url + (url.contains("?") ? "&" : "?") + "utm_source=ad";
+  }
+
   private static ImmutableListMultimap<String, Ad> createAdsMap() {
     Ad binoculars =
         Ad.newBuilder()
-            .setRedirectUrl("/product/2ZYFJ3GM2N")
+            .setRedirectUrl(adRedirectUrl("/product/2ZYFJ3GM2N"))
             .setText("Roof Binoculars for sale. 50% off.")
             .build();
     Ad explorerTelescope =
         Ad.newBuilder()
-            .setRedirectUrl("/product/66VCHSJNUP")
+            .setRedirectUrl(adRedirectUrl("/product/66VCHSJNUP"))
             .setText("Starsense Explorer Refractor Telescope for sale. 20% off.")
             .build();
     Ad colorImager =
         Ad.newBuilder()
-            .setRedirectUrl("/product/0PUK6V6EV0")
+            .setRedirectUrl(adRedirectUrl("/product/0PUK6V6EV0"))
             .setText("Solar System Color Imager for sale. 30% off.")
             .build();
     Ad opticalTube =
         Ad.newBuilder()
-            .setRedirectUrl("/product/9SIQT8TOJO")
+            .setRedirectUrl(adRedirectUrl("/product/9SIQT8TOJO"))
             .setText("Optical Tube Assembly for sale. 10% off.")
             .build();
     Ad travelTelescope =
         Ad.newBuilder()
-            .setRedirectUrl("/product/1YMWWN1N4O")
+            .setRedirectUrl(adRedirectUrl("/product/1YMWWN1N4O"))
             .setText(
                 "Eclipsmart Travel Refractor Telescope for sale. Buy one, get second kit for free")
             .build();
     Ad solarFilter =
         Ad.newBuilder()
-            .setRedirectUrl("/product/6E92ZMYYFZ")
+            .setRedirectUrl(adRedirectUrl("/product/6E92ZMYYFZ"))
             .setText("Solar Filter for sale. Buy two, get third one for free")
             .build();
     Ad cleaningKit =
         Ad.newBuilder()
-            .setRedirectUrl("/product/L9ECAV7KIM")
+            .setRedirectUrl(adRedirectUrl("/product/L9ECAV7KIM"))
             .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
+            .build();
+    Ad freeReturns =
+        Ad.newBuilder()
+            .setRedirectUrl(adRedirectUrl("/"))
+            .setText("Free returns within 30 days")
             .build();
     return ImmutableListMultimap.<String, Ad>builder()
         .putAll("binoculars", binoculars)
@@ -348,6 +375,10 @@ public final class AdService {
         .putAll("accessories", colorImager, solarFilter, cleaningKit)
         .putAll("assembly", opticalTube)
         .putAll("travel", travelTelescope)
+        .putAll("home", explorerTelescope)
+        .putAll("checkout", freeReturns)
+        .putAll("cart", cleaningKit)
+        .putAll("empty-cart", colorImager)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }
