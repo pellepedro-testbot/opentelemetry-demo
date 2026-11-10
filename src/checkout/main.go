@@ -156,7 +156,6 @@ type checkout struct {
 	cartSvcClient           pb.CartServiceClient
 	currencySvcClient       pb.CurrencyServiceClient
 	emailSvcClient          pb.EmailServiceClient
-	paymentSvcClient        pb.PaymentServiceClient
 	httpClient              *http.Client
 }
 
@@ -241,9 +240,6 @@ func main() {
 	defer c.Close()
 
 	mustMapEnv(&svc.paymentSvcAddr, "PAYMENT_ADDR")
-	c = mustCreateClient(svc.paymentSvcAddr)
-	svc.paymentSvcClient = pb.NewPaymentServiceClient(c)
-	defer c.Close()
 
 	svc.kafkaBrokerSvcAddr = os.Getenv("KAFKA_ADDR")
 
@@ -571,12 +567,16 @@ func (cs *checkout) convertCurrency(ctx context.Context, from *pb.Money, toCurre
 }
 
 func (cs *checkout) chargeCard(ctx context.Context, amount *pb.Money, paymentInfo *pb.CreditCardInfo) (string, error) {
-	paymentService := cs.paymentSvcClient
+	// Dial the payment service per charge so every charge resolves the
+	// current payment backend and never reuses a connection left in a bad
+	// state by an earlier failure.
+	paymentAddr := cs.paymentSvcAddr
 	if flags.PaymentUnreachable.Value(ctx, openfeature.EvaluationContext{}) {
-		badAddress := "badAddress:50051"
-		c := mustCreateClient(badAddress)
-		paymentService = pb.NewPaymentServiceClient(c)
+		paymentAddr = "badAddress:50051"
 	}
+	c := mustCreateClient(paymentAddr)
+	defer c.Close()
+	paymentService := pb.NewPaymentServiceClient(c)
 
 	paymentResp, err := paymentService.Charge(ctx, &pb.ChargeRequest{
 		Amount:     amount,
