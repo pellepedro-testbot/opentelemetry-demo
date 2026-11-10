@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -57,7 +58,9 @@ type productCatalog struct {
 var (
 	logger *slog.Logger
 	db     *sql.DB
-	reg    metric.Registration
+	// catalogMu serializes catalog DB access to protect shared catalog state.
+	catalogMu sync.Mutex
+	reg       metric.Registration
 )
 
 func init() {
@@ -226,6 +229,8 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database connection not initialized")
 	}
+	catalogMu.Lock()
+	defer catalogMu.Unlock()
 
 	// Query all products with categories
 	rows, err := db.QueryContext(ctx, `
@@ -251,6 +256,8 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 	if db == nil {
 		return nil, fmt.Errorf("database connection not initialized")
 	}
+	catalogMu.Lock()
+	defer catalogMu.Unlock()
 
 	// Query products matching search query in name or description
 	searchPattern := "%" + strings.ToLower(query) + "%"
@@ -278,6 +285,8 @@ func getProductFromDB(ctx context.Context, productID string) (*pb.Product, error
 	if db == nil {
 		return nil, fmt.Errorf("database connection not initialized")
 	}
+	catalogMu.Lock()
+	defer catalogMu.Unlock()
 
 	// Query single product by ID
 	row := db.QueryRowContext(ctx, `
