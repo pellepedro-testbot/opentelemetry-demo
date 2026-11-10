@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 const { context, propagation, trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
+const { status: grpcStatus } = require('@grpc/grpc-js');
 const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions');
 const cardValidator = require('simple-card-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -76,7 +77,9 @@ module.exports.charge = async request => {
     });
 
     if (!valid) {
-      throw new Error('Credit card info is invalid.');
+      const err = new Error('Credit card info is invalid.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
     }
 
     if (!['visa', 'mastercard'].includes(cardType)) {
@@ -85,6 +88,10 @@ module.exports.charge = async request => {
 
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
       throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+    }
+
+    if (number.replaceAll('-', '') === '4000000000000002') {
+      throw new Error('Your card was declined.');
     }
 
     // Do not charge synthetic requests.

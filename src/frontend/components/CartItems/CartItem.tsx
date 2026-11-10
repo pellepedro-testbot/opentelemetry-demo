@@ -41,6 +41,9 @@ const CartItem = ({
             <option key={o} value={o}>{o}</option>
           ))}
         </Select>
+        <S.RemoveButton $type="link" onClick={() => onQuantityChange(id, 0)}>
+          Remove
+        </S.RemoveButton>
       </S.CartItemDetails>
       <S.CartItemDetails>
         <S.PriceContainer>

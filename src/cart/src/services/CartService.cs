@@ -26,6 +26,16 @@ public class CartService : Oteldemo.CartService.CartServiceBase
 
     public override async Task<Empty> AddItem(AddItemRequest request, ServerCallContext context)
     {
+        if (string.IsNullOrEmpty(request.UserId))
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "user_id is required"));
+        }
+
+        if (string.IsNullOrEmpty(request.Item?.ProductId))
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "item.product_id is required"));
+        }
+
         var activity = Activity.Current;
         activity?.SetTag("user.id", request.UserId);
         activity?.SetTag("demo.product.id", request.Item.ProductId);

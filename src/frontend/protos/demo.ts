@@ -69,6 +69,8 @@ export interface Product {
    * other related products.
    */
   categories: string[];
+  /** Badge shown on product cards, e.g. "Bestseller". Empty means no badge. */
+  badge: string;
 }
 
 export interface ListProductsResponse {
@@ -886,7 +888,7 @@ export const ListRecommendationsResponse: MessageFns<ListRecommendationsResponse
 };
 
 function createBaseProduct(): Product {
-  return { id: "", name: "", description: "", picture: "", priceUsd: undefined, categories: [] };
+  return { id: "", name: "", description: "", picture: "", priceUsd: undefined, categories: [], badge: "" };
 }
 
 export const Product: MessageFns<Product> = {
@@ -908,6 +910,9 @@ export const Product: MessageFns<Product> = {
     }
     for (const v of message.categories) {
       writer.uint32(50).string(v!);
+    }
+    if (message.badge !== "") {
+      writer.uint32(58).string(message.badge);
     }
     return writer;
   },
@@ -973,6 +978,14 @@ export const Product: MessageFns<Product> = {
             message.categories.push(reader.string());
             continue;
           }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
+
+            message.badge = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -999,6 +1012,7 @@ export const Product: MessageFns<Product> = {
       categories: globalThis.Array.isArray(object?.categories)
         ? object.categories.map((e: any) => globalThis.String(e))
         : [],
+      badge: isSet(object.badge) ? globalThis.String(object.badge) : "",
     };
   },
 
@@ -1022,6 +1036,9 @@ export const Product: MessageFns<Product> = {
     if (message.categories?.length) {
       obj.categories = message.categories;
     }
+    if (message.badge !== "") {
+      obj.badge = message.badge;
+    }
     return obj;
   },
 
@@ -1038,6 +1055,7 @@ export const Product: MessageFns<Product> = {
       ? Money.fromPartial(object.priceUsd)
       : undefined;
     message.categories = object.categories?.map((e) => e) || [];
+    message.badge = object.badge ?? "";
     return message;
   },
 };
