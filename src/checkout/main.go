@@ -543,9 +543,9 @@ func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, us
 	out := make([]*pb.OrderItem, len(items))
 
 	for i, item := range items {
-		product, err := cs.productCatalogSvcClient.GetProduct(ctx, &pb.GetProductRequest{Id: item.GetProductId()})
+		product, err := cs.lookupProduct(ctx, item.GetProductId())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get product #%q", item.GetProductId())
+			return nil, err
 		}
 		price, err := cs.convertCurrency(ctx, product.GetPriceUsd(), userCurrency)
 		if err != nil {
@@ -557,6 +557,22 @@ func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, us
 		}
 	}
 	return out, nil
+}
+
+// lookupProduct resolves a cart item against the catalog listing, the same
+// ListProducts call the storefront uses, so checkout prices items from the
+// catalog view the shopper saw.
+func (cs *checkout) lookupProduct(ctx context.Context, productID string) (*pb.Product, error) {
+	catalog, err := cs.productCatalogSvcClient.ListProducts(ctx, &pb.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list products: %+v", err)
+	}
+	for _, p := range catalog.GetProducts() {
+		if p.GetId() == productID {
+			return p, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to get product #%q", productID)
 }
 
 func (cs *checkout) convertCurrency(ctx context.Context, from *pb.Money, toCurrency string) (*pb.Money, error) {
