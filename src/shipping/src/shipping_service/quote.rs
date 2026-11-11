@@ -145,6 +145,27 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+    }
+
+    #[test]
+    fn test_create_quote_from_float_does_not_truncate_cents() {
+        for (value, dollars, cents) in [
+            (8.99, 8, 99),
+            (35.96, 35, 96),
+            (71.92, 71, 92),
+            (0.29, 0, 29),
+            (0.57, 0, 57),
+            (1.15, 1, 15),
+        ] {
+            let quote = create_quote_from_float(value);
+            assert_eq!((quote.dollars, quote.cents), (dollars, cents), "quote for {value}");
+        }
+    }
+
+    #[test]
+    fn test_quote_display_pads_cents_to_two_digits() {
+        assert_eq!(format!("{}", Quote { dollars: 10, cents: 5 }), "10.05");
+        assert_eq!(format!("{}", Quote { dollars: 100, cents: 0 }), "100.00");
     }
 }

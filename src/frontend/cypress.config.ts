@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { execFileSync } from 'child_process';
 import { defineConfig } from 'cypress';
 import dotEnv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
@@ -21,8 +22,19 @@ export default defineConfig({
   },
   e2e: {
     baseUrl,
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
+    setupNodeEvents(on) {
+      on('task', {
+        // Runs one SQL statement in the demo's PostgreSQL container, for specs that seed catalog data.
+        astronomyDbSql(sql: string) {
+          return execFileSync(
+            'docker',
+            ['exec', 'astronomy-db', 'psql', '-U', 'postgres', '-d', 'astronomy_db', '-c', sql],
+            {
+              encoding: 'utf8',
+            }
+          );
+        },
+      });
     },
     supportFile: false,
   },
