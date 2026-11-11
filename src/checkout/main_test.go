@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -125,5 +126,40 @@ func TestServerStartupAndGracefulStop(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("server did not exit after GracefulStop")
+	}
+}
+
+func newFailingShippingService(t *testing.T) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestQuoteShippingErrorNamesShippingService(t *testing.T) {
+	srv := newFailingShippingService(t)
+	cs := &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	_, err := cs.quoteShipping(context.Background(), &pb.Address{Country: "US"}, []*pb.CartItem{{ProductId: "x", Quantity: 1}})
+	if err == nil {
+		t.Fatal("quoteShipping() error = nil, want an error for a 500 from the shipping service")
+	}
+	if !strings.Contains(err.Error(), "shipping service") || strings.Contains(err.Error(), "email service") {
+		t.Errorf("quoteShipping() error = %q, want it to name the shipping service", err)
+	}
+}
+
+func TestShipOrderErrorNamesShippingService(t *testing.T) {
+	srv := newFailingShippingService(t)
+	cs := &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	_, err := cs.shipOrder(context.Background(), &pb.Address{}, []*pb.CartItem{{ProductId: "x", Quantity: 1}})
+	if err == nil {
+		t.Fatal("shipOrder() error = nil, want an error for a 500 from the shipping service")
+	}
+	if !strings.Contains(err.Error(), "shipping service") || strings.Contains(err.Error(), "email service") {
+		t.Errorf("shipOrder() error = %q, want it to name the shipping service", err)
 	}
 }
