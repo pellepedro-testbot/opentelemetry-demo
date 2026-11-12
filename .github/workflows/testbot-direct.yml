@@ -10,7 +10,7 @@ on:
         description: Pull request number to validate
         required: true
       testbot_ref:
-        description: letsramp/testbot build ref to run (blank = the released skyramp/testbot@v1)
+        description: Patched Testbot build to run, a folder name under /opt/testbot on the VM (blank = the released skyramp/testbot@v1)
         required: false
         default: ''
       model:
@@ -53,12 +53,34 @@ jobs:
           model: ${{ inputs.model }}
           enableDebug: ${{ inputs.enable_debug }}
           postPrComment: 'false'
+          testbotTimeout: '360'
           targetSetupCommand: LOCUST_AUTOSTART=false docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml up -d --build
           targetReadyCheckCommand: curl -fsS http://localhost:8080/api/products >/dev/null
           targetTeardownCommand: docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml down -v --remove-orphans
 
-      - name: Patched Testbot is not wired yet
+      - name: Use the patched Testbot build
         if: inputs.testbot_ref != ''
+        env:
+          REF: ${{ inputs.testbot_ref }}
         run: |
-          echo "::error::testbot_ref needs the clone-and-run step for letsramp/testbot build/<branch>; not added yet"
-          exit 1
+          [[ "$REF" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "::error::bad testbot_ref"; exit 1; }
+          test -f "/opt/testbot/$REF/action.yml" || { echo "::error::no build at /opt/testbot/$REF"; exit 1; }
+          rm -rf .testbot-local && cp -R "/opt/testbot/$REF" .testbot-local
+          # Kept out of git status, so Testbot's own file checks never see it.
+          echo ".testbot-local/" >> .git/info/exclude
+
+      - name: Run Skyramp Testbot (patched)
+        if: inputs.testbot_ref != ''
+        uses: ./.testbot-local
+        with:
+          pipeline: staged
+          skyrampLicenseFile: ${{ secrets.SKYRAMP_LICENSE }}
+          anthropicApiKey: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: ${{ inputs.model }}
+          enableDebug: ${{ inputs.enable_debug }}
+          postPrComment: 'false'
+          testbotTimeout: '360'
+          targetSetupCommand: LOCUST_AUTOSTART=false docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml up -d --build
+          targetReadyCheckCommand: curl -fsS http://localhost:8080/api/products >/dev/null
+          targetTeardownCommand: docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml down -v --remove-orphans
+
