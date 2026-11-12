@@ -28,6 +28,8 @@ permissions:
   contents: read
   # The runner signs in to the Testbot webapp with the job's OIDC token.
   id-token: write
+  # A resumed setup downloads the checkpoint the setup it resumes saved as this workflow's artifact.
+  actions: read
 
 jobs:
   testbot:
@@ -38,12 +40,13 @@ jobs:
       - name: Run Skyramp Testbot
         # v1 installs the engine from npm. next-v3 is the latest Testbot V3 engine
         # (feat/testbot-v3); eval-sut bundles an older V3 build.
+        # The staging web app dispatches as skyramp-testbot-staging[bot]: its runs use the engine and app origin of staging.
         uses: skyramp/testbot@v1
         with:
-          engineVersion: next-v3
+          engineVersion: ${{ github.triggering_actor == 'skyramp-testbot-staging[bot]' && 'next' || 'next-v3' }}
           pipeline: staged
           skyrampRunId: ${{ inputs.skyramp_run_id }}
-          skyrampAppOrigin: https://testbot.skyramp.dev
+          skyrampAppOrigin: ${{ github.triggering_actor == 'skyramp-testbot-staging[bot]' && 'https://testbot-staging.skyramp.dev' || 'https://testbot.skyramp.dev' }}
           githubToken: ${{ github.token }}
           skyrampMcpVersion: 'next'
 
