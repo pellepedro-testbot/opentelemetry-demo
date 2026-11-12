@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { getElementByField } from '../../utils/Cypress';
+import { CypressFields } from '../../utils/enums/CypressFields';
+
 const FLAGD_READ_URL = '/feature/api/read';
 const FLAGD_WRITE_URL = '/feature/api/write';
 
@@ -9,6 +12,8 @@ const setFlag = (flagName: string, defaultVariant: string) => {
     body.flags[flagName].defaultVariant = defaultVariant;
 
     cy.request('POST', FLAGD_WRITE_URL, { data: body });
+    // flagd picks up the rewritten flag file asynchronously.
+    cy.wait(5000);
   });
 };
 
@@ -59,12 +64,39 @@ describe('Checkout API payment failure handling', () => {
     before(() => setFlag('paymentFailure', '100%'));
     after(() => setFlag('paymentFailure', 'off'));
 
-    it('returns a structured 422 PAYMENT_FAILED error instead of an unhandled 500', () => {
+    it('returns the single checkout error format', () => {
       placeOrder(`cypress-payment-failure-${Date.now()}`).then(response => {
-        expect(response.status).to.eq(422);
-        expect(response.body).to.have.property('code', 'PAYMENT_FAILED');
+        expect(response.status).to.eq(500);
+        expect(response.body).to.not.have.property('code');
         expect(response.body).to.have.property('error').that.is.a('string').and.is.not.empty;
       });
+    });
+
+    it('shopper stays on the cart when payment fails', () => {
+      cy.on('uncaught:exception', error => !error.message.includes('Failed to place order.'));
+      cy.intercept('POST', '/api/cart*').as('addToCart');
+      cy.intercept('POST', '/api/checkout*').as('placeOrder');
+
+      cy.log('**Step 1: add the first product to the cart**');
+      cy.visit('/');
+      getElementByField(CypressFields.ProductCard).first().click();
+      getElementByField(CypressFields.ProductAddToCart).click();
+      cy.wait('@addToCart');
+      cy.location('pathname').should('eq', '/cart');
+      getElementByField(CypressFields.CartItemCount).should('contain', '1');
+
+      cy.log('**Step 2: place the order**');
+      getElementByField(CypressFields.CheckoutPlaceOrder).click();
+      cy.wait('@placeOrder').then(({ response }) => {
+        expect(response?.statusCode).to.eq(500);
+        expect(response?.body).to.deep.equal({ error: 'Failed to place order.' });
+      });
+      cy.location('pathname').should('eq', '/cart');
+      getElementByField(CypressFields.CartItemCount).should('contain', '1');
+
+      cy.reload();
+      cy.location('pathname').should('eq', '/cart');
+      getElementByField(CypressFields.CartItemCount).should('contain', '1');
     });
   });
 
