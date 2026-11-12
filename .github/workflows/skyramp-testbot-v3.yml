@@ -34,7 +34,7 @@ permissions:
 jobs:
   testbot:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rachzucco]
     timeout-minutes: 390
     steps:
       - name: Run Skyramp Testbot
@@ -54,7 +54,7 @@ jobs:
   cleanup:
     needs: testbot
     if: always() && github.event_name == 'workflow_dispatch' && (github.ref == format('refs/heads/skyramp/testbot/onboarding-{0}', inputs.skyramp_run_id) || github.ref == format('refs/heads/skyramp/testbot/validation-{0}', inputs.skyramp_run_id))
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rachzucco]
     permissions:
       contents: write
     steps:
