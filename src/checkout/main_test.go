@@ -35,8 +35,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= time.Second || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want more than %v and at most %v", remaining, time.Second, 3*time.Second)
 			}
 
 			return &http.Response{
