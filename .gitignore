@@ -23,6 +23,8 @@
 # Build artifacts
 bin/
 obj/
+*.trx
+[Tt]est[Rr]esult*/
 .gradle/
 .nb-gradle
 .nb-gradle-properties
