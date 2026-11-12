@@ -98,7 +98,7 @@ def get_product_list(request_product_ids):
         span.set_attribute("demo.product.count", len(product_ids))
 
         # Create a filtered list of products excluding the products received as input
-        filtered_products = list(set(product_ids) - set(request_product_ids))
+        filtered_products = list(set(product_ids))  # dedupe; the frontend hides the current product
         num_products = len(filtered_products)
         span.set_attribute("demo.product.filtered.count", num_products)
         num_return = min(max_responses, num_products)
