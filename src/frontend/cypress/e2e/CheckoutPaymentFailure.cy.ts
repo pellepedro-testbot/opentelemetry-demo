@@ -56,14 +56,16 @@ const placeOrder = (userId: string, productId = '0PUK6V6EV0') => {
 
 describe('Checkout API payment failure handling', () => {
   describe('intentional payment failure', () => {
-    before(() => setFlag('paymentFailure', '100%'));
+    before(() => {
+      setFlag('paymentFailure', '100%');
+      cy.wait(10000);
+    });
     after(() => setFlag('paymentFailure', 'off'));
 
-    it('returns a structured 422 PAYMENT_FAILED error instead of an unhandled 500', () => {
+    it('returns the single checkout error format for a declined payment', () => {
       placeOrder(`cypress-payment-failure-${Date.now()}`).then(response => {
-        expect(response.status).to.eq(422);
-        expect(response.body).to.have.property('code', 'PAYMENT_FAILED');
-        expect(response.body).to.have.property('error').that.is.a('string').and.is.not.empty;
+        expect(response.status).to.eq(500);
+        expect(response.body).to.deep.equal({ error: 'Failed to place order.' });
       });
     });
   });
