@@ -35,6 +35,7 @@ describe('Product Detail Page', () => {
 
   it('should not render product picture or request undefined image when picture is missing', () => {
     cy.intercept('GET', '/api/products/*', req => {
+      delete req.headers['if-none-match'];
       req.continue(res => {
         delete res.body.picture;
       });
