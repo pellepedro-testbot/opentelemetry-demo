@@ -1,16 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { setFlag } from '../../utils/Cypress';
+
 const FLAGD_READ_URL = '/feature/api/read';
 const FLAGD_WRITE_URL = '/feature/api/write';
-
-const setFlag = (flagName: string, defaultVariant: string) => {
-  cy.request('GET', FLAGD_READ_URL).then(({ body }) => {
-    body.flags[flagName].defaultVariant = defaultVariant;
-
-    cy.request('POST', FLAGD_WRITE_URL, { data: body });
-  });
-};
 
 // productCatalogFailure targets a specific product via a targeting rule rather than
 // defaultVariant, so toggling it requires flipping the rule's true-branch (matching how
