@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-import { getElementByField } from '../../utils/Cypress';
+import { createStepChecks, getElementByField } from '../../utils/Cypress';
 import { CypressFields } from '../../utils/enums/CypressFields';
 
 describe('Product Detail Page', () => {
@@ -70,6 +70,51 @@ describe('Product Detail Page', () => {
     getElementByField(CypressFields.CartIcon).click({ force: true });
 
     getElementByField(CypressFields.CartDropdownItem).should('have.length', 1);
+  });
+
+  it('should show a product without a picture from the home page to the cart without a broken image', () => {
+    const checks = createStepChecks();
+    const countUndefinedImageRequests = (step: string) =>
+      cy.get('@undefinedImage.all').then(requests => {
+        checks.check(`${step}: no request for /images/products/undefined`, () => expect(requests).to.have.length(0));
+      });
+    cy.intercept('GET', '/api/products/*', req => {
+      delete req.headers['if-none-match'];
+      req.continue(res => {
+        delete res.body.picture;
+      });
+    }).as('getProduct');
+    cy.intercept('GET', '/images/products/undefined').as('undefinedImage');
+    cy.intercept('POST', '/api/cart*').as('addToCart');
+
+    cy.log('Step 1: open the storefront');
+    cy.visit('/');
+    getElementByField(CypressFields.ProductCard, getElementByField(CypressFields.ProductList)).should(
+      'have.length',
+      10
+    );
+    countUndefinedImageRequests('step 1');
+
+    cy.log('Step 2: open the first product, whose picture is missing');
+    getElementByField(CypressFields.ProductCard).first().click();
+    cy.wait('@getProduct');
+    getElementByField(CypressFields.ProductName).should('be.visible');
+    getElementByField(CypressFields.ProductDescription).should('be.visible');
+    getElementByField(CypressFields.ProductDetail).then($detail => {
+      checks.check('step 2: no product picture', () =>
+        expect($detail.find(`[data-cy="${CypressFields.ProductPicture}"]`)).to.have.length(0)
+      );
+    });
+    countUndefinedImageRequests('step 2');
+
+    cy.log('Step 3: add it to the cart');
+    getElementByField(CypressFields.ProductAddToCart).click();
+    cy.wait('@addToCart');
+    cy.location('pathname').should('eq', '/cart');
+    getElementByField(CypressFields.CartItemCount).should('contain', '1');
+    countUndefinedImageRequests('step 3');
+
+    checks.assertAll();
   });
 });
 
