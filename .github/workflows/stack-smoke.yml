@@ -49,7 +49,7 @@ env:
 
 jobs:
   stack:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rachzucco]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
