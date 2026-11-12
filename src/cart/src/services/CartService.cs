@@ -13,7 +13,6 @@ namespace cart.services;
 public class CartService : Oteldemo.CartService.CartServiceBase
 {
     private static readonly Empty Empty = new();
-    private readonly Random random = new Random();
     private readonly ICartStore _badCartStore;
     private readonly ICartStore _cartStore;
     private readonly IFeatureClient _featureFlagHelper;
@@ -54,7 +53,11 @@ public class CartService : Oteldemo.CartService.CartServiceBase
 
         try
         {
-            var cart = await _cartStore.GetCartAsync(request.UserId);
+            var cartFailureRate = await _featureFlagHelper.GetDoubleValueAsync("cartFailure", 0);
+            var store = cartFailureRate > 0 && Random.Shared.NextDouble() < cartFailureRate
+                ? _badCartStore
+                : _cartStore;
+            var cart = await store.GetCartAsync(request.UserId);
             var totalCart = 0;
             foreach (var item in cart.Items)
             {
@@ -80,14 +83,7 @@ public class CartService : Oteldemo.CartService.CartServiceBase
 
         try
         {
-            if (await _featureFlagHelper.GetBooleanValueAsync("cartFailure", false))
-            {
-                await _badCartStore.EmptyCartAsync(request.UserId);
-            }
-            else
-            {
-                await _cartStore.EmptyCartAsync(request.UserId);
-            }
+            await _cartStore.EmptyCartAsync(request.UserId);
         }
         catch (RpcException ex)
         {
