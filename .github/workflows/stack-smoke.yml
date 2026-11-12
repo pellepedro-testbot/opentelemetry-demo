@@ -58,6 +58,8 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
+        # Hosted runners only: on the self-hosted VM these paths hold toolchains Testbot uses.
+        if: runner.environment == 'github-hosted'
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           docker system prune -af >/dev/null
