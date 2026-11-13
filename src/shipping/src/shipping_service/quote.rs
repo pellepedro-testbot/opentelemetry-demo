@@ -145,6 +145,42 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+
+        let quote = Quote {
+            dollars: 10,
+            cents: 5,
+        };
+        assert_eq!(format!("{}", quote), "10.05");
+
+        let quote = Quote {
+            dollars: 100,
+            cents: 0,
+        };
+        assert_eq!(format!("{}", quote), "100.00");
+    }
+
+    #[test]
+    fn test_create_quote_from_float_does_not_truncate() {
+        let cases = [
+            (0.29, 0, 29),
+            (0.57, 0, 57),
+            (1.13, 1, 13),
+            (4.35, 4, 35),
+            (260.71, 260, 71),
+            (8.99, 8, 99),
+            (10.99, 10, 99),
+            (35.96, 35, 96),
+            (0.01, 0, 1),
+            (0.0, 0, 0),
+        ];
+        for (value, dollars, cents) in cases {
+            let quote = create_quote_from_float(value);
+            assert_eq!(
+                (quote.dollars, quote.cents),
+                (dollars, cents),
+                "create_quote_from_float({value})"
+            );
+        }
     }
 }

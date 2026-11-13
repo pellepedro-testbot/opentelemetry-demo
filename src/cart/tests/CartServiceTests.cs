@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using cart.cartstore;
@@ -161,6 +162,68 @@ public class CartServiceTests
         await client.EmptyCartAsync(new EmptyCartRequest { UserId = userId });
         cart = await client.GetCartAsync(getCartRequest);
         Assert.Empty(cart.Items);
+    }
+
+    [Fact]
+    public async Task AddItem_CartFailureFlagFullyOn_ItemStoredInCartStore()
+    {
+        const string domain = "cart-tests-cart-failure";
+        await Api.Instance.SetProviderAsync(domain, new OpenFeature.Providers.Memory.InMemoryProvider(new Dictionary<string, OpenFeature.Providers.Memory.Flag>
+        {
+            ["cartFailure"] = new OpenFeature.Providers.Memory.Flag<double>(new Dictionary<string, double> { ["100%"] = 1.0 }, "100%"),
+        }));
+        var featureClient = Api.Instance.GetClient(domain);
+        Assert.Equal(1.0, await featureClient.GetDoubleValueAsync("cartFailure", 0));
+
+        var goodStore = new InMemoryCartStore();
+        var badStore = new FailingCartStore();
+        var host = new HostBuilder().ConfigureWebHost(webBuilder =>
+        {
+            webBuilder
+                .UseTestServer()
+                .ConfigureServices(services =>
+                {
+                    services.AddGrpc();
+                    services.AddSingleton(_ => new CartServiceImplementation(goodStore, badStore, featureClient));
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints => endpoints.MapGrpcService<CartServiceImplementation>());
+                });
+        });
+
+        using var server = await host.StartAsync();
+        var httpClient = server.GetTestClient();
+        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress, new GrpcChannelOptions
+        {
+            HttpClient = httpClient
+        });
+        var cartClient = new CartServiceClient(channel);
+
+        string userId = Guid.NewGuid().ToString();
+        await cartClient.AddItemAsync(new AddItemRequest
+        {
+            UserId = userId,
+            Item = new CartItem { ProductId = "1", Quantity = 2 }
+        });
+
+        var stored = await goodStore.GetCartAsync(userId);
+        var item = Assert.Single(stored.Items);
+        Assert.Equal("1", item.ProductId);
+        Assert.Equal(2, item.Quantity);
+    }
+
+    private sealed class FailingCartStore : ICartStore
+    {
+        private static Exception Failure() =>
+            new Grpc.Core.RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.FailedPrecondition, "bad cart store"));
+
+        public void Initialize() => throw Failure();
+        public Task AddItemAsync(string userId, string productId, int quantity) => throw Failure();
+        public Task EmptyCartAsync(string userId) => throw Failure();
+        public Task<Cart> GetCartAsync(string userId) => throw Failure();
+        public bool Ping() => false;
     }
 
     private sealed class InMemoryCartStore : ICartStore
