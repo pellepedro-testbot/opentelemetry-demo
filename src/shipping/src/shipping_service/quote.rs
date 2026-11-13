@@ -145,6 +145,20 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+
+        let quote = Quote {
+            dollars: 5,
+            cents: 5,
+        };
+        assert_eq!(format!("{}", quote), "5.05");
+    }
+
+    #[test]
+    fn test_create_quote_from_float_keeps_cents() {
+        for (value, dollars, cents) in [(8.99, 8, 99), (35.96, 35, 96), (71.92, 71, 92), (260.71, 260, 71)] {
+            let quote = create_quote_from_float(value);
+            assert_eq!((quote.dollars, quote.cents), (dollars, cents), "quote for {value}");
+        }
     }
 }

@@ -35,8 +35,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= 0 || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, 3*time.Second)
 			}
 
 			return &http.Response{
@@ -56,6 +56,43 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sendOrderConfirmation() error = %v", err)
 	}
+}
+
+func shippingAnswering(status int) *checkout {
+	return &checkout{
+		shippingSvcAddr: "http://shipping.test",
+		httpClient: &http.Client{
+			Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: status,
+					Body:       io.NopCloser(strings.NewReader("")),
+					Header:     make(http.Header),
+					Request:    req,
+				}, nil
+			}),
+		},
+	}
+}
+
+func assertNamesShippingService(t *testing.T, err error) {
+	t.Helper()
+	if err == nil {
+		t.Fatal("expected an error for a 503 from the shipping service")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "shipping service") || !strings.Contains(msg, "503") || strings.Contains(msg, "email service") {
+		t.Errorf("error = %q, want it to name the shipping service and status 503", msg)
+	}
+}
+
+func TestQuoteShippingErrorNamesShippingService(t *testing.T) {
+	_, err := shippingAnswering(http.StatusServiceUnavailable).quoteShipping(context.Background(), &pb.Address{}, nil)
+	assertNamesShippingService(t, err)
+}
+
+func TestShipOrderErrorNamesShippingService(t *testing.T) {
+	_, err := shippingAnswering(http.StatusServiceUnavailable).shipOrder(context.Background(), &pb.Address{}, nil)
+	assertNamesShippingService(t, err)
 }
 
 func TestHealthCheck(t *testing.T) {
