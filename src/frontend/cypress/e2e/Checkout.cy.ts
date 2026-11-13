@@ -48,7 +48,9 @@ describe('Checkout Flow', () => {
     cy.wait('@placeOrder');
 
     cy.location('href').should('match', /\/checkout/);
-    getElementByField(CypressFields.CheckoutItem).should('have.length', 2);
+    cy.contains('Your order is complete!').should('be.visible');
+    cy.get('main p').filter(':contains("Quantity: 1")').should('have.length', 2);
+    getElementByField(CypressFields.CheckoutItem).should('not.exist');
   });
 });
 
