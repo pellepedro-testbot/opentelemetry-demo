@@ -1,0 +1,94 @@
+# Runs Testbot on a PR whose head is a merged checkout like the V3 runner's: the baseline's head plus each merged PR as
+# a "Testbot: merge PR #N" commit. It records the frozen base and the merges where Deliver reads them (testbot.deliverFrom,
+# testbot.deliverMerge), so Deliver re-cuts the tests onto the base as a V3 run does. Built to check letsramp/testbot#952
+# (SKYR-5799) without the web app. Its results are not F1 evidence.
+name: Testbot merged
+run-name: "Testbot merged · PR #${{ inputs.pr }}${{ inputs.testbot_ref && format(' · testbot {0}', inputs.testbot_ref) || '' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request whose head is the merged checkout
+        required: true
+      testbot_ref:
+        description: Patched Testbot build to run, a folder name under /opt/testbot on the VM
+        required: true
+      model:
+        description: Claude model
+        required: false
+        default: claude-opus-5-5
+      post_pr_comment:
+        description: Post Testbot's comment on the PR
+        type: boolean
+        default: true
+      enable_debug:
+        description: Testbot debug logging
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+  actions: read
+
+concurrency:
+  group: testbot-merged-pr-${{ inputs.pr }}
+  cancel-in-progress: false
+
+jobs:
+  testbot:
+    runs-on: [self-hosted, rachzucco]
+    timeout-minutes: 390
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr }}/head
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Record the merged checkout for Deliver
+        run: |
+          set -euo pipefail
+          # Walk back over the "Testbot: merge" commits: the first commit that is not one is the frozen base.
+          base=HEAD; merges=()
+          while subject=$(git log -1 --format=%s "$base") && [[ "$subject" =~ ^Testbot:\ merge\ PR\ \#([0-9]+)$ ]]; do
+            merges=("pull_request:${BASH_REMATCH[1]}" "${merges[@]}")
+            base=$(git rev-parse "$base^1")
+          done
+          [ "${#merges[@]}" -gt 0 ] || { echo "::error::HEAD is not a Testbot merge"; exit 1; }
+          git config testbot.deliverFrom "$(git rev-parse "$base")"
+          git config testbot.deliverMerge "${merges[*]}"
+          echo "deliverFrom=$(git config testbot.deliverFrom) deliverMerge=$(git config testbot.deliverMerge)"
+
+      - name: Use the patched Testbot build
+        env:
+          REF: ${{ inputs.testbot_ref }}
+        run: |
+          [[ "$REF" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "::error::bad testbot_ref"; exit 1; }
+          test -f "/opt/testbot/$REF/action.yml" || { echo "::error::no build at /opt/testbot/$REF"; exit 1; }
+          rm -rf .testbot-local && cp -R "/opt/testbot/$REF" .testbot-local
+          # Kept out of git status, so Testbot's own file checks never see it.
+          echo ".testbot-local/" >> .git/info/exclude
+
+      - name: Run Skyramp Testbot (patched)
+        uses: ./.testbot-local
+        with:
+          pipeline: staged
+          skyrampLicenseFile: ${{ secrets.SKYRAMP_LICENSE }}
+          anthropicApiKey: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: ${{ inputs.model }}
+          enableDebug: ${{ inputs.enable_debug }}
+          postPrComment: ${{ inputs.post_pr_comment }}
+          testbotTimeout: '360'
+          targetSetupCommand: LOCUST_AUTOSTART=false docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml up -d --build
+          targetReadyCheckCommand: curl -fsS http://localhost:8080/api/products >/dev/null
+          targetTeardownCommand: docker compose --env-file .env --env-file .env.override -f compose.yaml -f compose.full.yaml -f compose.observability.yaml -f compose.extras.yaml down -v --remove-orphans
+
+      - name: Show the delivery record
+        if: always()
+        run: |
+          for f in $(find . .testbot -path ./node_modules -prune -o \( -name deliver.json -o -name held-back.json \) -print 2>/dev/null | sort -u); do
+            echo "== $f"; head -c 20000 "$f"; echo
+          done
