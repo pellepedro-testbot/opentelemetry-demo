@@ -181,6 +181,48 @@ def _raise_for_status(resp, description):
         ) from e
 
 
+def add_to_cart(user_id, product_id, quantity=1):
+    """Add an item to a user's cart through the storefront API."""
+    resp = requests.post(
+        f"{FRONTEND_PROXY_URL}/api/cart",
+        json={"item": {"productId": product_id, "quantity": quantity}, "userId": user_id},
+        timeout=10,
+    )
+    _raise_for_status(resp, "add to cart request")
+    return resp.json()
+
+
+def get_cart(user_id, currency_code="USD", timeout=10):
+    """Return the response to GET /api/cart for a user."""
+    return requests.get(
+        f"{FRONTEND_PROXY_URL}/api/cart",
+        params={"sessionId": user_id, "currencyCode": currency_code},
+        timeout=timeout,
+    )
+
+
+def empty_cart(user_id, timeout=10):
+    """Return the response to DELETE /api/cart for a user."""
+    return requests.delete(
+        f"{FRONTEND_PROXY_URL}/api/cart",
+        json={"userId": user_id},
+        timeout=timeout,
+    )
+
+
+def place_order(user_id, currency_code="USD", credit_card=None):
+    """POST /api/checkout for a user with the probe person's address and card."""
+    person = dict(PROBE_PERSON, userId=user_id, userCurrency=currency_code)
+    if credit_card:
+        person["creditCard"] = dict(PROBE_PERSON["creditCard"], **credit_card)
+    return requests.post(
+        f"{FRONTEND_PROXY_URL}/api/checkout",
+        params={"currencyCode": currency_code},
+        json=person,
+        timeout=30,
+    )
+
+
 def _drive_checkout(session, product_id):
     """Add one product to a fresh cart and check out via the frontend proxy.
     """

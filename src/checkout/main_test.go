@@ -5,9 +5,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -35,8 +39,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= 0 || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, 3*time.Second)
 			}
 
 			return &http.Response{
@@ -125,5 +129,88 @@ func TestServerStartupAndGracefulStop(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("server did not exit after GracefulStop")
+	}
+}
+
+func failingServer(t *testing.T, status int) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func testAddress() *pb.Address {
+	return &pb.Address{StreetAddress: "1600 Amphitheatre Parkway", City: "Mountain View", State: "CA", Country: "United States", ZipCode: "94043"}
+}
+
+func testItems() []*pb.CartItem {
+	return []*pb.CartItem{{ProductId: "OLJCESPC7Z", Quantity: 1}}
+}
+
+func assertNamesShippingService(t *testing.T, call string, err error) {
+	t.Helper()
+	if err == nil {
+		t.Fatalf("%s() error = nil, want an error", call)
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "shipping service") || !strings.Contains(msg, "got 503") {
+		t.Errorf("%s() error = %q, want it to name the shipping service and the 503", call, msg)
+	}
+	if strings.Contains(msg, "email service") {
+		t.Errorf("%s() error = %q names the email service", call, msg)
+	}
+}
+
+func TestQuoteShippingFailureNamesShippingService(t *testing.T) {
+	srv := failingServer(t, http.StatusServiceUnavailable)
+	cs := &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	_, err := cs.quoteShipping(context.Background(), testAddress(), testItems())
+	assertNamesShippingService(t, "quoteShipping", err)
+}
+
+func TestShipOrderFailureNamesShippingService(t *testing.T) {
+	srv := failingServer(t, http.StatusServiceUnavailable)
+	cs := &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	_, err := cs.shipOrder(context.Background(), testAddress(), testItems())
+	assertNamesShippingService(t, "shipOrder", err)
+}
+
+func TestSendOrderConfirmationFailureNamesEmailService(t *testing.T) {
+	srv := failingServer(t, http.StatusInternalServerError)
+	cs := &checkout{emailSvcAddr: srv.URL, httpClient: srv.Client()}
+
+	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
+	want := "failed POST to email service: expected 200, got " + strconv.Itoa(http.StatusInternalServerError)
+	if err == nil || err.Error() != want {
+		t.Errorf("sendOrderConfirmation() error = %v, want %q", err, want)
+	}
+}
+
+func TestSendOrderConfirmationWaitsForSlowEmailService(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(1500 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+	cs := &checkout{emailSvcAddr: srv.URL, httpClient: &http.Client{}}
+
+	if err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{}); err != nil {
+		t.Errorf("sendOrderConfirmation() against a 1.5 s email service error = %v, want nil", err)
+	}
+}
+
+func TestCheckoutDoesNotImportPricingRules(t *testing.T) {
+	file, err := parser.ParseFile(token.NewFileSet(), "main.go", nil, parser.ImportsOnly)
+	if err != nil {
+		t.Fatalf("parse main.go: %v", err)
+	}
+	for _, imp := range file.Imports {
+		if strings.HasSuffix(strings.Trim(imp.Path.Value, `"`), "/checkout/rules") {
+			t.Errorf("main.go imports %s", imp.Path.Value)
+		}
 	}
 }
