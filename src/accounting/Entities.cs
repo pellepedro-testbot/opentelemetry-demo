@@ -17,7 +17,7 @@ internal class ShippingEntity
 
     public required long ShippingCostUnits { get; set; }
 
-    public required int ShippingCostNanos { get; set; }
+    public int ShippingCostNanos { get; set; }
 
     public required string StreetAddress { get; set; }
 
