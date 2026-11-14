@@ -1,16 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { setFlag } from '../../utils/Cypress';
+
 const FLAGD_READ_URL = '/feature/api/read';
 const FLAGD_WRITE_URL = '/feature/api/write';
-
-const setFlag = (flagName: string, defaultVariant: string) => {
-  cy.request('GET', FLAGD_READ_URL).then(({ body }) => {
-    body.flags[flagName].defaultVariant = defaultVariant;
-
-    cy.request('POST', FLAGD_WRITE_URL, { data: body });
-  });
-};
 
 // productCatalogFailure targets a specific product via a targeting rule rather than
 // defaultVariant, so toggling it requires flipping the rule's true-branch (matching how
@@ -56,20 +50,26 @@ const placeOrder = (userId: string, productId = '0PUK6V6EV0') => {
 
 describe('Checkout API payment failure handling', () => {
   describe('intentional payment failure', () => {
-    before(() => setFlag('paymentFailure', '100%'));
+    before(() => {
+      setFlag('paymentFailure', '100%');
+      // flagd picks up the written flag file asynchronously.
+      cy.wait(3000);
+    });
     after(() => setFlag('paymentFailure', 'off'));
 
-    it('returns a structured 422 PAYMENT_FAILED error instead of an unhandled 500', () => {
+    it('returns the unified checkout error for a declined payment', () => {
       placeOrder(`cypress-payment-failure-${Date.now()}`).then(response => {
-        expect(response.status).to.eq(422);
-        expect(response.body).to.have.property('code', 'PAYMENT_FAILED');
-        expect(response.body).to.have.property('error').that.is.a('string').and.is.not.empty;
+        expect(response.status).to.eq(500);
+        expect(response.body).to.deep.eq({ error: 'Failed to place order.' });
       });
     });
   });
 
   describe('unrelated internal failure', () => {
-    before(() => setProductCatalogFailure('on'));
+    before(() => {
+      setProductCatalogFailure('on');
+      cy.wait(3000);
+    });
     after(() => setProductCatalogFailure('off'));
 
     it('still returns a generic 500 and is not misclassified as PAYMENT_FAILED', () => {

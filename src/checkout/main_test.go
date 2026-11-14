@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -35,8 +36,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= time.Second || remaining > 3*time.Second {
+				return nil, fmt.Errorf("email request timeout = %v, want more than %v and at most %v", remaining, time.Second, 3*time.Second)
 			}
 
 			return &http.Response{
@@ -55,6 +56,23 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
 	if err != nil {
 		t.Fatalf("sendOrderConfirmation() error = %v", err)
+	}
+}
+
+func TestShippingErrorsNameShippingService(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	cs := &checkout{shippingSvcAddr: srv.URL, httpClient: srv.Client()}
+	want := "failed POST to shipping service: expected 200, got 500"
+
+	if _, err := cs.quoteShipping(context.Background(), &pb.Address{}, nil); err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("quoteShipping() error = %v, want it to contain %q", err, want)
+	}
+	if _, err := cs.shipOrder(context.Background(), &pb.Address{}, nil); err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("shipOrder() error = %v, want it to contain %q", err, want)
 	}
 }
 
