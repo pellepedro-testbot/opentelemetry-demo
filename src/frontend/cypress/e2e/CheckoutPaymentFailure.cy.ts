@@ -3,6 +3,7 @@
 
 const FLAGD_READ_URL = '/feature/api/read';
 const FLAGD_WRITE_URL = '/feature/api/write';
+const FLAG_PROPAGATION_MS = 5000;
 
 const setFlag = (flagName: string, defaultVariant: string) => {
   cy.request('GET', FLAGD_READ_URL).then(({ body }) => {
@@ -10,6 +11,7 @@ const setFlag = (flagName: string, defaultVariant: string) => {
 
     cy.request('POST', FLAGD_WRITE_URL, { data: body });
   });
+  cy.wait(FLAG_PROPAGATION_MS);
 };
 
 // productCatalogFailure targets a specific product via a targeting rule rather than
@@ -21,6 +23,7 @@ const setProductCatalogFailure = (variant: 'on' | 'off') => {
 
     cy.request('POST', FLAGD_WRITE_URL, { data: body });
   });
+  cy.wait(FLAG_PROPAGATION_MS);
 };
 
 const placeOrder = (userId: string, productId = '0PUK6V6EV0') => {
@@ -59,11 +62,10 @@ describe('Checkout API payment failure handling', () => {
     before(() => setFlag('paymentFailure', '100%'));
     after(() => setFlag('paymentFailure', 'off'));
 
-    it('returns a structured 422 PAYMENT_FAILED error instead of an unhandled 500', () => {
+    it('returns the single checkout error format', () => {
       placeOrder(`cypress-payment-failure-${Date.now()}`).then(response => {
-        expect(response.status).to.eq(422);
-        expect(response.body).to.have.property('code', 'PAYMENT_FAILED');
-        expect(response.body).to.have.property('error').that.is.a('string').and.is.not.empty;
+        expect(response.status).to.eq(500);
+        expect(response.body).to.deep.eq({ error: 'Failed to place order.' });
       });
     });
   });

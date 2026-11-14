@@ -125,6 +125,40 @@ mod tests {
         let quote = create_quote_from_float(100.00);
         assert_eq!(quote.dollars, 100);
         assert_eq!(quote.cents, 0);
+
+        let quote = create_quote_from_float(8.99);
+        assert_eq!(quote.dollars, 8);
+        assert_eq!(quote.cents, 99);
+
+        let quote = create_quote_from_float(35.96);
+        assert_eq!(quote.dollars, 35);
+        assert_eq!(quote.cents, 96);
+
+        let quote = create_quote_from_float(71.92);
+        assert_eq!(quote.dollars, 71);
+        assert_eq!(quote.cents, 92);
+    }
+
+    #[test]
+    fn test_create_quote_from_float_rounds_to_nearest_cent() {
+        for (value, dollars, cents) in [
+            (0.29, 0, 29),
+            (0.57, 0, 57),
+            (1.15, 1, 15),
+            (4.35, 4, 35),
+            (2.3, 2, 30),
+            (8.99, 8, 99),
+            (35.96, 35, 96),
+            (71.92, 71, 92),
+            (0.01, 0, 1),
+        ] {
+            let quote = create_quote_from_float(value);
+            assert_eq!(
+                (quote.dollars, quote.cents),
+                (dollars, cents),
+                "quote from {value}"
+            );
+        }
     }
 
     #[test]
@@ -145,6 +179,18 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+
+        let quote = Quote {
+            dollars: 10,
+            cents: 5,
+        };
+        assert_eq!(format!("{}", quote), "10.05");
+
+        let quote = Quote {
+            dollars: 100,
+            cents: 0,
+        };
+        assert_eq!(format!("{}", quote), "100.00");
     }
 }
