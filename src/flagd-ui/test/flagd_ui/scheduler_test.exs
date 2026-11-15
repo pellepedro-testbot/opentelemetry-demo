@@ -341,6 +341,35 @@ defmodule FlagdUi.SchedulerTest do
       end
     end
 
+    test "holds a targeting-rule flag through its rule and restores it on revert" do
+      scheduler = start_scheduler(TargetingRuleScheduler)
+
+      raw = fn ->
+        data = get_in(GenServer.call(Storage, :read), ["flags", "productCatalogFailure"])
+        {Enum.at(get_in(data, ["targeting", "if"]), 1), Map.get(data, "defaultVariant")}
+      end
+
+      config =
+        immediate_config(%{
+          interval_ms: 3000,
+          min_duration_ms: 1000,
+          max_duration_ms: 1000,
+          flags: %{"productCatalogFailure" => ["on"]}
+        })
+
+      assert :ok = Scheduler.start_schedule(scheduler, config)
+
+      assert_receive {:scheduler_state,
+                      %{active: [%{flag: "productCatalogFailure", variant: "on"}]}},
+                     3000
+
+      assert eventually(fn -> raw.() == {"on", "off"} end)
+      assert eventually(fn -> raw.() == {"off", "off"} end, 3000)
+
+      assert :ok = Scheduler.stop_schedule(scheduler)
+      assert raw.() == {"off", "off"}
+    end
+
     test "rejects a concurrency below one" do
       scheduler = start_scheduler(BadConcurrencyScheduler)
 
