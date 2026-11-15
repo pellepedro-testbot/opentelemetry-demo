@@ -95,6 +95,13 @@ pub fn create_quote_from_float(value: f64) -> Quote {
     }
 }
 
+impl Quote {
+    /// The quote as a whole number of cents.
+    pub fn total_cents(&self) -> u64 {
+        self.dollars * 100 + self.cents as u64
+    }
+}
+
 impl fmt::Display for Quote {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}.{}", self.dollars, self.cents)
@@ -118,6 +125,12 @@ mod tests {
         let quote = create_quote_from_float(100.00);
         assert_eq!(quote.dollars, 100);
         assert_eq!(quote.cents, 0);
+    }
+
+    #[test]
+    fn test_total_cents() {
+        assert_eq!(create_quote_from_float(10.5).total_cents(), 1050);
+        assert_eq!(Quote { dollars: 0, cents: 5 }.total_cents(), 5);
     }
 
     #[test]

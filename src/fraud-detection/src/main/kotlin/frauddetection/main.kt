@@ -23,7 +23,7 @@ import dev.openfeature.sdk.ImmutableContext
 import dev.openfeature.sdk.Value
 import dev.openfeature.sdk.OpenFeatureAPI
 
-const val topic = "orders"
+val topic: String = System.getenv("KAFKA_TOPIC") ?: "orders"
 const val groupID = "fraud-detection"
 
 private val logger: Logger = LogManager.getLogger(groupID)
@@ -68,7 +68,7 @@ fun main() {
                         Thread.sleep(1000)
                     }
                     val orders = OrderResult.parseFrom(record.value())
-                    logger.info("Consumed record with orderId: ${orders.orderId}, and updated total count to: $newCount")
+                    logger.info("Consumed record with orderId: ${orders.shippingTrackingId}, and updated total count to: $newCount")
                     newCount
                 }
         }

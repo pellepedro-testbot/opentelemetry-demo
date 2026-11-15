@@ -31,6 +31,10 @@ describe('Home Page', () => {
         win.localStorage.setItem('session', 'not}{valid-json');
       },
     });
-    getElementByField(CypressFields.SessionId).should('contain', SessionGateway.getSession().userId);
+    getElementByField(CypressFields.SessionId).should($span => {
+      const session = JSON.parse(localStorage.getItem('session') as string);
+      expect(session.userId).to.be.a('string').and.not.be.empty;
+      expect($span).to.contain(session.userId);
+    });
   });
 });
