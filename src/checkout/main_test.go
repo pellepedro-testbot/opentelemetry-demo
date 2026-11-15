@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -125,5 +126,32 @@ func TestServerStartupAndGracefulStop(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("server did not exit after GracefulStop")
+	}
+}
+
+func TestShippingServiceFailuresNameTheShippingService(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "shipping unavailable", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	cs := &checkout{
+		shippingSvcAddr: srv.URL,
+		httpClient:      srv.Client(),
+	}
+	address := &pb.Address{StreetAddress: "1600 Amphitheatre Parkway", City: "Mountain View", State: "CA", Country: "USA", ZipCode: "94043"}
+	items := []*pb.CartItem{{ProductId: "0PUK6V6EV0", Quantity: 1}}
+
+	_, quoteErr := cs.quoteShipping(context.Background(), address, items)
+	_, shipErr := cs.shipOrder(context.Background(), address, items)
+
+	for name, err := range map[string]error{"quoteShipping": quoteErr, "shipOrder": shipErr} {
+		if err == nil {
+			t.Errorf("%s() error = nil, want an error for a 500 answer", name)
+			continue
+		}
+		if !strings.Contains(err.Error(), "shipping service") || strings.Contains(err.Error(), "email service") {
+			t.Errorf("%s() error = %q, want it to name the shipping service and not the email service", name, err.Error())
+		}
 	}
 }
