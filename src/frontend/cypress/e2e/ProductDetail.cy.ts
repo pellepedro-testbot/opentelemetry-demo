@@ -54,6 +54,21 @@ describe('Product Detail Page', () => {
     cy.get('@undefinedImage.all').should('have.length', 0);
   });
 
+  it('should not recommend the product being viewed', () => {
+    for (let visit = 0; visit < 10; visit++) {
+      cy.clearLocalStorage();
+      cy.intercept('GET', '/api/recommendations*').as('getRecommendations');
+      cy.visit('/product/0PUK6V6EV0');
+      cy.wait('@getRecommendations');
+      getElementByField(CypressFields.RecommendationList)
+        .find('a')
+        .should('have.length.greaterThan', 0)
+        .each($link => {
+          expect($link.attr('href')).not.to.eq('/product/0PUK6V6EV0');
+        });
+    }
+  });
+
   it('should add item to cart', () => {
     cy.intercept('POST', '/api/cart*').as('addToCart');
     cy.intercept('GET', '/api/cart*').as('getCart');
