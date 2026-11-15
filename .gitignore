@@ -23,6 +23,8 @@
 # Build artifacts
 bin/
 obj/
+*.trx
+[Tt]est[Rr]esult*/
 .gradle/
 .nb-gradle
 .nb-gradle-properties
@@ -56,6 +58,5 @@ docker-compose.override.yml
 src/frontend/cypress/videos
 src/frontend/cypress/screenshots
 src/shipping/target/
-test/tracetesting/tracetesting-vars.yaml
 
 !src/currency/build
