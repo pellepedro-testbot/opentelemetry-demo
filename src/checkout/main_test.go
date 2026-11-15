@@ -35,8 +35,8 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 			}
 
 			remaining := time.Until(deadline)
-			if remaining <= 0 || remaining > time.Second {
-				return nil, fmt.Errorf("email request timeout = %v, want at most %v", remaining, time.Second)
+			if remaining <= time.Second || remaining > emailRequestTimeout {
+				return nil, fmt.Errorf("email request timeout = %v, want more than %v and at most %v", remaining, time.Second, emailRequestTimeout)
 			}
 
 			return &http.Response{
@@ -55,6 +55,36 @@ func TestSendOrderConfirmationHasBoundedTimeout(t *testing.T) {
 	err := cs.sendOrderConfirmation(context.Background(), "test@example.com", &pb.OrderResult{})
 	if err != nil {
 		t.Fatalf("sendOrderConfirmation() error = %v", err)
+	}
+}
+
+func TestShippingErrorsNameShippingService(t *testing.T) {
+	client := &http.Client{
+		Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Body:       io.NopCloser(strings.NewReader("")),
+				Header:     make(http.Header),
+				Request:    req,
+			}, nil
+		}),
+	}
+	cs := &checkout{
+		shippingSvcAddr: "http://shipping.test",
+		httpClient:      client,
+	}
+
+	_, quoteErr := cs.quoteShipping(context.Background(), &pb.Address{}, []*pb.CartItem{})
+	_, shipErr := cs.shipOrder(context.Background(), &pb.Address{}, []*pb.CartItem{})
+
+	for name, err := range map[string]error{"quoteShipping": quoteErr, "shipOrder": shipErr} {
+		if err == nil {
+			t.Errorf("%s() error = nil, want an error for HTTP 500", name)
+			continue
+		}
+		if !strings.Contains(err.Error(), "shipping service") || strings.Contains(err.Error(), "email service") {
+			t.Errorf("%s() error = %q, want it to name the shipping service and not the email service", name, err)
+		}
 	}
 }
 
