@@ -25,6 +25,31 @@ describe('Home Page', () => {
     getElementByField(CypressFields.ProductCard).should('contain', getSymbolFromCurrency('EUR'));
   });
 
+  it('should offer EUR in the currency switcher', () => {
+    cy.visit('/');
+    getElementByField(CypressFields.CurrencySwitcher).find('option[value="EUR"]').should('have.length', 1);
+  });
+
+  it('should not load product images below the fold before scrolling', () => {
+    let imageRequests = 0;
+    cy.intercept('GET', '/images/products/**', () => {
+      imageRequests += 1;
+    });
+    cy.viewport(1280, 400);
+
+    cy.visit('/');
+    getElementByField(CypressFields.ProductCard, getElementByField(CypressFields.ProductList)).should(
+      'have.length',
+      10
+    );
+    cy.wait(1000);
+    cy.then(() => imageRequests).then(beforeScroll => {
+      cy.scrollTo('bottom');
+      cy.wait(1000);
+      cy.then(() => expect(beforeScroll, 'product image requests before scrolling').to.be.lessThan(imageRequests));
+    });
+  });
+
   it('should recover corrupted stored session', () => {
     cy.visit('/', {
       onBeforeLoad(win) {
