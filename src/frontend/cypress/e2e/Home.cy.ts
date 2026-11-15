@@ -25,6 +25,33 @@ describe('Home Page', () => {
     getElementByField(CypressFields.ProductCard).should('contain', getSymbolFromCurrency('EUR'));
   });
 
+  it('serves image URLs relative to the page origin in the server-rendered HTML and after hydration', () => {
+    cy.request('/').then(({ body }) => {
+      const html = new DOMParser().parseFromString(body, 'text/html');
+      const images = [...html.querySelectorAll('img[data-nimg]')];
+      expect(images, 'next/image images').to.not.be.empty;
+      images.forEach(image => {
+        const src = image.getAttribute('src') || '';
+        const srcset = image.getAttribute('srcset') || '';
+        // A same-origin path followed by the loader's width and quality: "/icons/CartIcon.svg?w=48&q=75".
+        expect(src).to.match(/^\/[^/][^?]*\?w=\d+&q=\d+$/);
+        srcset.split(',').forEach(candidate => expect(candidate.trim()).to.match(/^\/[^/]/));
+        expect(`${src} ${srcset}`).to.not.contain('localhost:8080').and.not.contain('http://');
+      });
+    });
+
+    cy.visit('/');
+    cy.get('img[data-nimg]').each($image => {
+      expect($image.attr('src')).to.match(/^\/[^/][^?]*\?w=\d+&q=\d+$/);
+      expect($image.attr('src')).to.not.contain('localhost:8080');
+    });
+  });
+
+  it('shows the configured platform in the footer badge', () => {
+    cy.visit('/');
+    cy.get('footer').contains(/^local$/).should('be.visible');
+  });
+
   it('should recover corrupted stored session', () => {
     cy.visit('/', {
       onBeforeLoad(win) {

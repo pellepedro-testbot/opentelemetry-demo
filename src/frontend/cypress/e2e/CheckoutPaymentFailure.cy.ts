@@ -1,6 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+import { getElementByField } from '../../utils/Cypress';
+import { CypressFields } from '../../utils/enums/CypressFields';
+import {
+  addShownProductToCart,
+  CART_LINE,
+  cartLine,
+  interceptStorefrontApi,
+  placeOrder as placeOrderFromCart,
+  StepChecks,
+} from '../helpers/storefront';
+
 const FLAGD_READ_URL = '/feature/api/read';
 const FLAGD_WRITE_URL = '/feature/api/write';
 
@@ -53,6 +64,56 @@ const placeOrder = (userId: string, productId = '0PUK6V6EV0') => {
     },
   });
 };
+
+describe('Placing an order while payments fail', () => {
+  before(() => setFlag('paymentFailure', '100%'));
+  after(() => setFlag('paymentFailure', 'off'));
+
+  it('leaves the shopper on the cart page with the cart intact after a failed order', () => {
+    cy.on('uncaught:exception', () => false);
+    interceptStorefrontApi();
+    cy.visit('/');
+    getElementByField(CypressFields.ProductCard).first().click();
+    addShownProductToCart().then(({ name }) => {
+      placeOrderFromCart();
+      cy.wait(2000);
+
+      cy.location('pathname').should('eq', '/cart');
+      cartLine(name).should('be.visible');
+      cy.get(CART_LINE).should('have.length', 1);
+      cy.contains('Your order is complete!').should('not.exist');
+    });
+  });
+
+  it('keeps the shopper on the cart with the item when the order fails', () => {
+    const checks = new StepChecks();
+    cy.on('uncaught:exception', () => false);
+    interceptStorefrontApi();
+
+    checks.step('Step 1: add the first product to the cart');
+    let productName = '';
+    cy.visit('/');
+    getElementByField(CypressFields.ProductCard).first().click();
+    addShownProductToCart().then(product => {
+      productName = product.name;
+    });
+    cy.get(CART_LINE).should('have.length', 1);
+
+    checks.step('Step 2: place the order');
+    placeOrderFromCart().then(interception => {
+      checks.check('Step 2 order answer status', () => expect(interception.response?.statusCode).to.eq(422));
+      checks.check('Step 2 order answer code', () =>
+        expect(interception.response?.body).to.have.property('code', 'PAYMENT_FAILED')
+      );
+    });
+    cy.wait(2000);
+    cy.location('pathname').should('eq', '/cart');
+    cy.then(() => cartLine(productName).should('be.visible'));
+    cy.contains('Your order is complete!').should('not.exist');
+
+    checks.assertAll();
+  });
+});
 
 describe('Checkout API payment failure handling', () => {
   describe('intentional payment failure', () => {

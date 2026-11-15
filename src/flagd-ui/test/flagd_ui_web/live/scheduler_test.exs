@@ -157,4 +157,73 @@ defmodule FlagdUiWeb.SchedulerTest do
 
     assert html =~ ~s(name="variants[cartFailure][]" value="10%" checked)
   end
+
+  test "schedules random flag activations from the navbar and stops with no flag left active", %{
+    conn: conn
+  } do
+    resting = default_variants()
+
+    {:ok, dashboard, _html} = live(conn, ~p"/")
+    result = dashboard |> element("a", "Scheduler") |> render_click()
+    {:ok, view, html} = follow_redirect(result, conn, ~p"/scheduler")
+
+    assert html =~ "Scheduler stopped"
+    assert html =~ "adFailure"
+
+    html =
+      view
+      |> form("form",
+        interval_seconds: "3",
+        min_duration_seconds: "3",
+        max_duration_seconds: "3",
+        seed: "11"
+      )
+      |> render_submit()
+
+    assert html =~ "Scheduler running"
+    assert eventually(fn -> FlagdUi.Scheduler.state().active != [] end)
+    [%{flag: activated} | _] = FlagdUi.Scheduler.state().active
+    assert default_variants()[activated] != resting[activated]
+
+    html =
+      view
+      |> form("form",
+        interval_seconds: "10",
+        min_duration_seconds: "20",
+        max_duration_seconds: "30",
+        seed: ""
+      )
+      |> render_submit()
+
+    assert html =~ "must fit within the interval"
+    assert FlagdUi.Scheduler.state().config.seed == 11
+
+    html = view |> element("button", "Stop") |> render_click()
+
+    assert html =~ "Scheduler stopped"
+    refute FlagdUi.Scheduler.state().running
+    assert FlagdUi.Scheduler.state().active == []
+    assert default_variants() == resting
+  end
+
+  defp default_variants do
+    Storage
+    |> GenServer.call(:read)
+    |> Map.fetch!("flags")
+    |> Map.new(fn {name, data} -> {name, data["defaultVariant"]} end)
+  end
+
+  defp eventually(check, attempts \\ 80) do
+    cond do
+      check.() ->
+        true
+
+      attempts == 0 ->
+        false
+
+      true ->
+        Process.sleep(100)
+        eventually(check, attempts - 1)
+    end
+  end
 end

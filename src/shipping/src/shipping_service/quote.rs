@@ -128,9 +128,34 @@ mod tests {
     }
 
     #[test]
+    fn test_create_quote_from_float_keeps_exact_cents() {
+        for (value, dollars, cents) in [
+            (260.71, 260, 71),
+            (0.29, 0, 29),
+            (1.15, 1, 15),
+            (8.99, 8, 99),
+            (35.96, 35, 96),
+            (71.92, 71, 92),
+            (0.01, 0, 1),
+        ] {
+            let quote = create_quote_from_float(value);
+            assert_eq!(
+                (quote.dollars, quote.cents),
+                (dollars, cents),
+                "create_quote_from_float({value})"
+            );
+        }
+    }
+
+    #[test]
     fn test_total_cents() {
         assert_eq!(create_quote_from_float(10.5).total_cents(), 1050);
         assert_eq!(Quote { dollars: 0, cents: 5 }.total_cents(), 5);
+    }
+
+    #[test]
+    fn test_total_cents_of_quote_from_float() {
+        assert_eq!(create_quote_from_float(260.71).total_cents(), 26071);
     }
 
     #[test]
@@ -145,6 +170,18 @@ mod tests {
             dollars: 0,
             cents: 1,
         };
-        assert_eq!(format!("{}", quote), "0.1");
+        assert_eq!(format!("{}", quote), "0.01");
+
+        let quote = Quote {
+            dollars: 10,
+            cents: 5,
+        };
+        assert_eq!(format!("{}", quote), "10.05");
+
+        let quote = Quote {
+            dollars: 100,
+            cents: 0,
+        };
+        assert_eq!(format!("{}", quote), "100.00");
     }
 }
