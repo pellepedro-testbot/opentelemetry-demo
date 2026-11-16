@@ -16,6 +16,7 @@ services:
       - ./src/frontend/cypress/screenshots:/app/cypress/screenshots
     environment:
       - CYPRESS_baseUrl=http://${FRONTEND_ADDR}
+      - 'CYPRESS_expose={"FRONTEND_PROXY_URL": "http://${FRONTEND_PROXY_ADDR}"}'
       - FRONTEND_ADDR
       - NODE_ENV=production
     depends_on:
