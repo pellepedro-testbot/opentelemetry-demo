@@ -53,8 +53,6 @@ composer.lock
 # Otel Demo specific
 docker-compose.override.yml
 
-src/frontend/cypress/videos
-src/frontend/cypress/screenshots
 src/shipping/target/
 
 !src/currency/build
