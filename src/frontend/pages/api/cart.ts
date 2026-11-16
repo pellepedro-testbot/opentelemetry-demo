@@ -48,7 +48,8 @@ const handler: NextApiHandler<TResponse> = async ({ method, body, query }, res) 
     }
 
     default: {
-      return res.status(405);
+      res.setHeader('Allow', 'GET, POST, DELETE');
+      return res.status(405).send('');
     }
   }
 };
