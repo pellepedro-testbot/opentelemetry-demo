@@ -4,6 +4,7 @@
 import getSymbolFromCurrency from 'currency-symbol-map';
 import SessionGateway from '../../gateways/Session.gateway';
 import { getElementByField } from '../../utils/Cypress';
+import { setFlagVariant } from '../../utils/CypressFlagd';
 import { CypressFields } from '../../utils/enums/CypressFields';
 
 describe('Home Page', () => {
@@ -32,5 +33,21 @@ describe('Home Page', () => {
       },
     });
     getElementByField(CypressFields.SessionId).should('contain', SessionGateway.getSession().userId);
+  });
+
+  describe('while recommendations fail', () => {
+    before(() => setFlagVariant('recommendationCacheFailure', 'on'));
+    after(() => setFlagVariant('recommendationCacheFailure', 'off'));
+
+    it('still lists the products on the home page and a product page', () => {
+      cy.visit('/');
+      getElementByField(CypressFields.ProductCard, getElementByField(CypressFields.ProductList)).should(
+        'have.length',
+        10
+      );
+      getElementByField(CypressFields.ProductCard, getElementByField(CypressFields.ProductList)).first().click();
+      getElementByField(CypressFields.ProductDetail).should('exist');
+      getElementByField(CypressFields.ProductAddToCart).should('be.visible');
+    });
   });
 });
