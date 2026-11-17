@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
+import copy
 import os
 import time
 import uuid
@@ -504,3 +506,56 @@ def pytest_generate_tests(metafunc):
             edges,
             ids=[f"{p}->{c}" for p, c in edges],
         )
+
+
+@pytest.fixture(scope="session")
+def frontend_url():
+    return FRONTEND_PROXY_URL
+
+
+def add_to_cart(session, user_id, product_id, quantity=1):
+    resp = session.post(
+        f"{FRONTEND_PROXY_URL}/api/cart",
+        json={"item": {"productId": product_id, "quantity": quantity}, "userId": user_id},
+        timeout=10,
+    )
+    _raise_for_status(resp, "add to cart request")
+    return resp
+
+
+def place_order(session, user_id, currency="USD", expiration=None):
+    """POST /api/checkout for the user's cart with the probe person's address and
+    card; `expiration` is an optional (month, year) for the card."""
+    credit_card = dict(PROBE_PERSON["creditCard"])
+    if expiration is not None:
+        month, year = expiration
+        credit_card.update(creditCardExpirationMonth=month, creditCardExpirationYear=year)
+    person = dict(PROBE_PERSON, userId=user_id, userCurrency=currency, creditCard=credit_card)
+    return session.post(
+        f"{FRONTEND_PROXY_URL}/api/checkout",
+        params={"currencyCode": currency},
+        json=person,
+        timeout=30,
+    )
+
+
+def money_value(money):
+    return int(money.get("units", 0)) + int(money.get("nanos", 0)) / 1e9
+
+
+@contextlib.contextmanager
+def feature_flag(session, flag, change):
+    """Apply `change(flag_definition)` through the flagd UI API, and write the
+    flag configuration read beforehand back when the block ends."""
+    read = session.get(f"{FRONTEND_PROXY_URL}/feature/api/read", timeout=10)
+    _raise_for_status(read, "feature flag read")
+    original = read.json()
+    updated = copy.deepcopy(original)
+    change(updated["flags"][flag])
+    write = session.post(f"{FRONTEND_PROXY_URL}/feature/api/write", json={"data": updated}, timeout=10)
+    _raise_for_status(write, "feature flag write")
+    try:
+        yield
+    finally:
+        restore = session.post(f"{FRONTEND_PROXY_URL}/feature/api/write", json={"data": original}, timeout=10)
+        _raise_for_status(restore, "feature flag restore")
