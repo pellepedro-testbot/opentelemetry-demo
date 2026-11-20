@@ -70,7 +70,8 @@ CREATE TABLE catalog.products (
     price_currency_code TEXT NOT NULL,
     price_units BIGINT NOT NULL,
     price_nanos INT NOT NULL,
-    categories TEXT
+    categories TEXT,
+    views BIGINT NOT NULL DEFAULT 0
 );
 
 -- Product Catalog Service: grant permission to schema
