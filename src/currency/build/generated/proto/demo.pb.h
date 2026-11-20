@@ -5375,6 +5375,7 @@ class Product final : public ::google::protobuf::Message
     kNameFieldNumber = 2,
     kDescriptionFieldNumber = 3,
     kPictureFieldNumber = 4,
+    kBadgeFieldNumber = 7,
     kPriceUsdFieldNumber = 5,
   };
   // repeated string categories = 6;
@@ -5459,6 +5460,21 @@ class Product final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_picture();
 
   public:
+  // string badge = 7;
+  void clear_badge() ;
+  const ::std::string& badge() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_badge(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_badge();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_badge();
+  void set_allocated_badge(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_badge() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_badge(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_badge();
+
+  public:
   // .oteldemo.Money price_usd = 5;
   bool has_price_usd() const;
   void clear_price_usd() ;
@@ -5478,8 +5494,8 @@ class Product final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   1, 59,
+  static const ::google::protobuf::internal::TcParseTable<3, 7,
+                                   1, 64,
                                    2>
       _table_;
 
@@ -5505,6 +5521,7 @@ class Product final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr name_;
     ::google::protobuf::internal::ArenaStringPtr description_;
     ::google::protobuf::internal::ArenaStringPtr picture_;
+    ::google::protobuf::internal::ArenaStringPtr badge_;
     ::oteldemo::Money* PROTOBUF_NULLABLE price_usd_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -10111,14 +10128,14 @@ inline void Product::set_allocated_picture(::std::string* PROTOBUF_NULLABLE valu
 
 // .oteldemo.Money price_usd = 5;
 inline bool Product::has_price_usd() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.price_usd_ != nullptr);
   return value;
 }
 inline void Product::clear_price_usd() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.price_usd_ != nullptr) _impl_.price_usd_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline const ::oteldemo::Money& Product::_internal_price_usd() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -10137,16 +10154,16 @@ inline void Product::unsafe_arena_set_allocated_price_usd(
   }
   _impl_.price_usd_ = reinterpret_cast<::oteldemo::Money*>(value);
   if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000010u;
+    _impl_._has_bits_[0] |= 0x00000020u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000010u;
+    _impl_._has_bits_[0] &= ~0x00000020u;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:oteldemo.Product.price_usd)
 }
 inline ::oteldemo::Money* PROTOBUF_NULLABLE Product::release_price_usd() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
   ::oteldemo::Money* released = _impl_.price_usd_;
   _impl_.price_usd_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -10166,7 +10183,7 @@ inline ::oteldemo::Money* PROTOBUF_NULLABLE Product::unsafe_arena_release_price_
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:oteldemo.Product.price_usd)
 
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
   ::oteldemo::Money* temp = _impl_.price_usd_;
   _impl_.price_usd_ = nullptr;
   return temp;
@@ -10181,7 +10198,7 @@ inline ::oteldemo::Money* PROTOBUF_NONNULL Product::_internal_mutable_price_usd(
 }
 inline ::oteldemo::Money* PROTOBUF_NONNULL Product::mutable_price_usd()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_._has_bits_[0] |= 0x00000020u;
   ::oteldemo::Money* _msg = _internal_mutable_price_usd();
   // @@protoc_insertion_point(field_mutable:oteldemo.Product.price_usd)
   return _msg;
@@ -10198,9 +10215,9 @@ inline void Product::set_allocated_price_usd(::oteldemo::Money* PROTOBUF_NULLABL
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    _impl_._has_bits_[0] |= 0x00000010u;
+    _impl_._has_bits_[0] |= 0x00000020u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000010u;
+    _impl_._has_bits_[0] &= ~0x00000020u;
   }
 
   _impl_.price_usd_ = reinterpret_cast<::oteldemo::Money*>(value);
@@ -10269,6 +10286,71 @@ inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
 Product::_internal_mutable_categories() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.categories_;
+}
+
+// string badge = 7;
+inline void Product::clear_badge() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.badge_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline const ::std::string& Product::badge() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:oteldemo.Product.badge)
+  return _internal_badge();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void Product::set_badge(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.badge_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:oteldemo.Product.badge)
+}
+inline ::std::string* PROTOBUF_NONNULL Product::mutable_badge()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::std::string* _s = _internal_mutable_badge();
+  // @@protoc_insertion_point(field_mutable:oteldemo.Product.badge)
+  return _s;
+}
+inline const ::std::string& Product::_internal_badge() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.badge_.Get();
+}
+inline void Product::_internal_set_badge(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.badge_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL Product::_internal_mutable_badge() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000010u;
+  return _impl_.badge_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE Product::release_badge() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:oteldemo.Product.badge)
+  if ((_impl_._has_bits_[0] & 0x00000010u) == 0) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000010u;
+  auto* released = _impl_.badge_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.badge_.Set("", GetArena());
+  }
+  return released;
+}
+inline void Product::set_allocated_badge(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000010u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000010u;
+  }
+  _impl_.badge_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.badge_.IsDefault()) {
+    _impl_.badge_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:oteldemo.Product.badge)
 }
 
 // -------------------------------------------------------------------
