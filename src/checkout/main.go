@@ -408,11 +408,12 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		slog.String("demo.shipping.tracking.id", shippingTrackingID),
 	)
 
-	if err := cs.sendOrderConfirmation(ctx, req.Email, orderResult); err != nil {
-		logger.Warn(fmt.Sprintf("failed to send order confirmation: %+v", err))
-	} else {
-		logger.Info("order confirmation email sent")
+	// The confirmation email is the shopper's only record of the order, so a
+	// failed send is reported back instead of silently dropped.
+	if err = cs.sendOrderConfirmation(ctx, req.Email, orderResult); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "failed to send order confirmation: %+v", err)
 	}
+	logger.Info("order confirmation email sent")
 
 	// send to kafka only if kafka broker address is set
 	if cs.kafkaBrokerSvcAddr != "" {
