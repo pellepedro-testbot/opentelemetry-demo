@@ -74,7 +74,10 @@ var (
 	initResourcesOnce sync.Once
 )
 
-const emailRequestTimeout = time.Second
+const (
+	emailRequestTimeout = time.Second
+	chargeMaxAttempts   = 5
+)
 
 func initResource() *sdkresource.Resource {
 	initResourcesOnce.Do(func() {
@@ -578,10 +581,22 @@ func (cs *checkout) chargeCard(ctx context.Context, amount *pb.Money, paymentInf
 		paymentService = pb.NewPaymentServiceClient(c)
 	}
 
-	paymentResp, err := paymentService.Charge(ctx, &pb.ChargeRequest{
+	req := &pb.ChargeRequest{
 		Amount:     amount,
 		CreditCard: paymentInfo,
-	})
+	}
+
+	// The payment service occasionally fails a charge transiently; retry a
+	// few times before failing the whole order.
+	var paymentResp *pb.ChargeResponse
+	var err error
+	for attempt := 1; attempt <= chargeMaxAttempts; attempt++ {
+		paymentResp, err = paymentService.Charge(ctx, req)
+		if err == nil {
+			break
+		}
+		logger.Warn(fmt.Sprintf("charge attempt %d/%d failed: %+v", attempt, chargeMaxAttempts, err))
+	}
 	if err != nil {
 		return "", fmt.Errorf("could not charge the card: %+v", err)
 	}
