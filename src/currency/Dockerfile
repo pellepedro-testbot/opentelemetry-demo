@@ -40,6 +40,7 @@ WORKDIR /currency
 COPY ./src/currency/build/ build/
 COPY ./src/currency/proto/ proto/
 COPY ./src/currency/src/ src/
+COPY ./src/currency/data/ data/
 
 COPY ./src/currency/genproto/CMakeLists.txt genproto/CMakeLists.txt
 COPY ./src/currency/CMakeLists.txt CMakeLists.txt

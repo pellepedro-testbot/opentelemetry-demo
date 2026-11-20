@@ -22,3 +22,4 @@ target_link_libraries(
      ${OPENTELEMETRY_CPP_LIBRARIES} gRPC::grpc++ Threads::Threads)
 
 install(TARGETS currency DESTINATION bin)
+install(FILES data/currency_conversion.json DESTINATION share/currency)
