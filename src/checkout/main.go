@@ -417,7 +417,14 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	// send to kafka only if kafka broker address is set
 	if cs.kafkaBrokerSvcAddr != "" {
 		logger.Info("sending to postProcessor")
-		cs.sendToPostProcessor(ctx, orderResult)
+		// Publish in the background so the shopper does not wait on Kafka. The
+		// publish must outlive the request, so detach it from cancellation.
+		postCtx := context.WithoutCancel(ctx)
+		published := make(chan struct{})
+		go func() {
+			cs.sendToPostProcessor(postCtx, orderResult)
+			published <- struct{}{}
+		}()
 	}
 
 	resp := &pb.PlaceOrderResponse{Order: orderResult}
