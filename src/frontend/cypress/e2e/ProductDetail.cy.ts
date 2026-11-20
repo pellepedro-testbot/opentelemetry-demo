@@ -73,6 +73,43 @@ describe('Product Detail Page', () => {
 
     getElementByField(CypressFields.CartDropdownItem).should('have.length', 1);
   });
+  it('opens a product page without reviews and adds the product to the cart', () => {
+    const reviewRequests: string[] = [];
+    cy.intercept('GET', '/api/product-reviews*', req => {
+      reviewRequests.push(req.url);
+    });
+    cy.intercept('POST', '/api/cart*').as('addToCart');
+
+    cy.log('step 1: open the National Park Foundation Explorascope');
+    getElementByField(CypressFields.ProductList).contains('National Park Foundation Explorascope').click();
+    cy.location('pathname').should('eq', '/product/OLJCESPC7Z');
+    getElementByField(CypressFields.ProductName).should('contain', 'National Park Foundation Explorascope');
+    getElementByField(CypressFields.ProductPrice, getElementByField(CypressFields.ProductDetail)).should('contain', '$');
+    getElementByField(CypressFields.ProductAddToCart).should('be.visible');
+
+    cy.log('step 2: no reviews section and no review requests, then add to cart');
+    cy.wait(3000);
+    cy.get('[data-cy="product-reviews"]').should('not.exist');
+    cy.contains('Ask AI About This Product').should('not.exist');
+    cy.then(() => expect(reviewRequests, 'review requests').to.deep.equal([]));
+    getElementByField(CypressFields.ProductAddToCart).click();
+    cy.wait('@addToCart');
+    cy.location('pathname').should('eq', '/cart');
+    cy.contains('National Park Foundation Explorascope').should('be.visible');
+  });
+
+  it('has no reviews or Ask AI section and requests no reviews', () => {
+    const reviewRequests: string[] = [];
+    cy.intercept('GET', '/api/product-reviews*', req => {
+      reviewRequests.push(req.url);
+    });
+    getElementByField(CypressFields.ProductList).contains('National Park Foundation Explorascope').click();
+    getElementByField(CypressFields.ProductDetail).should('be.visible');
+    cy.wait(3000);
+    cy.get('[data-cy="product-reviews"]').should('not.exist');
+    cy.contains('Ask AI About This Product').should('not.exist');
+    cy.then(() => expect(reviewRequests, 'review requests').to.deep.equal([]));
+  });
 });
 
 export {};
