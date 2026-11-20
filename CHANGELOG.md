@@ -7,10 +7,6 @@ the release.
 
 ## Unreleased
 
-* [load-generator] Revert #3564: replace k6 with the pre-k6 Locust-based load
-  generator, removing the now-unused `loadGeneratorTraffic` and
-  `loadGeneratorVUs` feature flags along with it
-  ([#3873](https://github.com/open-telemetry/opentelemetry-demo/pull/3873))
 * [react-native-app] Catch errors from `placeOrder` in the Cart screen and
   show an error toast so payment failures are visible to the user instead of
   being silently dropped
@@ -23,6 +19,12 @@ the release.
   mask sensitive attributes with the transform processor, plus a documented
   redaction-processor fallback
   ([#3662](https://github.com/open-telemetry/opentelemetry-demo/pull/3662))
+* [collector] Gate raw PII emission (`user.email`, `demo.payment.card_number`,
+  `demo.payment.card_cvv`) behind the new `emitRawPii` feature flag (off by
+  default) in checkout/payment, and layer the purpose-built `redaction`
+  processor alongside `transform/redact_sensitive_data` as a key-name safety
+  net
+  ([#3867](https://github.com/open-telemetry/opentelemetry-demo/issues/3867))
 * [flagd-ui] Add a scheduler that periodically activates randomly picked feature
   flags for a random duration, so failure scenarios appear and disappear on
   their own without external tooling. Configurable interval, minimum and maximum
@@ -47,6 +49,15 @@ the release.
   The server bound to the port but was never started to accept connections, causing
   the service to fail its health checks.
   ([#3844](https://github.com/open-telemetry/opentelemetry-demo/pull/3844))
+Changelog entries are managed with individual fragment files under
+[`.chloggen`](./.chloggen), one per pull request. The unreleased changes are
+the set of fragment files currently in that directory. Do not edit released
+sections by hand; add a fragment instead (see the
+[contributing guide](./CONTRIBUTING.md#adding-a-changelog-entry)). At release
+time, `make chlog-update VERSION=x.x.x` folds those fragments into a new
+version section directly below the marker and deletes them.
+
+<!-- next version -->
 
 ## 3.0.0
 
