@@ -68,7 +68,7 @@ fun main() {
                         Thread.sleep(1000)
                     }
                     val orders = OrderResult.parseFrom(record.value())
-                    logger.info("Consumed record with orderId: ${orders.orderId}, and updated total count to: $newCount")
+                    logger.info("Consumed record with orderId: ${orders.shippingTrackingId}, and updated total count to: $newCount")
                     newCount
                 }
         }
