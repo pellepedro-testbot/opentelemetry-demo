@@ -37,22 +37,7 @@ jobs:
     runs-on: [self-hosted, rachzucco]
     timeout-minutes: 390
     steps:
-      # Patched engine on the rachzucco VM for staging runs (SKYR-6028 tsbuildinfo fix on 0.13.3-v3.548). The action
-      # build sits outside the job at /home/runner/testbot-patched; under .git/ no checkout's git status sees it.
-      - name: Use the patched Testbot on rachzucco
-        if: github.triggering_actor == 'skyramp-testbot-staging[bot]'
-        run: rm -rf .git/skyramp-testbot-patched && cp -R /home/runner/testbot-patched/skyr-6028-v3548 .git/skyramp-testbot-patched && cat .git/skyramp-testbot-patched/PATCH.json
-      - name: Run Skyramp Testbot (patched)
-        if: github.triggering_actor == 'skyramp-testbot-staging[bot]'
-        uses: ./.git/skyramp-testbot-patched
-        with:
-          pipeline: staged
-          skyrampRunId: ${{ inputs.skyramp_run_id }}
-          skyrampAppOrigin: https://testbot-staging.skyramp.dev
-          githubToken: ${{ github.token }}
-          skyrampMcpVersion: 'next'
       - name: Run Skyramp Testbot
-        if: github.triggering_actor != 'skyramp-testbot-staging[bot]'
         # v1 installs the engine from npm. next-v3 is the latest Testbot V3 engine
         # (feat/testbot-v3); eval-sut bundles an older V3 build.
         # The staging web app dispatches as skyramp-testbot-staging[bot]: its runs use the engine and app origin of staging.
