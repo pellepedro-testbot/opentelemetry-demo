@@ -74,7 +74,7 @@ var (
 	initResourcesOnce sync.Once
 )
 
-const emailRequestTimeout = time.Second
+const emailRequestTimeout = 3 * time.Second
 
 func initResource() *sdkresource.Resource {
 	initResourcesOnce.Do(func() {
