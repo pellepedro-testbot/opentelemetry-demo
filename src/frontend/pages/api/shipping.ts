@@ -7,17 +7,17 @@ import ShippingGateway from '../../gateways/http/Shipping.gateway';
 import { Address, CartItem, Empty, Money } from '../../protos/demo';
 import CurrencyGateway from '../../gateways/rpc/Currency.gateway';
 
-type TResponse = Money | Empty;
+type TResponse = (Money & { carrier: string }) | Empty;
 
 const handler = async ({ method, query }: NextApiRequest, res: NextApiResponse<TResponse>) => {
   switch (method) {
     case 'GET': {
       const { itemList = '', currencyCode = 'USD', address = '' } = query;
-      const { costUsd } = await ShippingGateway.getShippingCost(JSON.parse(itemList as string) as CartItem[],
+      const { costUsd, carrier } = await ShippingGateway.getShippingCost(JSON.parse(itemList as string) as CartItem[],
           JSON.parse(address as string) as Address);
       const cost = await CurrencyGateway.convert(costUsd!, currencyCode as string);
 
-      return res.status(200).json(cost!);
+      return res.status(200).json({ ...cost!, carrier });
     }
 
     default: {
