@@ -38,18 +38,34 @@ from openfeature.contrib.hook.opentelemetry import TracingHook
 
 from playwright.async_api import Route, Request
 
+metric_exporter = OTLPMetricExporter(insecure=True)
+meter_provider = MeterProvider(
+    [PeriodicExportingMetricReader(metric_exporter)]
+)
+set_meter_provider(meter_provider)
+
 # Configure tracer provider first (needed for trace context in logs)
-tracer_provider = TracerProvider()
+tracer_provider = TracerProvider(meter_provider=meter_provider)
 trace.set_tracer_provider(tracer_provider)
-tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(insecure=True)))
+tracer_provider.add_span_processor(
+    BatchSpanProcessor(
+        OTLPSpanExporter(insecure=True),
+        meter_provider=meter_provider,
+    )
+)
 
 # Configure logger provider with the same resource
-logger_provider = LoggerProvider()
+logger_provider = LoggerProvider(meter_provider=meter_provider)
 set_logger_provider(logger_provider)
 
 # Set up log exporter and processor
 log_exporter = OTLPLogExporter(insecure=True)
-logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+logger_provider.add_log_record_processor(
+    BatchLogRecordProcessor(
+        log_exporter,
+        meter_provider=meter_provider,
+    )
+)
 
 # Create logging handler that will include trace context
 handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
@@ -58,10 +74,6 @@ handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
 root_logger = logging.getLogger()
 root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
-
-# Configure metrics
-metric_exporter = OTLPMetricExporter(insecure=True)
-set_meter_provider(MeterProvider([PeriodicExportingMetricReader(metric_exporter)]))
 
 # Instrument logging to automatically inject trace context
 LoggingInstrumentor().instrument(set_logging_format=True)
@@ -109,6 +121,17 @@ products = [
 
 people_file = open('people.json')
 people = json.load(people_file)
+
+# Prompts the AstronomyShopAgent's bundled VCR fixtures
+# (src/agent/fixtures/vcr_cassettes) have canned responses for, so
+# USE_VCR=True replays cleanly without a real LLM.
+agent_prompts = [
+    "Show all available products in the store.",
+    "What currencies are supported by the Astronomy Shop?",
+    "What current promotions are available on binoculars?",
+]
+agent_endpoint = os.environ.get("AGENT_ENDPOINT", "agent")
+agent_port = os.environ.get("AGENT_PORT", "8010")
 
 class WebsiteUser(HttpUser):
     weight = int(os.environ.get("LOCUST_HTTP_USER_WEIGHT", "9"))
@@ -206,6 +229,17 @@ class WebsiteUser(HttpUser):
                 logging.info(f"User flooding homepage {flood_count} times")
                 for _ in range(0, flood_count):
                     self.client.get("/")
+
+    @task(3)
+    def ask_agent(self):
+        prompt = random.choice(agent_prompts)
+        input_messages = json.dumps([{"role": "user", "parts": [{"type": "text", "content": prompt}]}])
+        with self.tracer.start_as_current_span("user_ask_agent", context=context.get_current(), attributes={"gen_ai.input.messages": input_messages}):
+            logging.info(f"User asking agent: {prompt}")
+            self.client.post(
+                f"http://{agent_endpoint}:{agent_port}/prompt",
+                json={"message": prompt},
+            )
 
     def on_start(self):
         session_id = str(uuid.uuid4())
