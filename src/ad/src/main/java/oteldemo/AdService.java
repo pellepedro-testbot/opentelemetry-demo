@@ -5,8 +5,6 @@
 
 package oteldemo;
 
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import io.grpc.*;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.*;
@@ -30,9 +28,11 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,6 +56,10 @@ public final class AdService {
 
   @SuppressWarnings("FieldCanBeLocal")
   private static final int MAX_ADS_TO_SERVE = 2;
+
+  // A page with several categories shows at most this many ads from each one, so a category
+  // with many ads cannot crowd out the others.
+  private static final int MAX_ADS_PER_CATEGORY = 2;
 
   private Server server;
   private HealthStatusManager healthMgr;
@@ -208,10 +212,9 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          for (int i = 0; i < req.getContextKeysCount(); i++) {
-            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
-            allAds.addAll(ads);
-          }
+          List<String> categories = distinctCategories(req.getContextKeysList());
+          span.setAttribute("demo.ad.categories.count", categories.size());
+          allAds.addAll(collectTargetedAds(service, categories));
           adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
         } else {
@@ -256,13 +259,42 @@ public final class AdService {
         responseObserver.onError(e);
       }
     }
+
+    /**
+     * Returns the categories a page asked for, normalized, without blanks and without repeats,
+     * in the order the page listed them.
+     */
+    private static List<String> distinctCategories(List<String> contextKeys) {
+      Set<String> categories = new LinkedHashSet<>();
+      for (String key : contextKeys) {
+        String category = AdCatalog.normalizeCategory(key);
+        if (!category.isEmpty()) {
+          categories.add(category);
+        }
+      }
+      return new ArrayList<>(categories);
+    }
+
+    /**
+     * Collects ads for every category on the page: at most {@link #MAX_ADS_PER_CATEGORY} from
+     * each, each ad once even when categories share it, in the order the categories were given.
+     */
+    private static List<Ad> collectTargetedAds(AdService service, List<String> categories) {
+      Set<Ad> unique = new LinkedHashSet<>();
+      for (String category : categories) {
+        Collection<Ad> ads = service.getAdsByCategory(category);
+        List<Ad> capped = ads.stream().limit(MAX_ADS_PER_CATEGORY).toList();
+        unique.addAll(capped);
+      }
+      return new ArrayList<>(unique);
+    }
   }
 
-  private static final ImmutableListMultimap<String, Ad> adsMap = createAdsMap();
+  private final AdCatalog catalog = new AdCatalog();
 
   @WithSpan("getAdsByCategory")
   private Collection<Ad> getAdsByCategory(@SpanAttribute("demo.ad.category") String category) {
-    Collection<Ad> ads = adsMap.get(category);
+    Collection<Ad> ads = catalog.byCategory(category);
     Span.current().setAttribute("demo.ad.count", ads.size());
     adsServedCounter.labelValues(category).inc(ads.size());
     return ads;
@@ -280,9 +312,9 @@ public final class AdService {
     // put the span into context, so if any child span is started the parent will be set properly
     try (Scope ignored = span.makeCurrent()) {
 
-      Collection<Ad> allAds = adsMap.values();
+      List<Ad> allAds = catalog.all();
       for (int i = 0; i < MAX_ADS_TO_SERVE; i++) {
-        ads.add(Iterables.get(allAds, random.nextInt(allAds.size())));
+        ads.add(allAds.get(random.nextInt(allAds.size())));
       }
       span.setAttribute("demo.ad.count", ads.size());
       adsServedCounter.labelValues("random").inc(ads.size());
@@ -303,53 +335,6 @@ public final class AdService {
     if (server != null) {
       server.awaitTermination();
     }
-  }
-
-  private static ImmutableListMultimap<String, Ad> createAdsMap() {
-    Ad binoculars =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/2ZYFJ3GM2N")
-            .setText("Roof Binoculars for sale. 50% off.")
-            .build();
-    Ad explorerTelescope =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/66VCHSJNUP")
-            .setText("Starsense Explorer Refractor Telescope for sale. 20% off.")
-            .build();
-    Ad colorImager =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/0PUK6V6EV0")
-            .setText("Solar System Color Imager for sale. 30% off.")
-            .build();
-    Ad opticalTube =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/9SIQT8TOJO")
-            .setText("Optical Tube Assembly for sale. 10% off.")
-            .build();
-    Ad travelTelescope =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/1YMWWN1N4O")
-            .setText(
-                "Eclipsmart Travel Refractor Telescope for sale. Buy one, get second kit for free")
-            .build();
-    Ad solarFilter =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/6E92ZMYYFZ")
-            .setText("Solar Filter for sale. Buy two, get third one for free")
-            .build();
-    Ad cleaningKit =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/L9ECAV7KIM")
-            .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
-            .build();
-    return ImmutableListMultimap.<String, Ad>builder()
-        .putAll("binoculars", binoculars)
-        .putAll("telescopes", explorerTelescope)
-        .putAll("accessories", colorImager, solarFilter, cleaningKit)
-        .putAll("assembly", opticalTube)
-        .putAll("travel", travelTelescope)
-        // Keep the books category free of ads to ensure the random code branch is tested
-        .build();
   }
 
   /** Main launches the server from the command line. */

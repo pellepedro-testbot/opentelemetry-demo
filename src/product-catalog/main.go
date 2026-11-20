@@ -85,6 +85,8 @@ func initDatabase() error {
 	if err != nil {
 		return fmt.Errorf("failed to open database connection: %w", err)
 	}
+	db.SetMaxOpenConns(2)
+	db.SetMaxIdleConns(2)
 
 	reg, err = otelsql.RegisterDBStatsMetrics(db, dbAttrs)
 	if err != nil {
@@ -229,38 +231,10 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 
 	// Query all products with categories
 	rows, err := db.QueryContext(ctx, `
-		SELECT p.id, p.name, p.description, p.picture, 
-		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
+		SELECT `+productColumns+`
 		FROM catalog.products p
 		ORDER BY p.id
 	`)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query products: %w", err)
-	}
-	defer rows.Close()
-
-	products, err := getProductsFromRows(ctx, rows)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get products from rows: %w", err)
-	}
-
-	return products, nil
-}
-
-func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, error) {
-	if db == nil {
-		return nil, fmt.Errorf("database connection not initialized")
-	}
-
-	// Query products matching search query in name or description
-	searchPattern := "%" + strings.ToLower(query) + "%"
-	rows, err := db.QueryContext(ctx, `
-		SELECT p.id, p.name, p.description, p.picture, 
-		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
-		FROM catalog.products p
-		WHERE LOWER(p.name) LIKE $1 OR LOWER(p.description) LIKE $1
-		ORDER BY p.id
-	`, searchPattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)
 	}
@@ -281,8 +255,7 @@ func getProductFromDB(ctx context.Context, productID string) (*pb.Product, error
 
 	// Query single product by ID
 	row := db.QueryRowContext(ctx, `
-		SELECT p.id, p.name, p.description, p.picture, 
-		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
+		SELECT `+productColumns+`
 		FROM catalog.products p
 		WHERE p.id = $1
 	`, productID)
@@ -426,6 +399,10 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 
 func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
 	span := trace.SpanFromContext(ctx)
+
+	span.SetAttributes(
+		attribute.String("demo.product.search.query", normalizeQuery(req.Query)),
+	)
 
 	result, err := searchProductsFromDB(ctx, req.Query)
 	if err != nil {

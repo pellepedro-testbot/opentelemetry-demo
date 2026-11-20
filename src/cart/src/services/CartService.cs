@@ -61,6 +61,19 @@ public class CartService : Oteldemo.CartService.CartServiceBase
             }
             activity?.SetTag("demo.cart.items.count", totalCart);
 
+            // Shown in the storefront header badge.
+            long cartCount = 0;
+            try
+            {
+                cartCount = await _cartStore.GetCartCountAsync();
+            }
+            catch (RpcException)
+            {
+                // The badge is optional; a failed count must not fail the cart read.
+            }
+            activity?.SetTag("demo.cart.count", cartCount);
+            await context.WriteResponseHeadersAsync(new Metadata { { "x-cart-count", cartCount.ToString() } });
+
             return cart;
         }
         catch (RpcException ex)
