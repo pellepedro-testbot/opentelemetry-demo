@@ -7,6 +7,8 @@
 # Python
 import os
 import random
+import threading
+import time
 from concurrent import futures
 
 # Pip
@@ -38,6 +40,13 @@ from metrics import (
 
 cached_ids = []
 first_run = True
+
+# Product IDs from the catalog change rarely, so keep them for a short while
+# instead of calling ListProducts on every request. Only one caller refreshes
+# an expired entry; the others wait for it and reuse the result.
+PRODUCT_LIST_TTL_SECONDS = 30
+product_list_lock = threading.Lock()
+product_list_cache = (0.0, [])
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
@@ -92,8 +101,7 @@ def get_product_list(request_product_ids):
                 product_ids = cached_ids
         else:
             span.set_attribute("demo.feature_flag.recommendation_cache", False)
-            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
-            product_ids = [x.id for x in cat_response.products]
+            product_ids = get_catalog_product_ids()
 
         span.set_attribute("demo.product.count", len(product_ids))
 
@@ -111,6 +119,24 @@ def get_product_list(request_product_ids):
         span.set_attribute("demo.product.filtered.list", prod_list)
 
         return prod_list
+
+
+def get_catalog_product_ids():
+    global product_list_cache
+    expires_at, product_ids = product_list_cache
+    if time.monotonic() < expires_at:
+        return product_ids
+
+    with product_list_lock:
+        # Another request may have refreshed the list while we waited
+        expires_at, product_ids = product_list_cache
+        if time.monotonic() < expires_at:
+            return product_ids
+
+        cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
+        product_ids = [x.id for x in cat_response.products]
+        product_list_cache = (time.monotonic() + PRODUCT_LIST_TTL_SECONDS, product_ids)
+        return product_ids
 
 
 def must_map_env(key: str):
