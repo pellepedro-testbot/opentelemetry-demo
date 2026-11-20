@@ -19,14 +19,27 @@ const NANOS_MULTIPLE: u32 = 10000000u32;
 
 #[post("/get-quote")]
 pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
+    if req.items.is_empty() {
+        return HttpResponse::BadRequest().body("items must not be empty");
+    }
+
+    if req.items.iter().any(|item| item.quantity == 0) {
+        return HttpResponse::BadRequest().body("item quantity must be greater than 0");
+    }
+
     let itemct: u32 = req.items.iter().map(|item| item.quantity as u32).sum();
 
-    let quote = match create_quote_from_count(itemct).await {
+    let mut quote = match create_quote_from_count(itemct).await {
         Ok(q) => q,
         Err(e) => {
             return HttpResponse::InternalServerError().body(format!("Failed to get quote: {}", e));
         }
     };
+
+    if (10..=50).contains(&itemct) {
+        quote.dollars = 0;
+        quote.cents = 0;
+    }
 
     let reply = GetQuoteResponse {
         cost_usd: Some(Money {
@@ -34,6 +47,16 @@ pub async fn get_quote(req: web::Json<GetQuoteRequest>) -> impl Responder {
             units: quote.dollars,
             nanos: quote.cents * NANOS_MULTIPLE,
         }),
+        carrier: match &req.address {
+            Some(addr) if addr.country == "United States" => "USPS",
+            _ => "DHL",
+        }
+        .into(),
+        zone: match &req.address {
+            Some(addr) if addr.country == "United States" => "domestic",
+            _ => "international",
+        }
+        .into(),
     };
 
     info!(
@@ -51,6 +74,10 @@ pub async fn ship_order(
     req: web::Json<ShipOrderRequest>,
     flag_provider: web::Data<dyn FeatureProvider>,
 ) -> impl Responder {
+    if req.address.is_none() {
+        return HttpResponse::BadRequest().body("address is required");
+    }
+
     let is_outside_us = req
         .address
         .as_ref()
@@ -146,8 +173,18 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ship_order_no_address() {
-        let order = call_ship_order(None, mock_provider(0)).await;
-        assert!(!order.tracking_id.is_empty());
+        let app =
+            test::init_service(App::new().app_data(mock_provider(0)).service(ship_order)).await;
+        let req = test::TestRequest::post()
+            .uri("/ship-order")
+            .insert_header(ContentType::json())
+            .set_json(&ShipOrderRequest {
+                address: None,
+                items: vec![],
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
     #[actix_web::test]

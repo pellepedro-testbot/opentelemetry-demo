@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 const { context, propagation, trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
+const { status: grpcStatus } = require('@grpc/grpc-js');
 const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions');
 const cardValidator = require('simple-card-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -50,18 +51,18 @@ module.exports.charge = async request => {
     }
 
     const {
-      creditCardNumber: number,
+      creditCardNumber: number = '',
       creditCardCvv: cvv,
       creditCardExpirationYear: year,
       creditCardExpirationMonth: month
-    } = request.creditCard;
+    } = request.creditCard || {};
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
     const lastFourDigits = number.substr(-4);
     const transactionId = uuidv4();
 
-    const card = cardValidator(number);
-    const { card_type: cardType, valid } = card.getCardDetails();
+    // the validator throws a plain string for an empty number, so treat it as invalid here
+    const { card_type: cardType, valid } = number ? cardValidator(number).getCardDetails() : { card_type: 'unknown', valid: false };
 
     const loyalty_level = random(LOYALTY_LEVEL);
 
@@ -76,7 +77,9 @@ module.exports.charge = async request => {
     });
 
     if (!valid) {
-      throw new Error('Credit card info is invalid.');
+      const err = new Error('Credit card info is invalid.');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
     }
 
     if (!['visa', 'mastercard'].includes(cardType)) {
@@ -84,7 +87,20 @@ module.exports.charge = async request => {
     }
 
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
-      throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+      const err = new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+      err.code = grpcStatus.FAILED_PRECONDITION;
+      throw err;
+    }
+
+    // proto3 does not send a zero CVV, so 000 arrives unset
+    if (!cvv) {
+      const err = new Error('Invalid CVV');
+      err.code = grpcStatus.INVALID_ARGUMENT;
+      throw err;
+    }
+
+    if (number.replace(/\D/g, '') === '4000000000000002') {
+      throw new Error('Your card was declined.');
     }
 
     // Do not charge synthetic requests.
