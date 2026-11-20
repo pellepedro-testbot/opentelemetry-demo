@@ -24,3 +24,23 @@ from the root folder.
 It will start all of the required backend services
 and within the container simply run `npm run dev`.
 After that the app should be available at <http://localhost:8080/>.
+
+### Running against an existing demo stack
+
+If the demo stack is already running (for example after `docker compose up`),
+you can run the frontend from your own checkout instead of the container:
+
+```shell
+cd src/frontend
+npm install
+npm run dev
+```
+
+The `dev` script starts `next dev` with the OpenTelemetry instrumentation
+preloaded. The API layer calls the backend services, so the service address
+variables from the repository's `.env` file (for example `CART_ADDR` and
+`PRODUCT_CATALOG_ADDR`) must point at the running stack.
+
+The REST endpoints the client calls are implemented in `pages/api/`, one file
+per endpoint (`cart.ts`, `checkout.ts`, `currency.ts`, `products`, and so on).
+Changes to these files are picked up without restarting `npm run dev`.
