@@ -98,6 +98,10 @@ internal class Consumer : BackgroundService
                 Id = order.OrderId
             };
             dbContext.Add(orderEntity);
+            dbContext.SaveChanges();
+
+            // Persist each item in its own transaction so a single bad item
+            // cannot roll back the items that were already written.
             foreach (var item in order.Items)
             {
                 var orderItem = new OrderItemEntity
@@ -110,7 +114,10 @@ internal class Consumer : BackgroundService
                     OrderId = order.OrderId
                 };
 
+                using var transaction = dbContext.Database.BeginTransaction();
                 dbContext.Add(orderItem);
+                dbContext.SaveChanges();
+                transaction.Commit();
             }
 
             var shipping = new ShippingEntity
