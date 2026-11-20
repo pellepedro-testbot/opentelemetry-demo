@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 const { context, propagation, trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
 const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions');
+const crypto = require('crypto');
 const cardValidator = require('simple-card-validator');
 const { v4: uuidv4 } = require('uuid');
 
@@ -10,6 +11,7 @@ const { FlagdProvider } = require('@openfeature/flagd-provider');
 const flagProvider = new FlagdProvider();
 
 const logger = require('./logger');
+const { normalizeNumber, identifyNetwork, acceptedNetworkNames } = require('./card-networks');
 const tracer = trace.getTracer('payment');
 const meter = metrics.getMeter('payment');
 const transactionsCounter = meter.createCounter('demo.payment.transactions', {
@@ -17,6 +19,14 @@ const transactionsCounter = meter.createCounter('demo.payment.transactions', {
 });
 
 const LOYALTY_LEVEL = ['platinum', 'gold', 'silver', 'bronze'];
+
+// Salt for the card fingerprint written to the audit log. Override per environment.
+const CARD_HASH_SALT = process.env.PAYMENT_CARD_HASH_SALT || 'otel-demo-payment';
+
+/** Return a stable, non-reversible fingerprint of a card number for audit logging */
+function cardFingerprint(number) {
+  return crypto.pbkdf2Sync(number, CARD_HASH_SALT, 100000, 32, 'sha512').toString('hex');
+}
 
 /** Return random element from given array */
 function random(arr) {
@@ -57,17 +67,22 @@ module.exports.charge = async request => {
     } = request.creditCard;
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-    const lastFourDigits = number.substr(-4);
+    const digits = normalizeNumber(number);
+    const lastFourDigits = digits.slice(-4);
+    const cardHash = cardFingerprint(number);
     const transactionId = uuidv4();
 
-    const card = cardValidator(number);
+    const card = cardValidator(digits);
     const { card_type: cardType, valid } = card.getCardDetails();
+    const network = identifyNetwork(digits);
 
     const loyalty_level = random(LOYALTY_LEVEL);
 
     span.setAttributes({
       'demo.payment.card_type': cardType,
       'demo.payment.card_valid': valid,
+      'demo.payment.card_hash': cardHash,
+      'demo.payment.card_network': network?.id ?? 'unknown',
       'demo.user_context.loyalty_level': loyalty_level,
       ...(emitRawPii && {
         'demo.payment.card_number': number,
@@ -75,17 +90,23 @@ module.exports.charge = async request => {
       })
     });
 
-    if (!valid) {
-      throw new Error('Credit card info is invalid.');
+    span.addEvent('card.identified', { 'demo.payment.card_network': network?.id ?? 'unknown' });
+
+    // simple-card-validator miscounts 15-digit numbers, so an American Express
+    // card is checked against the network table (prefix and length) instead.
+    if (!valid && network?.id !== 'amex') {
+      throw new Error(`The card number ending ${lastFourDigits} is not valid. Please check it and try again.`);
     }
 
-    if (!['visa', 'mastercard'].includes(cardType)) {
-      throw new Error(`Sorry, we cannot process ${cardType} credit cards. Only VISA or MasterCard is accepted.`);
+    if (!network) {
+      throw new Error(`Sorry, we cannot process ${cardType || 'this type of'} cards. We accept ${acceptedNetworkNames()}.`);
     }
 
     if ((currentYear * 12 + currentMonth) > (year * 12 + month)) {
-      throw new Error(`The credit card (ending ${lastFourDigits}) expired on ${month}/${year}.`);
+      throw new Error(`The ${network.name} card ending ${lastFourDigits} expired on ${month}/${year}.`);
     }
+
+    span.addEvent('card.validated', { 'demo.payment.card_network': network.id });
 
     // Do not charge synthetic requests.
     if (syntheticRequest) {
@@ -100,7 +121,7 @@ module.exports.charge = async request => {
     }
 
     const { units, nanos, currencyCode } = request.amount;
-    logger.info({ transactionId, cardType, lastFourDigits, amount: { units, nanos, currencyCode }, loyalty_level }, 'Transaction complete.');
+    logger.info({ transactionId, cardType, cardNetwork: network.id, lastFourDigits, cardHash, amount: { units, nanos, currencyCode }, loyalty_level }, 'Transaction complete.');
     transactionsCounter.add(1, { 'demo.payment.currency': currencyCode });
 
     return { transactionId };

@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cerrno>
 #include <csignal>
@@ -8,6 +10,7 @@
 #include <cstring>
 #include <iostream>
 #include <math.h>
+#include <mutex>
 #include <pthread.h>
 #include <demo.grpc.pb.h>
 #include <grpc/health/v1/health.grpc.pb.h>
@@ -178,6 +181,66 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
   	return Status::OK;
   }
 
+  // The EUR rates of a currency pair, as used by one conversion.
+  struct RatePair
+  {
+    double from;
+    double to;
+  };
+
+  // Rates already looked up, keyed by "FROM/TO". The table of rates never
+  // changes while the server runs, so an entry never goes stale.
+  std::mutex rate_cache_mutex;
+  std::unordered_map<std::string, RatePair> rate_cache;
+
+  // Currency codes are matched in upper case without surrounding spaces, so
+  // " usd" and "USD" are the same currency.
+  static std::string normalizeCode(const std::string& code)
+  {
+    auto first = std::find_if_not(code.begin(), code.end(), ::isspace);
+    auto last = std::find_if_not(code.rbegin(), code.rend(), ::isspace).base();
+    std::string normalized = first < last ? std::string(first, last) : std::string();
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::toupper);
+    return normalized;
+  }
+
+  // Finds the EUR rate of a currency. Returns false for a code that is not in
+  // the table, instead of inventing a rate of zero for it.
+  static bool lookupRate(const std::string& code, double& rate)
+  {
+    auto it = currency_conversion.find(code);
+    if (it == currency_conversion.end() || it->second <= 0) {
+      return false;
+    }
+    rate = it->second;
+    return true;
+  }
+
+  // The rates for converting from one currency to another, from the cache when
+  // the pair was seen before. Returns false if either code is unknown.
+  bool ratesFor(const std::string& from_code, const std::string& to_code, RatePair& rates)
+  {
+    const std::string key = from_code + "/" + to_code;
+    {
+      std::lock_guard<std::mutex> lock(rate_cache_mutex);
+      auto cached = rate_cache.find(key);
+      if (cached != rate_cache.end()) {
+        rates = cached->second;
+        return true;
+      }
+    }
+
+    RatePair found{};
+    if (!lookupRate(from_code, found.from) || !lookupRate(to_code, found.to)) {
+      return false;
+    }
+
+    std::lock_guard<std::mutex> lock(rate_cache_mutex);
+    rate_cache.emplace(key, found);
+    rates = found;
+    return true;
+  }
+
   double getDouble(Money& money) {
     auto units = money.units();
     auto nanos = money.nanos();
@@ -227,14 +290,34 @@ class CurrencyService final : public oteldemo::CurrencyService::Service
     try {
       // Do the conversion work
       Money from = request->from();
-      string from_code = from.currency_code();
-      double rate = currency_conversion[from_code];
-      double one_euro = getDouble(from) / rate ;
+      string from_code = normalizeCode(from.currency_code());
+      string to_code = normalizeCode(request->to_code());
+      double final = getDouble(from);
 
-      string to_code = request->to_code();
-      double to_rate = currency_conversion[to_code];
+      if (from_code != to_code) {
+        RatePair rates;
+        if (!ratesFor(from_code, to_code, rates)) {
+          const std::string message = "unsupported currency code: " + from_code + " to " + to_code;
+          span->AddEvent("Unsupported currency code");
+          span->SetAttribute("demo.exchange.from", from_code);
+          span->SetAttribute("demo.exchange.to", to_code);
+          span->SetStatus(StatusCode::kError, message);
 
-      double final = one_euro * to_rate;
+          logger->Warn(eventName("currency.conversion_unsupported"),
+                       message,
+                       opentelemetry::common::MakeAttributes(
+                           {{"currency.from", from_code.c_str()},
+                            {"currency.to", to_code.c_str()}}));
+
+          span->End();
+          return Status(grpc::StatusCode::INVALID_ARGUMENT, message);
+        }
+
+        // Go through euros: the rates are quoted against EUR.
+        double one_euro = final / rates.from;
+        final = one_euro / rates.to;
+      }
+
       getUnitsAndNanos(*response, final);
       response->set_currency_code(to_code);
 
@@ -351,6 +434,7 @@ int main(int argc, char **argv) {
 
   uint16_t port = atoi(argv[1]);
 
+  std::cout << "Telemetry export: " << telemetryExportName(telemetryExportMode()) << std::endl;
   auto tracer_provider = initTracer();
   auto meter_provider = initMeter();
   auto logger_provider = initLogger();

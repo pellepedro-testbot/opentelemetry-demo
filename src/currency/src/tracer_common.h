@@ -8,11 +8,13 @@
 #include "opentelemetry/exporters/ostream/span_exporter_factory.h"
 #include "opentelemetry/nostd/shared_ptr.h"
 #include "opentelemetry/sdk/trace/batch_span_processor_factory.h"
+#include "opentelemetry/sdk/trace/simple_processor_factory.h"
 #include "opentelemetry/sdk/trace/tracer_context.h"
 #include "opentelemetry/sdk/trace/tracer_context_factory.h"
 #include "opentelemetry/sdk/trace/tracer_provider_factory.h"
 #include "opentelemetry/trace/propagation/http_trace_context.h"
 #include "opentelemetry/trace/provider.h"
+#include "telemetry_export.h"
 
 #include <grpcpp/grpcpp.h>
 #include <cstring>
@@ -70,11 +72,20 @@ public:
   ServerContext *context_;
 };
 
+std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor> makeSpanProcessor(
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> exporter, TelemetryExport mode)
+{
+  if (mode == TelemetryExport::Batch)
+  {
+    return opentelemetry::sdk::trace::BatchSpanProcessorFactory::Create(std::move(exporter), {});
+  }
+  return opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
+}
+
 std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> initTracer()
 {
   auto exporter = opentelemetry::exporter::otlp::OtlpGrpcExporterFactory::Create();
-  auto processor =
-      opentelemetry::sdk::trace::BatchSpanProcessorFactory::Create(std::move(exporter), {});
+  auto processor = makeSpanProcessor(std::move(exporter), telemetryExportMode());
   std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>> processors;
   processors.push_back(std::move(processor));
 

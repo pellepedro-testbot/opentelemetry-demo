@@ -3,12 +3,12 @@
 
 use actix_web::{web, App, HttpResponse, HttpServer};
 use open_feature::provider::FeatureProvider;
-use open_feature_flagd::{FlagdOptions, FlagdProvider};
 use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 use std::env;
 use std::sync::Arc;
 use tracing::info;
 
+mod flags;
 mod telemetry_conf;
 use telemetry_conf::init_otel;
 mod shipping_service;
@@ -47,14 +47,11 @@ async fn main() -> std::io::Result<()> {
         message = "Shipping service is running"
     );
 
-    let provider = FlagdProvider::new(FlagdOptions {
-        cache_settings: None,
-        ..Default::default()
-    })
-    .await
-    .expect("Failed to initialize flagd provider");
+    // Shipping starts even when flagd is not ready yet; flags use their defaults until it is.
+    let flags = Arc::new(flags::FlagdWhenReady::new());
+    flags::connect(flags.clone()).await;
 
-    let flag_provider = web::Data::from(Arc::new(provider) as Arc<dyn FeatureProvider>);
+    let flag_provider = web::Data::from(flags as Arc<dyn FeatureProvider>);
 
     HttpServer::new(move || {
         App::new()

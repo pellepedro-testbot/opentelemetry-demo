@@ -28,6 +28,12 @@ cargo test
   shipping requests are delayed by the flag's value in seconds to simulate
   overseas shipping latency. US addresses are never affected.
 
+Shipping starts even when flagd is not reachable yet. It tries to connect at
+startup (the flagd provider retries for about 15 seconds); if flagd still does
+not answer, it starts serving with
+every flag at its default value and keeps connecting in the background, with
+growing pauses up to 30 seconds. Once flagd answers, flags are read from flagd.
+
 ## Environment Variables
 
 | Variable           | Default | Description                   |

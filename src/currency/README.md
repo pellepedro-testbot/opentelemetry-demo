@@ -12,6 +12,13 @@ of opentelemetry-demo
 docker compose build currency
 ```
 
+## Telemetry export
+
+Spans and log records are exported as soon as they end, so a conversion shows
+up in Jaeger and in the log backend right away. Set
+`CURRENCY_TELEMETRY_EXPORT=batch` to collect them and export in batches
+instead. The service prints the mode it uses at startup.
+
 ## Run the service
 
 Execute the below command to run the service.

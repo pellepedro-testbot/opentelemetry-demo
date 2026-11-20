@@ -3,6 +3,16 @@
 The Ad service provides advertisement based on context keys. If no context keys
 are provided then it returns random ads.
 
+## Ads for a visit
+
+A shopper sees the same ads for the same page throughout a visit. The service
+remembers the ads it served for each session (the `session.id` baggage entry)
+and page (the categories the page asked for), and serves them again when the
+same shopper comes back to that page. Requests without a session get a fresh
+pick every time. `demo.ad.session_ads.entries` reports how many session and
+page pairs are remembered, and `demo.ad.session_ads.lookups` counts hits and
+misses.
+
 ## Building Locally
 
 The Ad service requires at least JDK 21 to build and uses gradlew to

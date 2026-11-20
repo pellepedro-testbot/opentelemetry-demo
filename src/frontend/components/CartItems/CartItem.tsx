@@ -7,18 +7,24 @@ import ProductPrice from '../ProductPrice';
 import Select from '../Select';
 import * as S from './CartItems.styled';
 
-const quantityOptions = new Array(10).fill(0).map((_, i) => i + 1);
+// The cart service keeps at most this many of one product in a line.
+export const MAX_QUANTITY_PER_LINE = 10;
+
+// 0 is the "Remove" choice; 1 to MAX_QUANTITY_PER_LINE set the quantity.
+const quantityOptions = Array.from({ length: MAX_QUANTITY_PER_LINE + 1 }, (_, i) => i);
 
 interface IProps {
   product: Product;
   quantity: number;
   onQuantityChange(productId: string, newQuantity: number): void;
+  onRemove(productId: string): void;
 }
 
 const CartItem = ({
   product: { id, name, picture, priceUsd = { units: 0, nanos: 0, currencyCode: 'USD' } },
   quantity,
   onQuantityChange,
+  onRemove,
 }: IProps) => {
   const totalNanos = Number(priceUsd.nanos) * quantity;
   const linePrice = {
@@ -36,9 +42,19 @@ const CartItem = ({
         </S.NameContainer>
       </Link>
       <S.CartItemDetails>
-        <Select value={quantity} onChange={e => onQuantityChange(id, +e.target.value)}>
+        <Select
+          value={quantity}
+          aria-label={`Quantity of ${name}`}
+          onChange={e => {
+            const newQuantity = +e.target.value;
+            if (newQuantity === 0) onRemove(id);
+            else onQuantityChange(id, newQuantity);
+          }}
+        >
           {quantityOptions.map(o => (
-            <option key={o} value={o}>{o}</option>
+            <option key={o} value={o}>
+              {o === 0 ? 'Remove' : o}
+            </option>
           ))}
         </Select>
       </S.CartItemDetails>

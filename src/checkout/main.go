@@ -347,16 +347,12 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	}
 	span.AddEvent("prepared")
 
-	total := &pb.Money{
-		CurrencyCode: req.UserCurrency,
-		Units:        0,
-		Nanos:        0,
-	}
-	total = money.Must(money.Sum(total, prep.shippingCostLocalized))
+	lines := make([]*pb.Money, 0, len(prep.orderItems)+1)
+	lines = append(lines, prep.shippingCostLocalized)
 	for _, it := range prep.orderItems {
-		multPrice := money.MultiplySlow(it.Cost, uint32(it.GetItem().GetQuantity()))
-		total = money.Must(money.Sum(total, multPrice))
+		lines = append(lines, money.Multiply(it.Cost, uint32(it.GetItem().GetQuantity())))
 	}
+	total := money.Must(money.SumAll(lines...))
 
 	txID, err := cs.chargeCard(ctx, total, req.CreditCard)
 	if err != nil {
@@ -417,7 +413,14 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	// send to kafka only if kafka broker address is set
 	if cs.kafkaBrokerSvcAddr != "" {
 		logger.Info("sending to postProcessor")
-		cs.sendToPostProcessor(ctx, orderResult)
+		// Publish in the background so the shopper does not wait on Kafka. The
+		// publish must outlive the request, so detach it from cancellation.
+		postCtx := context.WithoutCancel(ctx)
+		published := make(chan struct{})
+		go func() {
+			cs.sendToPostProcessor(postCtx, orderResult)
+			published <- struct{}{}
+		}()
 	}
 
 	resp := &pb.PlaceOrderResponse{Order: orderResult}
