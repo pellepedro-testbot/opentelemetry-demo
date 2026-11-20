@@ -14,6 +14,8 @@ import ProductCatalogService from '../../services/ProductCatalog.service';
 // Prefix checkout's Go service always uses for chargeCard failures (src/checkout/main.go),
 // the only signal available to tell a payment decline apart from an unrelated internal error.
 const PAYMENT_FAILURE_PREFIX = 'failed to charge card:';
+const INVALID_ZIP_CODE = 'Invalid zip code';
+const CARD_DECLINED = 'Your card was declined.';
 
 type TResponse = IProductCheckout | Empty | { error: string; code?: string };
 
@@ -33,8 +35,17 @@ const handler = async ({ method, body, query }: NextApiRequest, res: NextApiResp
 
         const details = (error as ServiceError)?.details || (error as Error)?.message || '';
 
+        if (details === INVALID_ZIP_CODE) {
+          return res.status(400).json({ error: INVALID_ZIP_CODE });
+        }
+
         if (details.startsWith(PAYMENT_FAILURE_PREFIX)) {
           if (!details.includes('code = Unavailable') && !details.includes('code = Internal')) {
+            if (details.includes(CARD_DECLINED)) {
+              logger.info({ details }, 'Checkout card declined');
+              return res.status(422).json({ error: CARD_DECLINED, code: 'PAYMENT_FAILED' });
+            }
+
             logger.info({ details }, 'Checkout payment declined');
             return res.status(422).json({
               error: 'Your payment could not be processed. Please check your card details and try again.',

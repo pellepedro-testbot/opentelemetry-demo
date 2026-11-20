@@ -30,6 +30,7 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -208,8 +209,9 @@ public final class AdService {
         span.setAttribute("demo.ad.context_keys.count", req.getContextKeysCount());
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
-          for (int i = 0; i < req.getContextKeysCount(); i++) {
-            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
+          // Look up each distinct context key once so repeated keys do not duplicate ads
+          for (String contextKey : new LinkedHashSet<>(req.getContextKeysList())) {
+            Collection<Ad> ads = service.getAdsByCategory(contextKey);
             allAds.addAll(ads);
           }
           adRequestType = AdRequestType.TARGETED;
@@ -348,6 +350,7 @@ public final class AdService {
         .putAll("accessories", colorImager, solarFilter, cleaningKit)
         .putAll("assembly", opticalTube)
         .putAll("travel", travelTelescope)
+        .putAll("home", explorerTelescope)
         // Keep the books category free of ads to ensure the random code branch is tested
         .build();
   }

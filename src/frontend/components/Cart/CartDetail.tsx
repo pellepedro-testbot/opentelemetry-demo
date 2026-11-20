@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useRouter } from 'next/router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import CartItems from '../CartItems';
 import CheckoutForm from '../CheckoutForm';
 import { IFormData } from '../CheckoutForm/CheckoutForm';
@@ -21,6 +21,7 @@ const CartDetail = () => {
   } = useCart();
   const { selectedCurrency } = useCurrency();
   const { push } = useRouter();
+  const [error, setError] = useState('');
 
   const onPlaceOrder = useCallback(
     async ({
@@ -35,24 +36,31 @@ const CartDetail = () => {
       creditCardExpirationYear,
       creditCardNumber,
     }: IFormData) => {
-      const order = await placeOrder({
-        userId,
-        email,
-        address: {
-          streetAddress,
-          state,
-          country,
-          city,
-          zipCode,
-        },
-        userCurrency: selectedCurrency,
-        creditCard: {
-          creditCardCvv,
-          creditCardExpirationMonth,
-          creditCardExpirationYear,
-          creditCardNumber,
-        },
-      });
+      setError('');
+      let order;
+      try {
+        order = await placeOrder({
+          userId,
+          email,
+          address: {
+            streetAddress,
+            state,
+            country,
+            city,
+            zipCode,
+          },
+          userCurrency: selectedCurrency,
+          creditCard: {
+            creditCardCvv,
+            creditCardExpirationMonth,
+            creditCardExpirationYear,
+            creditCardNumber,
+          },
+        });
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
 
       push({
         pathname: `/cart/checkout/${order.orderId}`,
@@ -66,13 +74,14 @@ const CartDetail = () => {
     <S.Container>
       <div>
         <S.Header>
-          <S.CarTitle>Shopping Cart</S.CarTitle>
+          <S.CarTitle>Shopping Cart ({items.reduce((acc, { quantity }) => acc + quantity, 0)} items)</S.CarTitle>
           <S.EmptyCartButton onClick={emptyCart} $type="link">
             Empty Cart
           </S.EmptyCartButton>
         </S.Header>
         <CartItems productList={items} />
       </div>
+      {error && <S.ErrorMessage role="alert">{error}</S.ErrorMessage>}
       <CheckoutForm onSubmit={onPlaceOrder} />
     </S.Container>
   );
