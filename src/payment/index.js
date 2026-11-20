@@ -8,23 +8,25 @@ const { ATTR_ERROR_TYPE } = require('@opentelemetry/semantic-conventions')
 
 const charge = require('./charge')
 const logger = require('./logger')
+const { OUTCOME_APPROVED, OUTCOME_DECLINED, amountAttributes, recordOutcome } = require('./telemetry')
 
 async function chargeServiceHandler(call, callback) {
   const span = opentelemetry.trace.getActiveSpan();
 
   try {
     const amount = call.request.amount
-    span?.setAttributes({
-      'demo.payment.amount': (Number(amount.units) + amount.nanos / 1000000000).toFixed(2)
-    })
+    span?.setAttributes(amountAttributes(amount))
+    span?.addEvent('charge.received')
     logger.info("Charge request received.")
 
     const response = await charge.charge(call.request)
+    recordOutcome(span, OUTCOME_APPROVED, { 'demo.payment.transaction.id': response.transactionId })
     callback(null, response)
 
   } catch (err) {
     logger.warn({ err })
 
+    recordOutcome(span, OUTCOME_DECLINED, { 'exception.message': err.message })
     span?.setStatus({ code: opentelemetry.SpanStatusCode.ERROR, message: err.message })
     span?.setAttribute(ATTR_ERROR_TYPE, err.name || 'Error')
     callback(err)

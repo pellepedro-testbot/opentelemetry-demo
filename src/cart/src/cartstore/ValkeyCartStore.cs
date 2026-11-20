@@ -19,6 +19,9 @@ public class ValkeyCartStore : ICartStore
     private const string CartFieldName = "cart";
     private const int RedisRetryNumber = 30;
 
+    // The cart page offers up to 10 of a product, and a line never holds more.
+    public const int MaxQuantityPerLine = 10;
+
     private volatile ConnectionMultiplexer _redis;
     private volatile bool _isRedisConnectionOpened;
 
@@ -139,28 +142,10 @@ public class ValkeyCartStore : ICartStore
             // Access the cart from the cache
             var value = await db.HashGetAsync(userId, CartFieldName);
 
-            Oteldemo.Cart cart;
-            if (value.IsNull)
-            {
-                cart = new Oteldemo.Cart
-                {
-                    UserId = userId
-                };
-                cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
-            }
-            else
-            {
-                cart = Oteldemo.Cart.Parser.ParseFrom((byte[])value);
-                var existingItem = cart.Items.SingleOrDefault(i => i.ProductId == productId);
-                if (existingItem == null)
-                {
-                    cart.Items.Add(new Oteldemo.CartItem { ProductId = productId, Quantity = quantity });
-                }
-                else
-                {
-                    existingItem.Quantity += quantity;
-                }
-            }
+            var cart = value.IsNull
+                ? new Oteldemo.Cart { UserId = userId }
+                : Oteldemo.Cart.Parser.ParseFrom((byte[])value);
+            ApplyQuantity(cart, productId, quantity);
 
             await db.HashSetAsync(userId, new[]{ new HashEntry(CartFieldName, cart.ToByteArray()) });
             await db.KeyExpireAsync(userId, TimeSpan.FromMinutes(60));
@@ -172,6 +157,29 @@ public class ValkeyCartStore : ICartStore
         finally
         {
             addItemHistogram.Record(stopwatch.Elapsed.TotalSeconds);
+        }
+    }
+
+    // Adds quantity to the product's line in the cart, or starts a new line for it.
+    // A negative quantity takes items away; the cart page sends minus the current
+    // quantity when a shopper chooses Remove. A line holds at most MaxQuantityPerLine.
+    internal static void ApplyQuantity(Oteldemo.Cart cart, string productId, int quantity)
+    {
+        var line = cart.Items.SingleOrDefault(i => i.ProductId == productId);
+        if (line == null)
+        {
+            cart.Items.Add(new Oteldemo.CartItem
+            {
+                ProductId = productId,
+                Quantity = Math.Min(quantity, MaxQuantityPerLine)
+            });
+            return;
+        }
+
+        line.Quantity = Math.Min(line.Quantity + quantity, MaxQuantityPerLine);
+        if (line.Quantity < 0)
+        {
+            cart.Items.Remove(line);
         }
     }
 

@@ -30,9 +30,11 @@ COPY --from=otelagent /autoinstrumentation /otel-auto-instrumentation-nodejs
 
 COPY ./pb/demo.proto demo.proto
 
+COPY ./src/payment/card-networks.js card-networks.js
 COPY ./src/payment/charge.js charge.js
 COPY ./src/payment/index.js index.js
 COPY ./src/payment/logger.js logger.js
+COPY ./src/payment/telemetry.js telemetry.js
 
 ARG PAYMENT_PORT=50051
 EXPOSE ${PAYMENT_PORT}
