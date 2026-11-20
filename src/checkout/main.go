@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -303,6 +305,31 @@ func (cs *checkout) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_W
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
+func isValidUSZipCode(zip string) bool {
+	if len(zip) != 5 {
+		return false
+	}
+	for _, c := range zip {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// isValidCurrencyCode reports whether code is a 3-letter uppercase currency code, like USD.
+func isValidCurrencyCode(code string) bool {
+	if len(code) != 3 {
+		return false
+	}
+	for _, c := range code {
+		if c < 'A' || c > 'Z' {
+			return false
+		}
+	}
+	return true
+}
+
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
@@ -336,16 +363,53 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		}
 	}()
 
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if !strings.Contains(req.Email, "@") {
+		return nil, status.Error(codes.InvalidArgument, "email is invalid")
+	}
+
+	if !isValidCurrencyCode(req.UserCurrency) {
+		return nil, status.Error(codes.InvalidArgument, "user_currency must be a 3-letter uppercase code")
+	}
+
+	switch country := req.GetAddress().GetCountry(); country {
+	case "United States", "USA", "Canada":
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "We do not ship to %s", country)
+	}
+
+	if req.GetAddress().GetCountry() == "United States" && !isValidUSZipCode(req.GetAddress().GetZipCode()) {
+		return nil, status.Error(codes.InvalidArgument, "Invalid zip code")
+	}
+
+	if strings.TrimSpace(req.GetAddress().GetStreetAddress()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "Street address is required")
+	}
+
+	if req.CreditCard == nil {
+		return nil, status.Error(codes.InvalidArgument, "credit_card is required")
+	}
+
 	orderID, err := uuid.NewUUID()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate order uuid")
 	}
 
 	prep, err := cs.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserId, req.UserCurrency, req.Address)
+	if errors.Is(err, errEmptyCart) {
+		return nil, status.Error(codes.FailedPrecondition, "Cart is empty")
+	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	span.AddEvent("prepared")
+
+	if prep.totalUSDNanos > maxOrderUSDNanos {
+		return nil, status.Error(codes.InvalidArgument, "Order exceeds the 5,000 USD limit")
+	}
 
 	total := &pb.Money{
 		CurrencyCode: req.UserCurrency,
@@ -354,8 +418,8 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	}
 	total = money.Must(money.Sum(total, prep.shippingCostLocalized))
 	for _, it := range prep.orderItems {
-		multPrice := money.MultiplySlow(it.Cost, uint32(it.GetItem().GetQuantity()))
-		total = money.Must(money.Sum(total, multPrice))
+		it.Cost = money.MultiplySlow(it.Cost, uint32(it.GetItem().GetQuantity()))
+		total = money.Must(money.Sum(total, it.Cost))
 	}
 
 	txID, err := cs.chargeCard(ctx, total, req.CreditCard)
@@ -424,10 +488,16 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 	return resp, nil
 }
 
+// maxOrderUSDNanos is the largest order total (items plus shipping, in USD nanos) PlaceOrder accepts.
+const maxOrderUSDNanos = 5000 * 1_000_000_000
+
+var errEmptyCart = errors.New("cart is empty")
+
 type orderPrep struct {
 	orderItems            []*pb.OrderItem
 	cartItems             []*pb.CartItem
 	shippingCostLocalized *pb.Money
+	totalUSDNanos         int64
 }
 
 func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, userID, userCurrency string, address *pb.Address) (orderPrep, error) {
@@ -439,7 +509,10 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	if err != nil {
 		return out, fmt.Errorf("cart failure: %+v", err)
 	}
-	orderItems, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
+	if len(cartItems) == 0 {
+		return out, errEmptyCart
+	}
+	orderItems, itemsUSDNanos, err := cs.prepOrderItems(ctx, cartItems, userCurrency)
 	if err != nil {
 		return out, fmt.Errorf("failed to prepare order: %+v", err)
 	}
@@ -455,6 +528,7 @@ func (cs *checkout) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Contex
 	out.shippingCostLocalized = shippingPrice
 	out.cartItems = cartItems
 	out.orderItems = orderItems
+	out.totalUSDNanos = itemsUSDNanos + usdNanos(shippingUSD)
 
 	var totalCart int32
 	for _, ci := range cartItems {
@@ -539,24 +613,31 @@ func (cs *checkout) emptyUserCart(ctx context.Context, userID string) error {
 	return nil
 }
 
-func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, userCurrency string) ([]*pb.OrderItem, error) {
+// prepOrderItems also returns the items' total in USD nanos, taken from the catalog's USD prices.
+func (cs *checkout) prepOrderItems(ctx context.Context, items []*pb.CartItem, userCurrency string) ([]*pb.OrderItem, int64, error) {
 	out := make([]*pb.OrderItem, len(items))
+	var totalUSDNanos int64
 
 	for i, item := range items {
 		product, err := cs.productCatalogSvcClient.GetProduct(ctx, &pb.GetProductRequest{Id: item.GetProductId()})
 		if err != nil {
-			return nil, fmt.Errorf("failed to get product #%q", item.GetProductId())
+			return nil, 0, fmt.Errorf("failed to get product #%q", item.GetProductId())
 		}
 		price, err := cs.convertCurrency(ctx, product.GetPriceUsd(), userCurrency)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert price of %q to %s", item.GetProductId(), userCurrency)
+			return nil, 0, fmt.Errorf("failed to convert price of %q to %s", item.GetProductId(), userCurrency)
 		}
 		out[i] = &pb.OrderItem{
 			Item: item,
 			Cost: price,
 		}
+		totalUSDNanos += usdNanos(product.GetPriceUsd()) * int64(item.GetQuantity())
 	}
-	return out, nil
+	return out, totalUSDNanos, nil
+}
+
+func usdNanos(m *pb.Money) int64 {
+	return m.GetUnits()*1_000_000_000 + int64(m.GetNanos())
 }
 
 func (cs *checkout) convertCurrency(ctx context.Context, from *pb.Money, toCurrency string) (*pb.Money, error) {

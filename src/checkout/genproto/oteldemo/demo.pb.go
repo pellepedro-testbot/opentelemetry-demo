@@ -228,9 +228,11 @@ func (x *GetCartRequest) GetUserId() string {
 }
 
 type Cart struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Items         []*CartItem            `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Items  []*CartItem            `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	// Time of the last AddItem or EmptyCart, in Unix milliseconds (UTC). 0 when never set.
+	UpdatedAt     int64 `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +281,13 @@ func (x *Cart) GetItems() []*CartItem {
 	return nil
 }
 
+func (x *Cart) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -316,9 +325,11 @@ func (*Empty) Descriptor() ([]byte, []int) {
 }
 
 type ListRecommendationsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ProductIds    []string               `protobuf:"bytes,2,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	UserId     string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ProductIds []string               `protobuf:"bytes,2,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
+	// Maximum number of product ids to return. 0 (unset) keeps the default of 5.
+	MaxResults    int32 `protobuf:"varint,3,opt,name=max_results,json=maxResults,proto3" json:"max_results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -365,6 +376,13 @@ func (x *ListRecommendationsRequest) GetProductIds() []string {
 		return x.ProductIds
 	}
 	return nil
+}
+
+func (x *ListRecommendationsRequest) GetMaxResults() int32 {
+	if x != nil {
+		return x.MaxResults
+	}
+	return 0
 }
 
 type ListRecommendationsResponse struct {
@@ -420,7 +438,11 @@ type Product struct {
 	PriceUsd    *Money                 `protobuf:"bytes,5,opt,name=price_usd,json=priceUsd,proto3" json:"price_usd,omitempty"`
 	// Categories such as "clothing" or "kitchen" that can be used to look up
 	// other related products.
-	Categories    []string `protobuf:"bytes,6,rep,name=categories,proto3" json:"categories,omitempty"`
+	Categories []string `protobuf:"bytes,6,rep,name=categories,proto3" json:"categories,omitempty"`
+	// Badge shown on product cards, e.g. "Bestseller". Empty means no badge.
+	Badge string `protobuf:"bytes,7,opt,name=badge,proto3" json:"badge,omitempty"`
+	// Most units of this product the product page lets a shopper select at once.
+	MaxQuantity   int32 `protobuf:"varint,8,opt,name=max_quantity,json=maxQuantity,proto3" json:"max_quantity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -495,6 +517,20 @@ func (x *Product) GetCategories() []string {
 		return x.Categories
 	}
 	return nil
+}
+
+func (x *Product) GetBadge() string {
+	if x != nil {
+		return x.Badge
+	}
+	return ""
+}
+
+func (x *Product) GetMaxQuantity() int32 {
+	if x != nil {
+		return x.MaxQuantity
+	}
+	return 0
 }
 
 type ListProductsResponse struct {
@@ -2232,18 +2268,22 @@ const file_demo_proto_rawDesc = "" +
 	"\x10EmptyCartRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\")\n" +
 	"\x0eGetCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"I\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"h\n" +
 	"\x04Cart\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12(\n" +
-	"\x05items\x18\x02 \x03(\v2\x12.oteldemo.CartItemR\x05items\"\a\n" +
-	"\x05Empty\"V\n" +
+	"\x05items\x18\x02 \x03(\v2\x12.oteldemo.CartItemR\x05items\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x03 \x01(\x03R\tupdatedAt\"\a\n" +
+	"\x05Empty\"w\n" +
 	"\x1aListRecommendationsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vproduct_ids\x18\x02 \x03(\tR\n" +
-	"productIds\">\n" +
+	"productIds\x12\x1f\n" +
+	"\vmax_results\x18\x03 \x01(\x05R\n" +
+	"maxResults\">\n" +
 	"\x1bListRecommendationsResponse\x12\x1f\n" +
 	"\vproduct_ids\x18\x01 \x03(\tR\n" +
-	"productIds\"\xb7\x01\n" +
+	"productIds\"\xf0\x01\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -2252,7 +2292,9 @@ const file_demo_proto_rawDesc = "" +
 	"\tprice_usd\x18\x05 \x01(\v2\x0f.oteldemo.MoneyR\bpriceUsd\x12\x1e\n" +
 	"\n" +
 	"categories\x18\x06 \x03(\tR\n" +
-	"categories\"E\n" +
+	"categories\x12\x14\n" +
+	"\x05badge\x18\a \x01(\tR\x05badge\x12!\n" +
+	"\fmax_quantity\x18\b \x01(\x05R\vmaxQuantity\"E\n" +
 	"\x14ListProductsResponse\x12-\n" +
 	"\bproducts\x18\x01 \x03(\v2\x11.oteldemo.ProductR\bproducts\"#\n" +
 	"\x11GetProductRequest\x12\x0e\n" +

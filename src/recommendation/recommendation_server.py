@@ -41,7 +41,10 @@ first_run = True
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
-        prod_list = get_product_list(request.product_ids)
+        try:
+            prod_list = get_product_list(request.product_ids, request.max_results)
+        except ValueError as e:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
         span = trace.get_current_span()
         span.set_attribute("demo.product.recommended.count", len(prod_list))
         logger.info(f"Receive ListRecommendations for product ids:{prod_list}")
@@ -64,16 +67,39 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
             status=health_pb2.HealthCheckResponse.UNIMPLEMENTED)
 
 
-def get_product_list(request_product_ids):
+# Upper bound for max_results; the frontend API enforces the same limit
+MAX_RESULTS_LIMIT = 100
+
+# Most distinct product_ids a request may send
+MAX_PRODUCT_IDS = 10
+
+# Most expensive product that may be recommended: 1,000 USD in nanos
+MAX_PRICE_NANOS = 1_000 * 1_000_000_000
+
+
+def get_product_list(request_product_ids, max_results=0):
     global first_run
     global cached_ids
     with tracer.start_as_current_span("get_product_list") as span:
-        max_responses = 5
+        if max_results < 0:
+            raise ValueError("max_results must not be negative")
+        if max_results > MAX_RESULTS_LIMIT:
+            raise ValueError(f"max_results must not exceed {MAX_RESULTS_LIMIT}")
+        # A positive max_results replaces the default count
+        max_responses = max_results or 5
 
-        # Formulate the list of characters to list of strings
-        request_product_ids_str = ''.join(request_product_ids)
+        # Formulate the list of characters to list of strings;
+        # a list of whole ids is joined with commas instead
+        if all(len(x) <= 1 for x in request_product_ids):
+            request_product_ids_str = ''.join(request_product_ids)
+        else:
+            request_product_ids_str = ','.join(request_product_ids)
         request_product_ids = request_product_ids_str.split(',')
+        # Count distinct non-empty ids; repeated ids count once
+        if len({x for x in request_product_ids if x}) > MAX_PRODUCT_IDS:
+            raise ValueError(f"at most {MAX_PRODUCT_IDS} product_ids may be sent")
 
+        cat_response = None
         # Feature flag scenario - Cache Leak
         if check_feature_flag("recommendationCacheFailure"):
             span.set_attribute("demo.feature_flag.recommendation_cache", True)
@@ -99,14 +125,37 @@ def get_product_list(request_product_ids):
 
         # Create a filtered list of products excluding the products received as input
         filtered_products = list(set(product_ids) - set(request_product_ids))
+
+        random.shuffle(filtered_products)
+
+        if cat_response is None:
+            cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
+        prices = {x.id: x.price_usd.units * 1_000_000_000 + x.price_usd.nanos for x in cat_response.products}
+        # Never recommend a product priced above 1,000 USD
+        filtered_products = [x for x in filtered_products if x in prices and prices[x] <= MAX_PRICE_NANOS]
+        # With no input products, recommend only accessories
+        if not request_product_ids_str:
+            accessory_ids = {x.id for x in cat_response.products if 'accessories' in x.categories}
+            filtered_products = [x for x in filtered_products if x in accessory_ids]
+        # Otherwise keep only products cheaper than every input product,
+        # preferring those sharing a category with the input products
+        else:
+            unknown_ids = [x for x in request_product_ids if x and x not in prices]
+            if unknown_ids:
+                raise ValueError(f"product_id not in catalog: {', '.join(unknown_ids)}")
+            requested_prices = [prices[x] for x in request_product_ids if x in prices]
+            if requested_prices:
+                cheapest = min(requested_prices)
+                filtered_products = [x for x in filtered_products if x in prices and prices[x] < cheapest]
+            requested_categories = {c for x in cat_response.products if x.id in request_product_ids for c in x.categories}
+            related_ids = {x.id for x in cat_response.products if requested_categories.intersection(x.categories)}
+            filtered_products.sort(key=lambda x: x not in related_ids)
         num_products = len(filtered_products)
         span.set_attribute("demo.product.filtered.count", num_products)
         num_return = min(max_responses, num_products)
 
-        # Sample list of indices to return
-        indices = random.sample(range(num_products), num_return)
-        # Fetch product ids from indices
-        prod_list = [filtered_products[i] for i in indices]
+        # Take the first products from the shuffled list, sorted ascending
+        prod_list = sorted(filtered_products[:num_return])
 
         span.set_attribute("demo.product.filtered.list", prod_list)
 

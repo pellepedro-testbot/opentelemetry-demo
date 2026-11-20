@@ -22,11 +22,14 @@ const CurrencySwitcher = () => {
           value={selectedCurrency}
           data-cy={CypressFields.CurrencySwitcher}
         >
-          {currencyCodeList.map(currencyCode => (
-            <option key={currencyCode} value={currencyCode}>
-              {currencyCode}
-            </option>
-          ))}
+          {currencyCodeList.map(currencyCode => {
+            const symbol = getSymbolFromCurrency(currencyCode);
+            return (
+              <option key={currencyCode} value={currencyCode}>
+                {symbol ? `${currencyCode} (${symbol})` : currencyCode}
+              </option>
+            );
+          })}
         </S.Select>
         <S.Arrow />
       </S.Container>

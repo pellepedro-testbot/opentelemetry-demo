@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -232,7 +233,7 @@ func loadProductsFromDB(ctx context.Context) ([]*pb.Product, error) {
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		ORDER BY p.id
+		ORDER BY p.name
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)
@@ -252,15 +253,29 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 		return nil, fmt.Errorf("database connection not initialized")
 	}
 
-	// Query products matching search query in name or description
-	searchPattern := "%" + strings.ToLower(query) + "%"
+	// Query products matching every word of the search query, each word in the
+	// name, description or category. Rank products whose name contains every
+	// word first, then those whose description does, then the rest.
+	var matchAll, nameAll, descAll []string
+	var args []any
+	for i, word := range strings.Fields(strings.ToLower(query)) {
+		args = append(args, "%"+word+"%")
+		n := i + 1
+		matchAll = append(matchAll, fmt.Sprintf("(LOWER(p.name) LIKE $%d OR LOWER(p.description) LIKE $%d OR LOWER(p.categories) LIKE $%d)", n, n, n))
+		nameAll = append(nameAll, fmt.Sprintf("LOWER(p.name) LIKE $%d", n))
+		descAll = append(descAll, fmt.Sprintf("LOWER(p.description) LIKE $%d", n))
+	}
 	rows, err := db.QueryContext(ctx, `
 		SELECT p.id, p.name, p.description, p.picture, 
 		       p.price_currency_code, p.price_units, p.price_nanos, p.categories
 		FROM catalog.products p
-		WHERE LOWER(p.name) LIKE $1 OR LOWER(p.description) LIKE $1
-		ORDER BY p.id
-	`, searchPattern)
+		WHERE `+strings.Join(matchAll, " AND ")+`
+		ORDER BY CASE
+		           WHEN `+strings.Join(nameAll, " AND ")+` THEN 0
+		           WHEN `+strings.Join(descAll, " AND ")+` THEN 1
+		           ELSE 2
+		         END, p.id
+	`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query products: %w", err)
 	}
@@ -272,6 +287,21 @@ func searchProductsFromDB(ctx context.Context, query string) ([]*pb.Product, err
 	}
 
 	return products, nil
+}
+
+func searchProductsByCategoryFromDB(ctx context.Context, category string) ([]*pb.Product, error) {
+	products, err := loadProductsFromDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*pb.Product
+	for _, product := range products {
+		if slices.ContainsFunc(product.Categories, func(c string) bool { return strings.EqualFold(c, category) }) {
+			result = append(result, product)
+		}
+	}
+	return result, nil
 }
 
 func getProductFromDB(ctx context.Context, productID string) (*pb.Product, error) {
@@ -341,6 +371,16 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 		}
 	}
 
+	var badge string
+	if id == "66VCHSJNUP" {
+		badge = "Bestseller"
+	}
+
+	maxQuantity := int32(10)
+	if id == "2ZYFJ3GM2N" {
+		maxQuantity = 3
+	}
+
 	return &pb.Product{
 		Id:          id,
 		Name:        name,
@@ -351,7 +391,9 @@ func parseProductRow(id, name, description, picture, currencyCode, categoriesStr
 			Units:        units,
 			Nanos:        nanos,
 		},
-		Categories: categories,
+		Categories:  categories,
+		Badge:       badge,
+		MaxQuantity: maxQuantity,
 	}
 }
 
@@ -388,21 +430,22 @@ func (p *productCatalog) ListProducts(ctx context.Context, req *pb.Empty) (*pb.L
 
 func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductRequest) (*pb.Product, error) {
 	span := trace.SpanFromContext(ctx)
+	id := strings.TrimSpace(req.Id)
 	span.SetAttributes(
-		attribute.String("demo.product.id", req.Id),
+		attribute.String("demo.product.id", id),
 	)
 
 	// GetProduct will fail on a specific product when feature flag is enabled
-	if p.checkProductFailure(ctx, req.Id) {
+	if p.checkProductFailure(ctx, id) {
 		msg := "Error: Product Catalog Fail Feature Flag Enabled"
 		span.SetStatus(otelcodes.Error, msg)
 		span.AddEvent(msg)
 		return nil, status.Error(codes.Internal, msg)
 	}
 
-	found, err := getProductFromDB(ctx, req.Id)
+	found, err := getProductFromDB(ctx, id)
 	if err != nil {
-		msg := fmt.Sprintf("Product Not Found: %s", req.Id)
+		msg := fmt.Sprintf("Product Not Found: %s", id)
 		span.SetStatus(otelcodes.Error, msg)
 		span.AddEvent(msg)
 		return nil, status.Error(codes.NotFound, msg)
@@ -410,7 +453,7 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 
 	span.AddEvent("Product Found")
 	span.SetAttributes(
-		attribute.String("demo.product.id", req.Id),
+		attribute.String("demo.product.id", id),
 		attribute.String("demo.product.name", found.Name),
 	)
 
@@ -418,7 +461,7 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 		ctx,
 		slog.LevelInfo, "Product Found",
 		slog.String("demo.product.name", found.Name),
-		slog.String("demo.product.id", req.Id),
+		slog.String("demo.product.id", id),
 	)
 
 	return found, nil
@@ -427,7 +470,17 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
 	span := trace.SpanFromContext(ctx)
 
-	result, err := searchProductsFromDB(ctx, req.Query)
+	if strings.TrimSpace(req.Query) == "" {
+		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
+
+	var result []*pb.Product
+	var err error
+	if category, ok := strings.CutPrefix(strings.TrimSpace(req.Query), "category:"); ok {
+		result, err = searchProductsByCategoryFromDB(ctx, strings.TrimSpace(category))
+	} else {
+		result, err = searchProductsFromDB(ctx, req.Query)
+	}
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to search products: %v", err)
